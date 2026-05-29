@@ -1,0 +1,262 @@
+@page "/admin/quests"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>任务配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">任务配置</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="AddQuest">新增任务</button>
+            <button class="wap-button" @onclick="Save">保存</button>
+            <button class="wap-button muted" @onclick="GoAdmin">返回后台</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        <div class="admin-tabs">
+            <button class="@(_category == QuestCategory.Main ? "active" : "")" @onclick="() => SelectCategory(QuestCategory.Main)">主线</button>
+            <button class="@(_category == QuestCategory.Daily ? "active" : "")" @onclick="() => SelectCategory(QuestCategory.Daily)">每日</button>
+        </div>
+
+        <div class="admin-detail">
+            @for (int index = 0; index < FilteredQuests.Count; index++)
+            {
+                QuestDefinitionConfig quest = FilteredQuests[index];
+                int currentIndex = _quests.IndexOf(quest);
+                <article class="admin-card">
+                    <header>
+                        <b>@(string.IsNullOrWhiteSpace(quest.Title) ? quest.Id : quest.Title)</b>
+                        <button @onclick="() => RemoveQuest(currentIndex)">删除</button>
+                    </header>
+
+                    <div class="admin-grid-2">
+                        <label>
+                            <span>任务ID</span>
+                            <input @bind="quest.Id" />
+                        </label>
+                        <label>
+                            <span>分类</span>
+                            <select @bind="quest.Category">
+                                @foreach (QuestCategory category in Enum.GetValues<QuestCategory>())
+                                {
+                                    <option value="@category.ToString()">@ResolveCategoryName(category)</option>
+                                }
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="admin-grid-2">
+                        <label>
+                            <span>标题</span>
+                            <input @bind="quest.Title" />
+                        </label>
+                        <label>
+                            <span>完成次数</span>
+                            <input type="number" min="1" @bind="quest.RequiredCount" />
+                        </label>
+                    </div>
+
+                    <label>
+                        <span>描述</span>
+                        <input @bind="quest.Description" />
+                    </label>
+
+                    <div class="admin-grid-2">
+                        <label>
+                            <span>触发事件</span>
+                            <select @bind="quest.EventType">
+                                @foreach (QuestEventType eventType in Enum.GetValues<QuestEventType>())
+                                {
+                                    <option value="@eventType.ToString()">@eventType</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>前置任务</span>
+                            <select @bind="quest.PreviousQuestId">
+                                <option value="">无</option>
+                                @foreach (QuestDefinitionConfig candidate in _quests.Where(item => item != quest))
+                                {
+                                    <option value="@candidate.Id">@candidate.Id / @candidate.Title</option>
+                                }
+                            </select>
+                        </label>
+                    </div>
+
+                    <header>
+                        <b>奖励</b>
+                        <button @onclick="() => AddReward(quest)">新增奖励</button>
+                    </header>
+
+                    @for (int rewardIndex = 0; rewardIndex < quest.Rewards.Count; rewardIndex++)
+                    {
+                        int currentRewardIndex = rewardIndex;
+                        QuestRewardConfig reward = quest.Rewards[currentRewardIndex];
+                        <div class="admin-reward">
+                            <div class="admin-grid-4">
+                                <label>
+                                    <span>类型</span>
+                                    <select @bind="reward.Type">
+                                        @foreach (QuestRewardType type in Enum.GetValues<QuestRewardType>())
+                                        {
+                                            <option value="@type.ToString()">@type</option>
+                                        }
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>名称</span>
+                                    <input @bind="reward.Name" />
+                                </label>
+                                <label>
+                                    <span>数量</span>
+                                    <input type="number" min="1" @bind="reward.Quantity" />
+                                </label>
+                                <label>
+                                    <span>道具模板</span>
+                                    <select disabled="@(reward.Type != QuestRewardType.Consumable.ToString())" @bind="reward.TemplateId">
+                                        <option value="">无</option>
+                                        @foreach (ConsumableTemplateConfig item in _consumables)
+                                        {
+                                            <option value="@item.TemplateId">@item.TemplateId / @item.Name</option>
+                                        }
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="admin-inline-actions">
+                                <button @onclick="() => RemoveReward(quest, currentRewardIndex)">删除奖励</button>
+                            </div>
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    </section>
+</main>
+
+@code {
+    private List<QuestDefinitionConfig> _quests = new();
+    private List<ConsumableTemplateConfig> _consumables = new();
+    private QuestCategory _category = QuestCategory.Main;
+    private string _message = string.Empty;
+    private bool _success;
+
+    private List<QuestDefinitionConfig> FilteredQuests
+        => _quests
+            .Where(quest => string.Equals(quest.Category, _category.ToString(), StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    protected override void OnInitialized()
+    {
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _quests = Configs.GetQuestDefinitions().ToList();
+        _consumables = Configs.GetConsumableTemplates().ToList();
+    }
+
+    private void SelectCategory(QuestCategory category)
+        => _category = category;
+
+    private void AddQuest()
+    {
+        _quests.Add(new QuestDefinitionConfig
+        {
+            Id = NextId(_category == QuestCategory.Main ? "main" : "daily"),
+            Category = _category.ToString(),
+            Title = string.Empty,
+            Description = string.Empty,
+            EventType = QuestEventType.CreateCharacter.ToString(),
+            RequiredCount = 1,
+            PreviousQuestId = string.Empty,
+            Rewards = new List<QuestRewardConfig>(),
+        });
+    }
+
+    private void RemoveQuest(int index)
+    {
+        if (index < 0 || index >= _quests.Count)
+        {
+            return;
+        }
+
+        string removedId = _quests[index].Id;
+        _quests.RemoveAt(index);
+        foreach (QuestDefinitionConfig quest in _quests)
+        {
+            if (string.Equals(quest.PreviousQuestId, removedId, StringComparison.OrdinalIgnoreCase))
+            {
+                quest.PreviousQuestId = string.Empty;
+            }
+        }
+    }
+
+    private static void AddReward(QuestDefinitionConfig quest)
+        => quest.Rewards.Add(new QuestRewardConfig
+        {
+            Type = QuestRewardType.Copper.ToString(),
+            Name = string.Empty,
+            Quantity = 1,
+            TemplateId = string.Empty,
+        });
+
+    private static void RemoveReward(QuestDefinitionConfig quest, int index)
+    {
+        if (index < 0 || index >= quest.Rewards.Count)
+        {
+            return;
+        }
+
+        quest.Rewards.RemoveAt(index);
+    }
+
+    private void Save()
+    {
+        foreach (QuestRewardConfig reward in _quests.SelectMany(quest => quest.Rewards))
+        {
+            if (reward.Type == QuestRewardType.Copper.ToString())
+            {
+                reward.TemplateId = string.Empty;
+            }
+        }
+
+        ConfigSaveResult result = Configs.SaveQuestDefinitions(_quests);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            Reload();
+        }
+    }
+
+    private void GoAdmin()
+        => Navigation.NavigateTo("/admin");
+
+    private string NextId(string prefix)
+    {
+        HashSet<string> existing = _quests.Select(quest => quest.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        int index = existing.Count + 1;
+        string id;
+        do
+        {
+            id = $"{prefix}-{index++:000}";
+        }
+        while (existing.Contains(id));
+
+        return id;
+    }
+
+    private static string ResolveCategoryName(QuestCategory category)
+        => category switch
+        {
+            QuestCategory.Daily => "每日",
+            _ => "主线",
+        };
+}

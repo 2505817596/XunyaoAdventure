@@ -1,0 +1,3 @@
+.admin-list {
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+}

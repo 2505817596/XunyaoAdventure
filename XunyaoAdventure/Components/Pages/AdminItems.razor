@@ -1,0 +1,260 @@
+@page "/admin/items"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>物品配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">物品配置</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="AddCurrentTabItem">@($"新增{CurrentTabName}")</button>
+            <button class="wap-button muted" @onclick="GoAdmin">返回后台</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        <div class="admin-tabs">
+            <button class="@(_tab == ItemAdminTab.Consumables ? "active" : "")" @onclick="() => SelectTab(ItemAdminTab.Consumables)">道具</button>
+            <button class="@(_tab == ItemAdminTab.Equipment ? "active" : "")" @onclick="() => SelectTab(ItemAdminTab.Equipment)">装备</button>
+            <button class="@(_tab == ItemAdminTab.Fragments ? "active" : "")" @onclick="() => SelectTab(ItemAdminTab.Fragments)">碎片</button>
+        </div>
+
+        <div class="admin-list">
+            @if (_tab == ItemAdminTab.Consumables)
+            {
+                @for (int index = 0; index < _consumables.Count; index++)
+                {
+                    int currentIndex = index;
+                    ConsumableTemplateConfig item = _consumables[currentIndex];
+                    <article class="admin-card admin-clickable" @onclick='() => GoDetail("consumable", item.TemplateId)'>
+                        <header>
+                            <b>@item.TemplateId</b>
+                            <button @onclick:stopPropagation="true" @onclick="() => RemoveConsumable(currentIndex)">删除</button>
+                        </header>
+                        <div class="admin-index-title">@item.Name</div>
+                        <div class="admin-index-meta">@ResolveEffectText(item)</div>
+                    </article>
+                }
+            }
+            else if (_tab == ItemAdminTab.Equipment)
+            {
+                @for (int index = 0; index < _equipment.Count; index++)
+                {
+                    int currentIndex = index;
+                    EquipmentTemplateConfig item = _equipment[currentIndex];
+                    <article class="admin-card admin-clickable" @onclick='() => GoDetail("equipment", item.TemplateId)'>
+                        <header>
+                            <b>@item.TemplateId</b>
+                            <button @onclick:stopPropagation="true" @onclick="() => RemoveEquipment(currentIndex)">删除</button>
+                        </header>
+                        <div class="admin-index-title">@item.Name</div>
+                        <div class="admin-index-meta">@ResolveSlotName(item.SlotKey) / @item.Quality / 战力 @GameAccountStore.CalculateEquipmentPower(item.Stats, item.Quality, item.UpgradeLevel)</div>
+                    </article>
+                }
+            }
+            else
+            {
+                @for (int index = 0; index < _fragments.Count; index++)
+                {
+                    int currentIndex = index;
+                    FragmentTemplateConfig item = _fragments[currentIndex];
+                    <article class="admin-card admin-clickable" @onclick='() => GoDetail("fragment", item.TemplateId)'>
+                        <header>
+                            <b>@item.TemplateId</b>
+                            <button @onclick:stopPropagation="true" @onclick="() => RemoveFragment(currentIndex)">删除</button>
+                        </header>
+                        <div class="admin-index-title">@item.Name</div>
+                        <div class="admin-index-meta">@item.Quality / @item.Description</div>
+                    </article>
+                }
+            }
+        </div>
+    </section>
+</main>
+
+@code {
+    private List<ConsumableTemplateConfig> _consumables = new();
+    private List<EquipmentTemplateConfig> _equipment = new();
+    private List<FragmentTemplateConfig> _fragments = new();
+    private ItemAdminTab _tab = ItemAdminTab.Consumables;
+    private string _message = string.Empty;
+    private bool _success;
+
+    private string CurrentTabName
+        => _tab switch
+        {
+            ItemAdminTab.Equipment => "装备",
+            ItemAdminTab.Fragments => "碎片",
+            _ => "道具",
+        };
+
+    protected override void OnInitialized()
+    {
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _consumables = Configs.GetConsumableTemplates().ToList();
+        _equipment = Configs.GetEquipmentTemplates().ToList();
+        _fragments = Configs.GetFragmentTemplates().ToList();
+    }
+
+    private void SelectTab(ItemAdminTab tab)
+        => _tab = tab;
+
+    private void AddCurrentTabItem()
+    {
+        if (_tab == ItemAdminTab.Consumables)
+        {
+            ConsumableTemplateConfig item = new()
+            {
+                TemplateId = NextId("item", _consumables.Select(config => config.TemplateId)),
+                Name = "新道具",
+                IconText = "道",
+                EffectType = "None",
+                EffectValue = 0,
+                Description = "道具描述",
+            };
+            _consumables.Add(item);
+            SaveAndNavigate("consumable", item.TemplateId);
+        }
+        else if (_tab == ItemAdminTab.Equipment)
+        {
+            EquipmentTemplateConfig item = new()
+            {
+                TemplateId = NextId("equipment", _equipment.Select(config => config.TemplateId)),
+                Name = "新装备",
+                SlotKey = "weapon",
+                IconText = "装",
+                Quality = "白",
+                Stats = new HeroAttributeConfig { PhysicalAttack = 12 },
+            };
+            _equipment.Add(item);
+            SaveAndNavigate("equipment", item.TemplateId);
+        }
+        else
+        {
+            FragmentTemplateConfig item = new()
+            {
+                TemplateId = NextId("fragment", _fragments.Select(config => config.TemplateId)),
+                Name = "新碎片",
+                IconText = "碎",
+                Quality = "白",
+                Description = "碎片描述",
+            };
+            _fragments.Add(item);
+            SaveAndNavigate("fragment", item.TemplateId);
+        }
+    }
+
+    private void SaveAndNavigate(string kind, string templateId)
+    {
+        ConfigSaveResult result = Configs.SaveItemConfig(_consumables, _equipment, _fragments);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            Navigation.NavigateTo($"/admin/items/{kind}/{Uri.EscapeDataString(templateId)}");
+        }
+        else
+        {
+            Reload();
+        }
+    }
+
+    private void RemoveConsumable(int index)
+    {
+        if (index < 0 || index >= _consumables.Count)
+        {
+            return;
+        }
+
+        _consumables.RemoveAt(index);
+        SaveList();
+    }
+
+    private void RemoveEquipment(int index)
+    {
+        if (index < 0 || index >= _equipment.Count)
+        {
+            return;
+        }
+
+        _equipment.RemoveAt(index);
+        SaveList();
+    }
+
+    private void RemoveFragment(int index)
+    {
+        if (index < 0 || index >= _fragments.Count)
+        {
+            return;
+        }
+
+        _fragments.RemoveAt(index);
+        SaveList();
+    }
+
+    private void SaveList()
+    {
+        ConfigSaveResult result = Configs.SaveItemConfig(_consumables, _equipment, _fragments);
+        _success = result.Success;
+        _message = result.Message;
+        Reload();
+    }
+
+    private void GoDetail(string kind, string templateId)
+        => Navigation.NavigateTo($"/admin/items/{kind}/{Uri.EscapeDataString(templateId)}");
+
+    private void GoAdmin()
+        => Navigation.NavigateTo("/admin");
+
+    private static string NextId(string prefix, IEnumerable<string> existingIds)
+    {
+        HashSet<string> existing = existingIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        int index = existing.Count + 1;
+        string id;
+        do
+        {
+            id = $"{prefix}-{index++}";
+        }
+        while (existing.Contains(id));
+
+        return id;
+    }
+
+    private static string ResolveEffectText(ConsumableTemplateConfig item)
+        => item.EffectType switch
+        {
+            "MonsterExp" => $"妖怪经验 +{item.EffectValue}",
+            "DemonEssence" => "妖元材料",
+            "BreakthroughPill" => "破境材料",
+            "SoulStone" => "升星材料",
+            _ => "无效果",
+        };
+
+    private static string ResolveSlotName(string slotKey)
+        => slotKey switch
+        {
+            "weapon" => "武器",
+            "armor" => "护甲",
+            "necklace" => "饰品",
+            "boots" => "鞋子",
+            "relic" => "法器",
+            "soul" => "命星",
+            _ => "装备",
+        };
+
+    private enum ItemAdminTab
+    {
+        Consumables,
+        Equipment,
+        Fragments,
+    }
+}

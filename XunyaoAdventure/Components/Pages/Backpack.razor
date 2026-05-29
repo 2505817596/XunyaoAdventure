@@ -1,0 +1,249 @@
+@page "/backpack"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+
+<PageTitle>背包</PageTitle>
+
+<main class="wap-page backpack-page">
+    <section class="wap-panel backpack-panel">
+        <div class="wap-title">背包</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else
+        {
+            <div class="backpack-tabs">
+                <button class="@(_tab == BackpackTab.Consumables ? "active" : "")" @onclick="() => SelectTab(BackpackTab.Consumables)">道具</button>
+                <button class="@(_tab == BackpackTab.Equipment ? "active" : "")" @onclick="() => SelectTab(BackpackTab.Equipment)">装备</button>
+                <button class="@(_tab == BackpackTab.Fragments ? "active" : "")" @onclick="() => SelectTab(BackpackTab.Fragments)">碎片</button>
+            </div>
+
+            <div class="backpack-detail">
+                @if (_tab == BackpackTab.Consumables)
+                {
+                    @if (SelectedConsumable is null)
+                    {
+                        <div class="wap-line">道具为空</div>
+                    }
+                    else
+                    {
+                        <div class="backpack-detail-icon">@SelectedConsumable.IconText</div>
+                        <div class="backpack-detail-main">
+                            <div class="backpack-detail-name">@SelectedConsumable.Name</div>
+                            <div class="backpack-detail-line">数量：@SelectedConsumable.Quantity</div>
+                            <div class="backpack-detail-line">@SelectedConsumable.Description</div>
+                        </div>
+                    }
+                }
+                else if (_tab == BackpackTab.Equipment)
+                {
+                    @if (SelectedEquipment is null)
+                    {
+                        <div class="wap-line">装备为空</div>
+                    }
+                    else
+                    {
+                        <div class="backpack-detail-icon @ResolveEquipmentQualityClass(SelectedEquipment.Quality)">@SelectedEquipment.IconText</div>
+                        <div class="backpack-detail-main">
+                            <div class="backpack-detail-name">@SelectedEquipment.Name</div>
+                            <div class="backpack-detail-line">@ResolveSlotName(SelectedEquipment.SlotKey) / @SelectedEquipment.Quality / 强化 +@SelectedEquipment.UpgradeLevel / 战力 +@SelectedEquipment.Power</div>
+                            <div class="backpack-detail-line">@SelectedEquipment.AttributeText</div>
+                            @if (SelectedEquipment.EquippedMonsterId is int monsterId)
+                            {
+                                <div class="backpack-detail-line">已穿戴：@ResolveMonsterName(monsterId)</div>
+                            }
+                            else
+                            {
+                                <div class="backpack-detail-line">未穿戴</div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    @if (SelectedFragment is null)
+                    {
+                        <div class="wap-line">碎片为空</div>
+                    }
+                    else
+                    {
+                        <div class="backpack-detail-icon">@SelectedFragment.IconText</div>
+                        <div class="backpack-detail-main">
+                            <div class="backpack-detail-name">@SelectedFragment.Name</div>
+                            <div class="backpack-detail-line">@SelectedFragment.Quality / 数量：@SelectedFragment.Quantity</div>
+                            <div class="backpack-detail-line">@SelectedFragment.Description</div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="backpack-grid">
+                @if (_tab == BackpackTab.Consumables)
+                {
+                    @foreach (BackpackConsumableItem item in SortedConsumables)
+                    {
+                        <button class="backpack-item @(item.TemplateId == _selectedConsumableId ? "selected" : "")" @onclick="() => SelectConsumable(item.TemplateId)">
+                            <span class="backpack-icon">@item.IconText</span>
+                            <small>x@(item.Quantity)</small>
+                        </button>
+                    }
+                }
+                else if (_tab == BackpackTab.Equipment)
+                {
+                    @foreach (BackpackEquipmentItem item in SortedEquipment)
+                    {
+                        <button class="backpack-item @ResolveEquipmentQualityClass(item.Quality) @(item.EquippedMonsterId is null ? "" : "equipped") @(item.InstanceId == _selectedEquipmentId ? "selected" : "")" @onclick="() => SelectEquipment(item.InstanceId)">
+                            <span class="backpack-icon">@item.IconText</span>
+                            <small class="equipment-level-badge">+@item.UpgradeLevel</small>
+                            @if (item.EquippedMonsterId is not null)
+                            {
+                                <small class="equipment-equipped-badge">穿</small>
+                            }
+                        </button>
+                    }
+                }
+                else
+                {
+                    @foreach (BackpackFragmentItem item in SortedFragments)
+                    {
+                        <button class="backpack-item @(item.TemplateId == _selectedFragmentId ? "selected" : "")" @onclick="() => SelectFragment(item.TemplateId)">
+                            <span class="backpack-icon">@item.IconText</span>
+                            <small>x@(item.Quantity)</small>
+                        </button>
+                    }
+                }
+            </div>
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private BackpackTab _tab = BackpackTab.Consumables;
+    private string? _selectedConsumableId;
+    private int? _selectedEquipmentId;
+    private string? _selectedFragmentId;
+
+    private IEnumerable<BackpackConsumableItem> SortedConsumables
+        => _account?.Consumables
+            .Where(item => item.Quantity > 0)
+            .OrderBy(item => item.TemplateId)
+            ?? Enumerable.Empty<BackpackConsumableItem>();
+
+    private IEnumerable<BackpackEquipmentItem> SortedEquipment
+        => _account?.Backpack
+            .OrderBy(item => item.EquippedMonsterId is null)
+            .ThenBy(item => item.SlotKey)
+            .ThenByDescending(item => item.Power)
+            ?? Enumerable.Empty<BackpackEquipmentItem>();
+
+    private IEnumerable<BackpackFragmentItem> SortedFragments
+        => _account?.Fragments
+            .Where(item => item.Quantity > 0)
+            .OrderBy(item => item.TemplateId)
+            ?? Enumerable.Empty<BackpackFragmentItem>();
+
+    private BackpackConsumableItem? SelectedConsumable
+        => SortedConsumables.FirstOrDefault(item => item.TemplateId == _selectedConsumableId)
+            ?? SortedConsumables.FirstOrDefault();
+
+    private BackpackEquipmentItem? SelectedEquipment
+        => SortedEquipment.FirstOrDefault(item => item.InstanceId == _selectedEquipmentId)
+            ?? SortedEquipment.FirstOrDefault();
+
+    private BackpackFragmentItem? SelectedFragment
+        => SortedFragments.FirstOrDefault(item => item.TemplateId == _selectedFragmentId)
+            ?? SortedFragments.FirstOrDefault();
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        SyncDefaultSelection();
+    }
+
+    private void SelectTab(BackpackTab tab)
+    {
+        _tab = tab;
+        SyncDefaultSelection();
+    }
+
+    private void SyncDefaultSelection()
+    {
+        if (_selectedConsumableId is null || !SortedConsumables.Any(item => item.TemplateId == _selectedConsumableId))
+        {
+            _selectedConsumableId = SortedConsumables.FirstOrDefault()?.TemplateId;
+        }
+
+        if (_selectedEquipmentId is null || !SortedEquipment.Any(item => item.InstanceId == _selectedEquipmentId))
+        {
+            _selectedEquipmentId = SortedEquipment.FirstOrDefault()?.InstanceId;
+        }
+
+        if (_selectedFragmentId is null || !SortedFragments.Any(item => item.TemplateId == _selectedFragmentId))
+        {
+            _selectedFragmentId = SortedFragments.FirstOrDefault()?.TemplateId;
+        }
+    }
+
+    private void SelectConsumable(string templateId)
+        => _selectedConsumableId = templateId;
+
+    private void SelectEquipment(int itemInstanceId)
+        => _selectedEquipmentId = itemInstanceId;
+
+    private void SelectFragment(string templateId)
+        => _selectedFragmentId = templateId;
+
+    private string ResolveMonsterName(int monsterId)
+        => _account?.Monsters.FirstOrDefault(monster => monster.Id == monsterId)?.Name ?? "未知";
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+
+    private static string ResolveSlotName(string slotKey)
+        => slotKey switch
+        {
+            "weapon" => "武器",
+            "armor" => "护甲",
+            "necklace" => "饰品",
+            "boots" => "鞋子",
+            "relic" => "法器",
+            "soul" => "命星",
+            _ => "装备",
+        };
+
+    private static string ResolveEquipmentQualityClass(string quality)
+        => quality switch
+        {
+            "白" => "quality-1",
+            "绿" => "quality-2",
+            "蓝" => "quality-3",
+            "紫" => "quality-4",
+            "红" => "quality-5",
+            _ => "quality-1",
+        };
+
+    private enum BackpackTab
+    {
+        Consumables,
+        Equipment,
+        Fragments,
+    }
+}

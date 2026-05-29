@@ -1,0 +1,127 @@
+@page "/guilds"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject GuildStore GuildService
+
+<PageTitle>公会</PageTitle>
+
+<main class="wap-page guild-page">
+    <section class="wap-panel guild-panel">
+        <div class="wap-title">公会</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else if (_myGuild is not null)
+        {
+            <div class="wap-line">你已加入：@_myGuild.Name</div>
+            <button class="wap-button" @onclick="GoMyGuild">进入公会</button>
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+        else
+        {
+            <div class="guild-create">
+                <input maxlength="12" placeholder="输入公会名称" @bind="_guildName" @bind:event="oninput" />
+                <button disabled="@string.IsNullOrWhiteSpace(_guildName)" @onclick="CreateGuild">创建</button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+            }
+
+            <div class="guild-list">
+                @if (!_guilds.Any())
+                {
+                    <div class="wap-line">还没有公会</div>
+                }
+                else
+                {
+                    @foreach (XunyaoAdventure.Game.Guild guild in _guilds)
+                    {
+                        <article class="guild-card">
+                            <header>
+                                <b>@guild.Name</b>
+                                <span>@guild.Members.Count 人</span>
+                            </header>
+                            <div class="guild-meta">会长：@ResolveLeaderName(guild)</div>
+                            <div class="guild-notice">@(string.IsNullOrWhiteSpace(guild.Notice) ? "暂无公告" : guild.Notice)</div>
+                            <button @onclick="() => JoinGuild(guild.Id)">加入公会</button>
+                        </article>
+                    }
+                }
+            </div>
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private XunyaoAdventure.Game.Guild? _myGuild;
+    private List<XunyaoAdventure.Game.Guild> _guilds = new();
+    private string _guildName = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnInitialized()
+    {
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        _myGuild = GuildService.GetGuildByMember(Session.UserName);
+        _guilds = GuildService.GetGuilds()
+            .OrderByDescending(guild => guild.Members.Count)
+            .ThenBy(guild => guild.CreatedAt)
+            .ToList();
+    }
+
+    private void CreateGuild()
+    {
+        GuildActionResult result = GuildService.CreateGuild(Session.UserName, _guildName);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            _guildName = string.Empty;
+        }
+
+        Reload();
+    }
+
+    private void JoinGuild(int guildId)
+    {
+        GuildActionResult result = GuildService.JoinGuild(Session.UserName, guildId);
+        _success = result.Success;
+        _message = result.Message;
+        Reload();
+    }
+
+    private static string ResolveLeaderName(XunyaoAdventure.Game.Guild guild)
+        => guild.Members.FirstOrDefault(member => member.Role == GuildMemberRole.Leader)?.RoleName
+            ?? guild.LeaderUserName;
+
+    private void GoMyGuild()
+        => Navigation.NavigateTo("/guild");
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+}

@@ -1,0 +1,126 @@
+@page "/campaign/{ChapterId}"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject CampaignStore Campaigns
+@inject QuestStore Quests
+
+<PageTitle>章节</PageTitle>
+
+<main class="wap-page campaign-page">
+    <section class="wap-panel campaign-panel">
+        <div class="wap-title">@(_chapter?.Name ?? "章节")</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else if (_chapter is null)
+        {
+            <div class="wap-line">章节不存在</div>
+            <button class="wap-button muted" @onclick="GoCampaign">返回副本</button>
+        }
+        else if (!_chapter.Unlocked)
+        {
+            <div class="wap-line">该章节尚未开放</div>
+            <button class="wap-button muted" @onclick="GoCampaign">返回副本</button>
+        }
+        else
+        {
+            <div class="wap-line">@_chapter.Description</div>
+            <div class="stage-list">
+                @foreach (CampaignStageView stageView in _stages)
+                {
+                    CampaignStage stage = stageView.Stage;
+                    <article class="stage-item @(stageView.Unlocked ? "" : "locked") @(stageView.Cleared ? "cleared" : "")">
+                        <div>
+                            <header>
+                                <b>@stage.Code @stage.Name</b>
+                                <span>推荐战力 @stage.RecommendedPower</span>
+                            </header>
+                            <p>@stage.Description</p>
+                            <small>难度 @stage.Difficulty / @ResolveStageStatus(stageView)</small>
+                        </div>
+                        <div class="stage-actions">
+                            <button disabled="@(!stageView.Unlocked)" @onclick="() => Challenge(stage.Id)">
+                                @(stageView.Unlocked ? "挑战" : "锁定")
+                            </button>
+                            @if (stageView.Cleared)
+                            {
+                                <button class="sweep" @onclick="() => Sweep(stage.Id)">扫荡</button>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <button class="wap-button muted" @onclick="GoCampaign">返回副本</button>
+        }
+    </section>
+</main>
+
+@code {
+    [Parameter]
+    public string ChapterId { get; set; } = string.Empty;
+
+    private PlayerAccount? _account;
+    private CampaignChapterDefinition? _chapter;
+    private IReadOnlyList<CampaignStageView> _stages = Array.Empty<CampaignStageView>();
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        _chapter = Campaigns.GetChapter(ChapterId);
+        _stages = Campaigns.GetStageViews(Session.UserName, ChapterId);
+    }
+
+    private void Challenge(string stageId)
+    {
+        CampaignStageSelection? selection = Campaigns.CreateSelection(Session.UserName, stageId);
+        if (selection is null)
+        {
+            return;
+        }
+
+        Session.SelectStage(selection);
+        Navigation.NavigateTo("/battle/formation");
+    }
+
+    private void Sweep(string stageId)
+    {
+        CampaignBattleResult? result = Campaigns.SweepStage(Session.UserName, stageId, Accounts);
+        if (result is null)
+        {
+            return;
+        }
+
+        Quests.ReportEvent(Session.UserName, QuestEventType.ClearStage);
+        Session.SetBattleResult(result);
+        Navigation.NavigateTo("/battle/result");
+    }
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoCampaign()
+        => Navigation.NavigateTo("/campaign");
+
+    private static string ResolveStageStatus(CampaignStageView stageView)
+    {
+        if (stageView.Cleared)
+        {
+            return "已通关";
+        }
+
+        return stageView.Unlocked ? "未通关" : "未解锁";
+    }
+}

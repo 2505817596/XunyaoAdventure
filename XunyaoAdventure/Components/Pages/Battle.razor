@@ -1,0 +1,150 @@
+@page "/battle"
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject CampaignStore Campaigns
+@inject QuestStore Quests
+
+<PageTitle>Battle</PageTitle>
+
+@if (_canEnterBattle)
+{
+    <div class="battle-shell">
+        <div class="battle-host" @ref="_battleHost"></div>
+    </div>
+}
+
+@code {
+    private ElementReference _battleHost;
+    private IJSObjectReference? _battleModule;
+    private DotNetObjectReference<Battle>? _dotNetRef;
+    private int? _battleId;
+    private bool _canEnterBattle;
+    private byte[]? _setupBytes;
+    private List<object> _heroHudItems = new();
+
+    protected override void OnInitialized()
+    {
+        PlayerAccount? account = Accounts.GetAccount(Session.UserName);
+        if (account is null)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (account.Profile is null)
+        {
+            Navigation.NavigateTo("/create-character");
+            return;
+        }
+
+        if (Session.BattleMonsterIds.Count == 0)
+        {
+            Navigation.NavigateTo("/battle/formation");
+            return;
+        }
+
+        List<OwnedMonster> selectedMonsters = new();
+        foreach (int monsterId in Session.BattleMonsterIds)
+        {
+            OwnedMonster? monster = account.Monsters.FirstOrDefault(item => item.Id == monsterId);
+            if (monster is not null)
+            {
+                selectedMonsters.Add(monster);
+            }
+        }
+
+        if (selectedMonsters.Count == 0)
+        {
+            Session.SetBattleMonsters(Array.Empty<int>());
+            Navigation.NavigateTo("/battle/formation");
+            return;
+        }
+
+        _setupBytes = XunyaoAdventure.Battle.BattleDemoSetupFactory.CreateSetupBytes(selectedMonsters, Session.SelectedStage);
+        _heroHudItems = selectedMonsters
+            .Select((monster, index) => new
+            {
+                unitId = index + 1,
+                name = monster.Name,
+                portraitUrl = monster.PortraitUrl,
+                unitAssetId = ResolveBattleUnitAssetId(monster.PortraitUrl),
+                stage = Math.Clamp(monster.Stage, 1, GameAccountStore.MaxMonsterStage),
+                star = Math.Clamp(monster.Star, 1, GameAccountStore.MaxMonsterStar),
+            })
+            .Cast<object>()
+            .ToList();
+        _canEnterBattle = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !_canEnterBattle)
+        {
+            return;
+        }
+
+        _battleModule = await JS.InvokeAsync<IJSObjectReference>("import", "/battle-client/assets/battle-view.js?v=jsmodule-12");
+        _battleId = await _battleModule.InvokeAsync<int>(
+            "mountBattle",
+            _battleHost,
+            new
+            {
+                setupBytes = _setupBytes!,
+                heroes = _heroHudItems,
+                assetBaseUrl = "/battle-client/",
+                onExit = _dotNetRef ??= DotNetObjectReference.Create(this),
+                onBattleEnded = _dotNetRef ??= DotNetObjectReference.Create(this),
+            });
+    }
+
+    [JSInvokable]
+    public void ExitBattle()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    [JSInvokable]
+    public void BattleEnded(bool victory)
+    {
+        CampaignBattleResult result = Campaigns.CompleteBattle(Session.UserName, Session.SelectedStage, victory, Accounts);
+        if (result.Victory)
+        {
+            Quests.ReportEvent(Session.UserName, QuestEventType.ClearStage);
+        }
+
+        Session.SetBattleResult(result);
+        Navigation.NavigateTo("/battle/result");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_battleModule is not null && _battleId is not null)
+        {
+            await _battleModule.InvokeVoidAsync("disposeBattle", _battleId.Value);
+        }
+
+        if (_battleModule is not null)
+        {
+            await _battleModule.DisposeAsync();
+        }
+
+        _dotNetRef?.Dispose();
+    }
+
+    private static string ResolveBattleUnitAssetId(string portraitUrl)
+    {
+        string marker = "/unit/";
+        int markerIndex = portraitUrl.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0)
+        {
+            return "001";
+        }
+
+        int start = markerIndex + marker.Length;
+        int end = portraitUrl.IndexOf('/', start);
+        return end > start ? portraitUrl[start..end] : "001";
+    }
+}

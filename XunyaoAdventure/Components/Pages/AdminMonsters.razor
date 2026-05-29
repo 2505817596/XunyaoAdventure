@@ -1,0 +1,129 @@
+@page "/admin/monsters"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>妖怪配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">妖怪配置</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="AddMonster">新增妖怪</button>
+            <button class="wap-button muted" @onclick="GoAdmin">返回后台</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        <div class="admin-list">
+            @for (int index = 0; index < _monsters.Count; index++)
+            {
+                int currentIndex = index;
+                MonsterTemplateConfig monster = _monsters[currentIndex];
+                <article class="admin-card admin-clickable" @onclick="() => GoMonster(monster.TemplateId)">
+                    <header>
+                        <b>@monster.TemplateId</b>
+                        <button @onclick:stopPropagation="true" @onclick="() => RemoveMonster(currentIndex)">删除</button>
+                    </header>
+                    <div class="admin-index-title">@monster.Name</div>
+                </article>
+            }
+        </div>
+    </section>
+</main>
+
+@code {
+    private List<MonsterTemplateConfig> _monsters = new();
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnInitialized()
+    {
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _monsters = Configs.GetMonsterTemplates().ToList();
+    }
+
+    private void AddMonster()
+    {
+        int nextIndex = _monsters.Count + 1;
+        string templateId;
+        do
+        {
+            templateId = $"monster-{nextIndex++}";
+        }
+        while (_monsters.Any(monster => string.Equals(monster.TemplateId, templateId, StringComparison.OrdinalIgnoreCase)));
+
+        MonsterTemplateConfig monster = CreateDefaultMonster(templateId, $"新妖怪{nextIndex - 1}");
+        ConfigSaveResult result = Configs.SaveMonsterTemplate(monster);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            Navigation.NavigateTo($"/admin/monsters/{Uri.EscapeDataString(monster.TemplateId)}");
+            return;
+        }
+
+        Reload();
+    }
+
+    private void RemoveMonster(int index)
+    {
+        if (index < 0 || index >= _monsters.Count)
+        {
+            return;
+        }
+
+        _monsters.RemoveAt(index);
+        ConfigSaveResult result = Configs.SaveMonsterTemplates(_monsters);
+        _success = result.Success;
+        _message = result.Message;
+        Reload();
+    }
+
+    private void GoMonster(string templateId)
+        => Navigation.NavigateTo($"/admin/monsters/{Uri.EscapeDataString(templateId)}");
+
+    private void GoAdmin()
+        => Navigation.NavigateTo("/admin");
+
+    private static MonsterTemplateConfig CreateDefaultMonster(string templateId, string name)
+        => new()
+        {
+            TemplateId = templateId,
+            Name = name,
+            Attribute = "力",
+            Element = "木",
+            Position = "前排",
+            InitialLevel = 1,
+            InitialStar = 1,
+            InitialStage = 1,
+            InitialPower = 120,
+            UnitAssetId = "001",
+            PortraitUrl = "/battle-client/unit/001/stand/0000.png",
+            BaseStrength = 26,
+            BaseIntelligence = 14,
+            BaseAgility = 18,
+            StrengthGrowth = 2.9,
+            IntelligenceGrowth = 1.4,
+            AgilityGrowth = 1.9,
+            BaseMaxHp = 220,
+            BasePhysicalAttack = 12,
+            BaseMagicPower = 4,
+            BasePhysicalArmor = 8,
+            BaseMagicResist = 7,
+            BasePhysicalCrit = 8,
+            BaseHpRegen = 1,
+            BaseEnergyRegen = 0.22,
+            BaseInterruptThreshold = 18,
+            MoveSpeed = 2.15,
+            AttackRange = 1.05,
+            AttackInterval = 1,
+        };
+}

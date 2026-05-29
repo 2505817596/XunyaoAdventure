@@ -1,0 +1,216 @@
+# Battle Skill Capability Snapshot
+
+This file is generated from `BattleSkillProfiles.All`.
+
+profiles=45
+profile 0:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage, ApplyStatus/PrimaryTarget/Enemy/Physical/Stun/Buff|Debuff|Control
+  ultimate: Damage/EnemyUnitsInRadius/Enemy/Physical/None/Damage
+profile 1:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/EnemyUnitsInRadius/Enemy/Physical/None/Damage
+  ultimate_timeline: 22938:Linear/AreaAtDestination/PrimaryTargetx1/1
+profile 2:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage, ApplyStatus/PrimaryTarget/Enemy/Physical/Stun/Buff|Debuff|Control
+  ultimate: Damage/EnemyUnitsInRadius/Enemy/Physical/None/Damage
+profile 3:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/PrimaryTarget/Ally/Physical/PhysicalArmorUp/Buff
+profile 4:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/PrimaryTarget/Ally/Physical/Shield/Buff|Shield, ApplyStatus/PrimaryTarget/Enemy/Physical/DamageTakenAmplify/Buff|Debuff
+profile 5:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/PrimaryTarget/Ally/Physical/Thorns/Buff
+profile 6:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/PrimaryTarget/Ally/Physical/LifeSteal/Buff
+profile 7:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Dispel/PrimaryTarget/Ally/Physical/None/Dispel, Dispel/PrimaryTarget/Enemy/Physical/None/Dispel
+profile 8:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/PrimaryTarget/Ally/Physical/Rage/Buff
+profile 9:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/PrimaryTarget/Ally/Physical/SecondWind/Buff
+profile 10:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/PrimaryTarget/Ally/Physical/DeathBurst/Buff
+profile 11:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage, ApplyStatus/PrimaryTarget/Enemy/Physical/Slow/Buff|Debuff
+  ultimate: Damage/EnemyUnitsInRadius/Enemy/Physical/None/Damage
+profile 12:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate_timeline: 13107:None/PrimaryTarget/PrimaryTargetx1/1, 26214:None/PrimaryTarget/PrimaryTargetx1/2, 39322:None/PrimaryTarget/PrimaryTargetx1/2
+profile 13:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ModifyEnergy/PrimaryTarget/Ally/Physical/None/Energy, ApplyStatus/EnemyUnitsInRadius/Enemy/Physical/Silence/Buff|Debuff|Control
+profile 14:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/Self/Self/Physical/Taunt/Buff|Debuff|Control
+profile 15:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Displace/PrimaryTarget/Enemy/Physical/None/Control|Displace
+profile 16:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Revive/PrimaryTarget/Ally/Physical/Revive/Buff|Revive, Heal/AllyUnitsInRadius/Ally/Physical/None/Heal
+profile 17:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Summon/PrimaryTarget/Ally/Physical/None/Summon, ApplyStatus/PrimaryTarget/Ally/Physical/Shield/Buff|Shield
+profile 18:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  death_effects: Summon/Self/Self/Physical/None/Summon
+profile 19:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage, ApplyStatus/PrimaryTarget/Enemy/Physical/DamageOverTime/Damage|Buff|Debuff|Periodic|NoLifeSteal|NoReflection
+  ultimate: Damage/EnemyUnitsInRadius/Enemy/Physical/None/Damage, Interrupt/EnemyUnitsInRadius/Enemy/Physical/None/Control, ApplyStatus/EnemyUnitsInRadius/Enemy/Physical/DamageOverTime/Damage|Buff|Debuff|Periodic|NoLifeSteal|NoReflection, Execute/EnemyUnitsInRadius/Enemy/Pure/None/Damage|NoLifeSteal|NoReflection
+profile 20:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/Self/Self/Physical/Taunt/Buff|Debuff|Control, ApplyStatus/Self/Self/Physical/PhysicalImmune/Buff|Immunity
+  passive_triggers: HealthBelow:22938/2/True
+profile 21:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Heal/AllyUnitsInRadius/Ally/Physical/None/Heal
+  passive_triggers: BattleStart:0/2/True
+profile 22:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/PrimaryTarget/Ally/Physical/Shield/Buff|Shield
+  passive_triggers: KillEnemy:0/1/False
+profile 23:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/Self/Self/Physical/Taunt/Buff|Debuff|Control
+  passive_triggers: DamageTaken:0/1/False
+profile 24:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/PrimaryTarget/Enemy/Physical/None/Damage, ApplyStatus/PrimaryTarget/Enemy/Physical/Slow/Buff|Debuff
+  passive_triggers: DamageDealt:0/1/False
+profile 25:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/Self/Self/Physical/Taunt/Buff|Debuff|Control
+  passive_triggers: AllyDied:0/1/False
+profile 26:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Heal/AllyUnitsInRadius/Ally/Physical/None/Heal
+  passive_triggers: EnemyDied:0/1/False
+profile 27:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Heal/AllyUnitsInRadius/Ally/Physical/None/Heal
+  passive_triggers: SkillStart:0/1/False
+profile 28:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Heal/AllyUnitsInRadius/Ally/Physical/None/Heal
+  passive_triggers: SkillFinish:0/1/False
+profile 29:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Heal/AllyUnitsInRadius/Ally/Physical/None/Heal
+  passive_triggers: HealReceived:0/1/False
+profile 30:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Heal/AllyUnitsInRadius/Ally/Physical/None/Heal
+  passive_triggers: HealGranted:0/1/False
+profile 31:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  passive_triggers: SkillHit:0/1/False
+profile 32:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Heal/AllyUnitsInRadius/Ally/Physical/None/Heal
+  passive_triggers: AuraTick:131072/1/False
+profile 33:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/AllyUnitsInRadius/Ally/Physical/PhysicalAttackUp/Buff, ApplyStatus/AllyUnitsInRadius/Ally/Physical/AttackSpeedUp/Buff
+  passive_triggers: AuraTick:170394/1/False
+profile 34:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage, ApplyStatus/PrimaryTarget/Enemy/Physical/Slow/Buff|Debuff
+  ultimate: ApplyStatus/EnemyUnitsInRadius/Enemy/Physical/AttackSpeedDown/Buff|Debuff, ApplyStatus/EnemyUnitsInRadius/Enemy/Physical/MagicResistDown/Buff|Debuff
+  passive_triggers: AuraTick:144179/1/False
+profile 35:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/AllyUnitsInRadius/Ally/Physical/PhysicalArmorUp/Buff, ApplyStatus/AllyUnitsInRadius/Ally/Physical/HealOverTime/Heal|Buff|Periodic
+  passive_triggers: AuraTick:150733/1/False
+profile 36:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/EnemyUnitsInLine/Enemy/Physical/None/Damage, ApplyStatus/EnemyUnitsInLine/Enemy/Physical/Stun/Buff|Debuff|Control
+profile 37:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/EnemyUnitsInFan/Enemy/Physical/None/Damage, ApplyStatus/EnemyUnitsInFan/Enemy/Physical/Slow/Buff|Debuff
+profile 38:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/ChainedEnemies/Enemy/Physical/None/Damage, ApplyStatus/ChainedEnemies/Enemy/Physical/Silence/Buff|Debuff|Control
+profile 39:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/BackEnemy/Enemy/Physical/None/Damage, ApplyStatus/BackEnemy/Enemy/Physical/Stun/Buff|Debuff|Control
+profile 40:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/MiddleEnemyRow/Enemy/Physical/None/Damage, ApplyStatus/MiddleEnemyRow/Enemy/Physical/Silence/Buff|Debuff|Control
+profile 41:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: ApplyStatus/FrontAllyRow/Ally/Physical/Shield/Buff|Shield, Heal/FrontAllyRow/Ally/Physical/None/Heal
+profile 42:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/PrimaryTarget/Enemy/Physical/None/Damage, ApplyStatus/PrimaryTarget/Enemy/Physical/Slow/Buff|Debuff
+  ultimate_timeline: 16384:Homing/PrimaryTarget/NearestEnemiesx3/2
+profile 43:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/EnemyUnitsInRadius/Enemy/Physical/None/Damage
+  ultimate_timeline: 18350:Linear/AreaAtDestination/RandomEnemiesx4/1
+profile 44:
+  unit_tags: None
+  basic_attack: Damage/PrimaryTarget/Enemy/Physical/None/Damage
+  ultimate: Damage/PrimaryTarget/Enemy/Magical/None/Damage
+  auto_skills: AutoSkill1/AutoSkill/Enemy/2/0
+
+capabilities:
+  effect_types: ApplyStatus, Damage, Dispel, Displace, Execute, Heal, Interrupt, ModifyEnergy, Revive, Summon
+  targets: AllyUnitsInRadius, BackEnemy, ChainedEnemies, EnemyUnitsInFan, EnemyUnitsInLine, EnemyUnitsInRadius, FrontAllyRow, MiddleEnemyRow, PrimaryTarget, Self
+  trigger_conditions: AllyDied, AuraTick, BattleStart, DamageDealt, DamageTaken, EnemyDied, HealGranted, HealReceived, HealthBelow, KillEnemy, SkillFinish, SkillHit, SkillStart
+  buffs: AttackSpeedDown, AttackSpeedUp, DamageImmune, DamageOverTime, DamageTakenAmplify, DeathBurst, HealOverTime, LifeSteal, MagicResistDown, PhysicalArmorUp, PhysicalAttackUp, PhysicalImmune, Rage, Revive, SecondWind, Shield, Silence, Slow, Stun, Taunt, Thorns
+  damage_types: Magical, Pure
+  tags: Buff, Control, Damage, Debuff, Dispel, Displace, Energy, Heal, Immunity, NoLifeSteal, NoReflection, Periodic, Revive, Shield, Summon
+  formulas: 2

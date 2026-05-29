@@ -1,0 +1,108 @@
+@page "/admin/campaign"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>副本配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">副本配置</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="AddChapter">新增章节</button>
+            <button class="wap-button muted" @onclick="GoAdmin">返回后台</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        <div class="admin-list">
+            @for (int index = 0; index < _chapters.Count; index++)
+            {
+                int currentIndex = index;
+                CampaignChapterConfig chapter = _chapters[currentIndex];
+                int stageCount = _stages.Count(stage => string.Equals(stage.ChapterId, chapter.Id, StringComparison.OrdinalIgnoreCase));
+                <article class="admin-card admin-clickable" @onclick="() => GoChapter(chapter.Id)">
+                    <header>
+                        <b>@chapter.Id</b>
+                        <button @onclick:stopPropagation="true" @onclick="() => RemoveChapter(currentIndex)">删除</button>
+                    </header>
+                    <div class="admin-index-title">@chapter.Name</div>
+                </article>
+            }
+        </div>
+    </section>
+</main>
+
+@code {
+    private List<CampaignChapterConfig> _chapters = new();
+    private List<CampaignStageConfig> _stages = new();
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnInitialized()
+    {
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _chapters = Configs.GetCampaignChapters().ToList();
+        _stages = Configs.GetCampaignStages().ToList();
+    }
+
+    private void AddChapter()
+    {
+        int nextIndex = _chapters.Count + 1;
+        string chapterId;
+        do
+        {
+            chapterId = $"chapter-{nextIndex++}";
+        }
+        while (_chapters.Any(chapter => string.Equals(chapter.Id, chapterId, StringComparison.OrdinalIgnoreCase)));
+
+        _chapters.Add(new CampaignChapterConfig
+        {
+            Id = chapterId,
+            Name = $"新章节{nextIndex - 1}",
+            Description = "新章节描述",
+            Order = nextIndex - 1,
+            Unlocked = _chapters.Count == 0,
+        });
+
+        ConfigSaveResult result = Configs.SaveCampaignConfig(_chapters, _stages);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            Navigation.NavigateTo($"/admin/campaign/{Uri.EscapeDataString(chapterId)}");
+            return;
+        }
+
+        Reload();
+    }
+
+    private void RemoveChapter(int index)
+    {
+        if (index < 0 || index >= _chapters.Count)
+        {
+            return;
+        }
+
+        string chapterId = _chapters[index].Id;
+        _chapters.RemoveAt(index);
+        _stages.RemoveAll(stage => string.Equals(stage.ChapterId, chapterId, StringComparison.OrdinalIgnoreCase));
+        ConfigSaveResult result = Configs.SaveCampaignConfig(_chapters, _stages);
+        _success = result.Success;
+        _message = result.Message;
+        Reload();
+    }
+
+    private void GoChapter(string chapterId)
+        => Navigation.NavigateTo($"/admin/campaign/{Uri.EscapeDataString(chapterId)}");
+
+    private void GoAdmin()
+        => Navigation.NavigateTo("/admin");
+}

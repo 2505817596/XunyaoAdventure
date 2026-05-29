@@ -1,0 +1,74 @@
+@page "/monsters"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject QuestStore Quests
+
+<PageTitle>妖怪</PageTitle>
+
+<main class="wap-page monster-page">
+    <section class="wap-panel monster-panel">
+        <div class="wap-title">我的妖怪</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else
+        {
+            <div class="wap-line">主人：@_account.Profile.Name</div>
+            <div class="monster-list">
+                @foreach (OwnedMonster monster in _account.Monsters)
+                {
+                    <button class="monster-card" @onclick="() => GoMonsterDetail(monster.Id)">
+                        <span class="monster-name">@monster.Name</span>
+                        <span class="monster-portrait @ResolveStageFrameClass(monster.Stage)">
+                            <img src="@monster.PortraitUrl" alt="@monster.Name" />
+                            <span class="monster-level">@monster.Level</span>
+                            <span class="monster-stars">@BuildStars(monster.Star)</span>
+                        </span>
+                    </button>
+                }
+            </div>
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        if (_account?.Profile is not null)
+        {
+            Quests.ReportEvent(Session.UserName, QuestEventType.ViewMonsters);
+        }
+    }
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoMonsterDetail(int monsterId)
+        => Navigation.NavigateTo($"/monsters/{monsterId}");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+
+    private static string BuildStars(int star)
+        => new('★', Math.Clamp(star, 1, 5));
+
+    private static string ResolveStageFrameClass(int stage)
+        => $"stage-{Math.Clamp(stage, 1, GameAccountStore.MaxMonsterStage)}";
+}

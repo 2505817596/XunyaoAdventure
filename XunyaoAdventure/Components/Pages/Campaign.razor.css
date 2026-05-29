@@ -1,0 +1,52 @@
+.campaign-page {
+    background: #252733;
+}
+
+.campaign-panel {
+    width: min(100%, 430px);
+    background: #d9d0bb;
+    border-color: #1b1b22;
+}
+
+.campaign-list {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid #806637;
+}
+
+.campaign-chapter {
+    display: grid;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #806637;
+    background: #f2e7c8;
+    color: #302410;
+    cursor: pointer;
+    text-align: left;
+}
+
+.campaign-chapter b {
+    color: #4a2c14;
+    font-size: 17px;
+}
+
+.campaign-chapter span {
+    color: #5f5137;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.campaign-chapter small {
+    color: #8a3b20;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.campaign-chapter.locked {
+    opacity: 0.62;
+    cursor: default;
+}
+

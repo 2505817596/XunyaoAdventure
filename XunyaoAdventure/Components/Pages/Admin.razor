@@ -1,0 +1,39 @@
+@page "/admin"
+@inject NavigationManager Navigation
+
+<PageTitle>后台</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">后台</div>
+
+        <div class="admin-menu">
+            <button class="wap-button" @onclick="GoGameplay">初始化配置</button>
+            <button class="wap-button" @onclick="GoMonsters">妖怪配置</button>
+            <button class="wap-button" @onclick="GoItems">物品配置</button>
+            <button class="wap-button" @onclick="GoQuests">任务配置</button>
+            <button class="wap-button" @onclick="GoCampaign">副本配置</button>
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        </div>
+    </section>
+</main>
+
+@code {
+    private void GoGameplay()
+        => Navigation.NavigateTo("/admin/gameplay");
+
+    private void GoMonsters()
+        => Navigation.NavigateTo("/admin/monsters");
+
+    private void GoItems()
+        => Navigation.NavigateTo("/admin/items");
+
+    private void GoQuests()
+        => Navigation.NavigateTo("/admin/quests");
+
+    private void GoCampaign()
+        => Navigation.NavigateTo("/admin/campaign");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+}

@@ -1,0 +1,267 @@
+@page "/battle/formation"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject CampaignStore Campaigns
+@inject QuestStore Quests
+@inject GameConfigStore Configs
+
+<PageTitle>选择阵容</PageTitle>
+
+<main class="formation-page">
+    @if (_account is null)
+    {
+        <section class="wap-panel">
+            <div class="wap-title">选择阵容</div>
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        </section>
+    }
+    else if (_account.Profile is null)
+    {
+        <section class="wap-panel">
+            <div class="wap-title">选择阵容</div>
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        </section>
+    }
+    else
+    {
+        <section class="formation-shell">
+            <header class="formation-top">
+                <button class="formation-back" @onclick="GoHome">←</button>
+                <div class="formation-title">@(Session.SelectedStage?.StageCode ?? "阵容") @_selectedIds.Count/5</div>
+                <div class="formation-power">战力 @_selectedPower</div>
+            </header>
+
+            @if (Session.SelectedStage is not null)
+            {
+                <div class="formation-message">
+                    @Session.SelectedStage.StageName / 推荐战力 @Session.SelectedStage.RecommendedPower
+                </div>
+            }
+
+            <div class="formation-selected">
+                @for (int i = 0; i < 5; i++)
+                {
+                    OwnedMonster? monster = i < _selectedMonsters.Count ? _selectedMonsters[i] : null;
+                    <button class="formation-slot @(monster is null ? "" : $"filled {ResolveStageFrameClass(monster.Stage)}")" @onclick="() => RemoveAt(i)">
+                        @if (monster is null)
+                        {
+                            <span>+</span>
+                        }
+                        else
+                        {
+                            <img src="@monster.PortraitUrl" alt="@monster.Name" />
+                            <small>@monster.Level</small>
+                            <b>@BuildStars(monster.Star)</b>
+                        }
+                    </button>
+                }
+            </div>
+
+            <div class="formation-board">
+                <div class="formation-tabs">
+                    <span>全部</span>
+                    <span>前</span>
+                    <span>中</span>
+                    <span>后</span>
+                    <span>力</span>
+                    <span>智</span>
+                    <span>敏</span>
+                </div>
+
+                <div class="formation-roster">
+                    @foreach (OwnedMonster monster in _account.Monsters)
+                    {
+                        bool selected = _selectedIds.Contains(monster.Id);
+                        <button class="formation-hero @ResolveStageFrameClass(monster.Stage) @(selected ? "selected" : "")" @onclick="() => ToggleMonster(monster.Id)">
+                            <img src="@monster.PortraitUrl" alt="@monster.Name" />
+                            <small>@monster.Level</small>
+                            <b>@BuildStars(monster.Star)</b>
+                            @if (selected)
+                            {
+                                <span>✓</span>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="formation-message">@_message</div>
+            }
+
+            <footer class="formation-actions">
+                <button class="formation-preset" @onclick="SelectDefault">预设阵容</button>
+                <button class="formation-fight" @onclick="StartBattle">战斗</button>
+            </footer>
+        </section>
+    }
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private readonly List<int> _selectedIds = new();
+    private readonly List<OwnedMonster> _selectedMonsters = new();
+    private InitialAccountConfig _initialAccount = new();
+    private int _selectedPower;
+    private string _message = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        if (_account is null)
+        {
+            return;
+        }
+
+        _initialAccount = Configs.GetInitialAccountConfig();
+        if (!string.IsNullOrWhiteSpace(_initialAccount.DefaultStageId))
+        {
+            CampaignStageSelection? defaultStage = Campaigns.CreateSelection(Session.UserName, _initialAccount.DefaultStageId);
+            if (defaultStage is not null)
+            {
+                Session.EnsureSelectedStage(defaultStage);
+            }
+        }
+
+        if (Session.BattleMonsterIds.Count > 0)
+        {
+            foreach (int monsterId in Session.BattleMonsterIds)
+            {
+                if (_account.Monsters.Any(monster => monster.Id == monsterId))
+                {
+                    _selectedIds.Add(monsterId);
+                }
+            }
+        }
+
+        if (_selectedIds.Count == 0)
+        {
+            SelectDefault();
+            return;
+        }
+
+        RefreshSelectedMonsters();
+    }
+
+    private void ToggleMonster(int monsterId)
+    {
+        _message = string.Empty;
+        if (_selectedIds.Contains(monsterId))
+        {
+            _selectedIds.Remove(monsterId);
+            RefreshSelectedMonsters();
+            return;
+        }
+
+        if (_selectedIds.Count >= _initialAccount.FormationSize)
+        {
+            _message = $"最多选择{_initialAccount.FormationSize}个妖怪";
+            return;
+        }
+
+        _selectedIds.Add(monsterId);
+        RefreshSelectedMonsters();
+    }
+
+    private void RemoveAt(int index)
+    {
+        if (index < 0 || index >= _selectedIds.Count)
+        {
+            return;
+        }
+
+        _selectedIds.RemoveAt(index);
+        RefreshSelectedMonsters();
+    }
+
+    private void SelectDefault()
+    {
+        if (_account is null)
+        {
+            return;
+        }
+
+        _message = string.Empty;
+        _selectedIds.Clear();
+        _selectedIds.AddRange(_account.Monsters.Take(_initialAccount.FormationSize).Select(monster => monster.Id));
+        RefreshSelectedMonsters();
+    }
+
+    private void StartBattle()
+    {
+        if (_selectedIds.Count == 0)
+        {
+            _message = "请至少选择1个妖怪";
+            return;
+        }
+
+        Session.SetBattleMonsters(_selectedIds, _initialAccount.FormationSize);
+        Quests.ReportEvent(Session.UserName, QuestEventType.EnterBattle);
+        Navigation.NavigateTo("/battle");
+    }
+
+    private void RefreshSelectedMonsters()
+    {
+        _selectedMonsters.Clear();
+        if (_account is null)
+        {
+            _selectedPower = 0;
+            return;
+        }
+
+        List<OwnedMonster> sortedMonsters = _selectedIds
+            .Select((monsterId, index) => new
+            {
+                Monster = _account.Monsters.FirstOrDefault(item => item.Id == monsterId),
+                Index = index,
+            })
+            .Where(item => item.Monster is not null)
+            .OrderBy(item => ResolvePositionOrder(item.Monster!.Position))
+            .ThenBy(item => item.Index)
+            .Select(item => item.Monster!)
+            .ToList();
+
+        _selectedMonsters.AddRange(sortedMonsters);
+        _selectedIds.Clear();
+        _selectedIds.AddRange(sortedMonsters.Select(monster => monster.Id));
+
+        _selectedPower = _selectedMonsters.Sum(monster => monster.Power);
+    }
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+    {
+        Session.ClearSelectedStage();
+        Navigation.NavigateTo("/");
+    }
+
+    private static string BuildStars(int star)
+        => new('★', Math.Clamp(star, 1, GameAccountStore.MaxMonsterStar));
+
+    private static string ResolveStageFrameClass(int stage)
+        => $"stage-{Math.Clamp(stage, 1, GameAccountStore.MaxMonsterStage)}";
+
+    private static int ResolvePositionOrder(string position)
+    {
+        if (position == "中排" || position.Contains('中') || position.Contains('涓'))
+        {
+            return 1;
+        }
+
+        if (position == "后排" || position.Contains('后') || position.Contains('鍚'))
+        {
+            return 2;
+        }
+
+        return 0;
+    }
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "initialRole": {
+    "monsterTemplateIds": [
+      "monster-1",
+      "monster-2"
+    ]
+  },
+  "initialAccount": {
+    "level": 20,
+    "copper": 120000,
+    "defaultStageId": "stage-1-1",
+    "formationSize": 5
+  }
+}

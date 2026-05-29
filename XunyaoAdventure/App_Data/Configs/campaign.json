@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "chapters": [
+    {
+      "id": "chapter-1",
+      "name": "新章节1",
+      "description": "新章节描述",
+      "order": 1,
+      "unlocked": true
+    }
+  ],
+  "stages": [
+    {
+      "id": "chapter-1-stage-1",
+      "chapterId": "chapter-1",
+      "code": "1",
+      "name": "新关卡1",
+      "description": "新关卡描述",
+      "order": 1,
+      "recommendedPower": 180,
+      "difficulty": 1,
+      "baseUnlocked": true,
+      "rewards": [
+        {
+          "type": "Consumable",
+          "name": "经验药水",
+          "quantity": 3,
+          "templateId": "small-exp-potion"
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "type": "Consumable",
+          "name": "灵魂石",
+          "quantity": 5,
+          "templateId": "soul-stone"
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "templateId": "monster-1",
+              "name": "新敌人1",
+              "level": 1,
+              "star": 1,
+              "stage": 1,
+              "x": 5.72,
+              "y": -0.28
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+@page "/rankings"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+
+<PageTitle>排行榜</PageTitle>
+
+<main class="wap-page ranking-page">
+    <section class="wap-panel ranking-panel">
+        <div class="wap-title">排行榜</div>
+
+        @if (!Session.IsLoggedIn)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else
+        {
+            <div class="ranking-tabs">
+                <button class="@TabClass(RankingBoardType.TotalPower)" @onclick="() => SelectBoard(RankingBoardType.TotalPower)">总战力</button>
+                <button class="@TabClass(RankingBoardType.StrongestMonster)" @onclick="() => SelectBoard(RankingBoardType.StrongestMonster)">最强妖怪</button>
+                <button class="@TabClass(RankingBoardType.Level)" @onclick="() => SelectBoard(RankingBoardType.Level)">等级</button>
+                <button class="@TabClass(RankingBoardType.Copper)" @onclick="() => SelectBoard(RankingBoardType.Copper)">铜钱</button>
+            </div>
+
+            @if (!_entries.Any())
+            {
+                <div class="wap-line">暂无排行数据</div>
+            }
+            else
+            {
+                <div class="ranking-list">
+                    @foreach (RankingEntry entry in _entries)
+                    {
+                        <article class="ranking-item @(IsSelf(entry) ? "self" : "")">
+                            <div class="ranking-rank">@entry.Rank</div>
+                            <div class="ranking-main">
+                                <header>
+                                    <b>@entry.RoleName</b>
+                                    @if (IsSelf(entry))
+                                    {
+                                        <span>自己</span>
+                                    }
+                                </header>
+                                <small>@ResolveSubText(entry)</small>
+                            </div>
+                            <div class="ranking-score">@ResolveScore(entry)</div>
+                        </article>
+                    }
+                </div>
+            }
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private RankingBoardType _boardType = RankingBoardType.TotalPower;
+    private List<RankingEntry> _entries = new();
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void SelectBoard(RankingBoardType boardType)
+    {
+        _boardType = boardType;
+        Refresh();
+    }
+
+    private void Refresh()
+        => _entries = Accounts.GetRankings(_boardType, 50).ToList();
+
+    private string TabClass(RankingBoardType boardType)
+        => _boardType == boardType ? "active" : string.Empty;
+
+    private bool IsSelf(RankingEntry entry)
+        => string.Equals(entry.UserName, Session.UserName, StringComparison.OrdinalIgnoreCase);
+
+    private string ResolveScore(RankingEntry entry)
+        => _boardType switch
+        {
+            RankingBoardType.StrongestMonster => entry.StrongestMonsterPower.ToString(),
+            RankingBoardType.Level => entry.Level.ToString(),
+            RankingBoardType.Copper => entry.Copper.ToString(),
+            _ => entry.TotalPower.ToString(),
+        };
+
+    private string ResolveSubText(RankingEntry entry)
+        => _boardType switch
+        {
+            RankingBoardType.StrongestMonster => string.IsNullOrWhiteSpace(entry.StrongestMonsterName)
+                ? "还没有妖怪"
+                : $"{entry.StrongestMonsterName} / 总战力 {entry.TotalPower}",
+            RankingBoardType.Level => $"总战力 {entry.TotalPower} / 铜钱 {entry.Copper}",
+            RankingBoardType.Copper => $"等级 {entry.Level} / 总战力 {entry.TotalPower}",
+            _ => $"等级 {entry.Level} / 最强 {entry.StrongestMonsterPower}",
+        };
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+}

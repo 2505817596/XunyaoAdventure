@@ -1,0 +1,258 @@
+@page "/admin/items/{Kind}/{TemplateId}"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>物品详情配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">@Title</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="Save">保存</button>
+            <button class="wap-button muted" @onclick="GoList">返回列表</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        @if (!IsValidKind)
+        {
+            <div class="wap-line">物品类型不存在</div>
+        }
+        else if (Kind == "consumable")
+        {
+            @if (_consumable is null)
+            {
+                <div class="wap-line">道具模板不存在</div>
+            }
+            else
+            {
+                <div class="admin-detail">
+                    <article class="admin-card">
+                        <div class="admin-section-title">基础信息</div>
+                        <div class="admin-grid-2">
+                            <label><span>模板ID</span><input @bind="_consumable.TemplateId" /></label>
+                            <label><span>名字</span><input @bind="_consumable.Name" /></label>
+                        </div>
+                        <div class="admin-grid-3">
+                            <label><span>图标字</span><input maxlength="2" @bind="_consumable.IconText" /></label>
+                            <label>
+                                <span>效果类型</span>
+                                <select @bind="_consumable.EffectType">
+                                    <option value="None">无</option>
+                                    <option value="MonsterExp">妖怪经验</option>
+                                    <option value="DemonEssence">妖元材料</option>
+                                    <option value="BreakthroughPill">破境材料</option>
+                                    <option value="SoulStone">升星材料</option>
+                                </select>
+                            </label>
+                            @if (_consumable.EffectType == "MonsterExp")
+                            {
+                                <label><span>经验值</span><input type="number" min="0" @bind="_consumable.EffectValue" /></label>
+                            }
+                            else if (_consumable.EffectType != "None")
+                            {
+                                <label><span>效果数值</span><input type="number" min="0" @bind="_consumable.EffectValue" /></label>
+                            }
+                            else
+                            {
+                                <div class="admin-meta">无数值</div>
+                            }
+                        </div>
+                        <label><span>描述</span><input @bind="_consumable.Description" /></label>
+                    </article>
+                </div>
+            }
+        }
+        else if (Kind == "equipment")
+        {
+            @if (_equipmentItem is null)
+            {
+                <div class="wap-line">装备模板不存在</div>
+            }
+            else
+            {
+                <div class="admin-detail">
+                    <article class="admin-card">
+                        <div class="admin-section-title">基础信息</div>
+                        <div class="admin-grid-2">
+                            <label><span>模板ID</span><input @bind="_equipmentItem.TemplateId" /></label>
+                            <label><span>名字</span><input @bind="_equipmentItem.Name" /></label>
+                        </div>
+                        <div class="admin-grid-3">
+                            <label>
+                                <span>装备槽</span>
+                                <select @bind="_equipmentItem.SlotKey">
+                                    <option value="weapon">武器</option>
+                                    <option value="armor">护甲</option>
+                                    <option value="necklace">饰品</option>
+                                    <option value="boots">鞋子</option>
+                                    <option value="relic">法器</option>
+                                    <option value="soul">命星</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>品质</span>
+                                <select @bind="_equipmentItem.Quality">
+                                    <option value="白">白</option>
+                                    <option value="绿">绿</option>
+                                    <option value="蓝">蓝</option>
+                                    <option value="紫">紫</option>
+                                    <option value="红">红</option>
+                                </select>
+                            </label>
+                            <label><span>图标字</span><input maxlength="2" @bind="_equipmentItem.IconText" /></label>
+                        </div>
+                        <div class="admin-index-meta">当前战力：@GameAccountStore.CalculateEquipmentPower(_equipmentItem.Stats, _equipmentItem.Quality, _equipmentItem.UpgradeLevel)</div>
+                    </article>
+
+                    <article class="admin-card">
+                        <div class="admin-section-title">装备基础属性</div>
+                        <div class="admin-grid-3">
+                            <label><span>力量</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.Strength" /></label>
+                            <label><span>智力</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.Intelligence" /></label>
+                            <label><span>敏捷</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.Agility" /></label>
+                            <label><span>最大生命</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.MaxHp" /></label>
+                            <label><span>物理攻击</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.PhysicalAttack" /></label>
+                            <label><span>魔法强度</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.MagicPower" /></label>
+                            <label><span>物理护甲</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.PhysicalArmor" /></label>
+                            <label><span>魔法抗性</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.MagicResist" /></label>
+                            <label><span>物理暴击</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.PhysicalCrit" /></label>
+                            <label><span>生命回复</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.HpRegen" /></label>
+                            <label><span>能量回复</span><input type="number" min="0" step="0.01" @bind="_equipmentItem.Stats.EnergyRegen" /></label>
+                            <label><span>打断阈值</span><input type="number" min="0" step="0.1" @bind="_equipmentItem.Stats.InterruptThreshold" /></label>
+                        </div>
+                    </article>
+                </div>
+            }
+        }
+        else
+        {
+            @if (_fragment is null)
+            {
+                <div class="wap-line">碎片模板不存在</div>
+            }
+            else
+            {
+                <div class="admin-detail">
+                    <article class="admin-card">
+                        <div class="admin-section-title">基础信息</div>
+                        <div class="admin-grid-2">
+                            <label><span>模板ID</span><input @bind="_fragment.TemplateId" /></label>
+                            <label><span>名字</span><input @bind="_fragment.Name" /></label>
+                        </div>
+                        <div class="admin-grid-3">
+                            <label><span>图标字</span><input maxlength="2" @bind="_fragment.IconText" /></label>
+                            <label>
+                                <span>品质</span>
+                                <select @bind="_fragment.Quality">
+                                    <option value="白">白</option>
+                                    <option value="绿">绿</option>
+                                    <option value="蓝">蓝</option>
+                                    <option value="紫">紫</option>
+                                    <option value="红">红</option>
+                                </select>
+                            </label>
+                        </div>
+                        <label><span>描述</span><input @bind="_fragment.Description" /></label>
+                    </article>
+                </div>
+            }
+        }
+    </section>
+</main>
+
+@code {
+    [Parameter]
+    public string Kind { get; set; } = string.Empty;
+
+    [Parameter]
+    public string TemplateId { get; set; } = string.Empty;
+
+    private List<ConsumableTemplateConfig> _consumables = new();
+    private List<EquipmentTemplateConfig> _equipment = new();
+    private List<FragmentTemplateConfig> _fragments = new();
+    private ConsumableTemplateConfig? _consumable;
+    private EquipmentTemplateConfig? _equipmentItem;
+    private FragmentTemplateConfig? _fragment;
+    private string _originalTemplateId = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+
+    private bool IsValidKind
+        => Kind is "consumable" or "equipment" or "fragment";
+
+    private string Title
+        => Kind switch
+        {
+            "equipment" => _equipmentItem?.Name ?? "装备详情配置",
+            "fragment" => _fragment?.Name ?? "碎片详情配置",
+            "consumable" => _consumable?.Name ?? "道具详情配置",
+            _ => "物品详情配置",
+        };
+
+    protected override void OnInitialized()
+    {
+        _originalTemplateId = TemplateId;
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _consumables = Configs.GetConsumableTemplates().ToList();
+        _equipment = Configs.GetEquipmentTemplates().ToList();
+        _fragments = Configs.GetFragmentTemplates().ToList();
+        _consumable = _consumables.FirstOrDefault(item => string.Equals(item.TemplateId, _originalTemplateId, StringComparison.OrdinalIgnoreCase));
+        _equipmentItem = _equipment.FirstOrDefault(item => string.Equals(item.TemplateId, _originalTemplateId, StringComparison.OrdinalIgnoreCase));
+        _fragment = _fragments.FirstOrDefault(item => string.Equals(item.TemplateId, _originalTemplateId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void Save()
+    {
+        if (!IsValidKind)
+        {
+            return;
+        }
+
+        if (Kind == "consumable" && _consumable is not null)
+        {
+            ReplaceById(_consumables, _originalTemplateId, _consumable, item => item.TemplateId);
+        }
+        else if (Kind == "equipment" && _equipmentItem is not null)
+        {
+            ReplaceById(_equipment, _originalTemplateId, _equipmentItem, item => item.TemplateId);
+        }
+        else if (Kind == "fragment" && _fragment is not null)
+        {
+            ReplaceById(_fragments, _originalTemplateId, _fragment, item => item.TemplateId);
+        }
+
+        ConfigSaveResult result = Configs.SaveItemConfig(_consumables, _equipment, _fragments);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            _originalTemplateId = Kind switch
+            {
+                "equipment" => _equipmentItem?.TemplateId ?? _originalTemplateId,
+                "fragment" => _fragment?.TemplateId ?? _originalTemplateId,
+                _ => _consumable?.TemplateId ?? _originalTemplateId,
+            };
+        }
+    }
+
+    private static void ReplaceById<T>(List<T> items, string originalId, T item, Func<T, string> idSelector)
+    {
+        int index = items.FindIndex(candidate => string.Equals(idSelector(candidate), originalId, StringComparison.OrdinalIgnoreCase));
+        if (index >= 0)
+        {
+            items[index] = item;
+        }
+    }
+
+    private void GoList()
+        => Navigation.NavigateTo("/admin/items");
+}

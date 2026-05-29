@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "quests": [
+    {
+      "id": "main-001",
+      "category": "Main",
+      "title": "哈机密",
+      "description": "哈机密",
+      "eventType": "SendChat",
+      "requiredCount": 2,
+      "previousQuestId": "",
+      "rewards": [
+        {
+          "type": "Consumable",
+          "name": "哈机密",
+          "quantity": 5,
+          "templateId": "demon-essence"
+        }
+      ]
+    }
+  ]
+}

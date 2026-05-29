@@ -1,0 +1,182 @@
+@page "/admin/monsters/{TemplateId}"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>妖怪详情配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">@(_monster?.Name ?? "妖怪详情配置")</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="Save">保存</button>
+            <button class="wap-button muted" @onclick="GoList">返回列表</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        @if (_monster is null)
+        {
+            <div class="wap-line">妖怪模板不存在</div>
+        }
+        else
+        {
+            <div class="admin-detail">
+                <article class="admin-card">
+                    <div class="admin-section-title">基础信息</div>
+                    <div class="admin-grid-2">
+                        <label>
+                            <span>模板ID</span>
+                            <input @bind="_monster.TemplateId" />
+                        </label>
+                        <label>
+                            <span>名字</span>
+                            <input @bind="_monster.Name" />
+                        </label>
+                    </div>
+                    <div class="admin-grid-3">
+                        <label>
+                            <span>主属性</span>
+                            <select @bind="_monster.Attribute">
+                                <option>力</option>
+                                <option>智</option>
+                                <option>敏</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>元素</span>
+                            <select @bind="_monster.Element">
+                                <option>金</option>
+                                <option>木</option>
+                                <option>水</option>
+                                <option>火</option>
+                                <option>土</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>站位</span>
+                            <select @bind="_monster.Position">
+                                <option>前排</option>
+                                <option>中排</option>
+                                <option>后排</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="admin-grid-3">
+                        <label>
+                            <span>等级</span>
+                            <input type="number" min="1" max="@GameAccountStore.MaxMonsterLevel" @bind="_monster.InitialLevel" />
+                        </label>
+                        <label>
+                            <span>星级</span>
+                            <input type="number" min="1" max="@GameAccountStore.MaxMonsterStar" @bind="_monster.InitialStar" />
+                        </label>
+                        <label>
+                            <span>阶级</span>
+                            <input type="number" min="1" max="@GameAccountStore.MaxMonsterStage" @bind="_monster.InitialStage" />
+                        </label>
+                    </div>
+                    <div class="admin-grid-2">
+                        <label>
+                            <span>战力</span>
+                            <input type="number" min="1" @bind="_monster.InitialPower" />
+                        </label>
+                        <label>
+                            <span>资源ID</span>
+                            <input @bind="_monster.UnitAssetId" @onblur="SyncPortrait" />
+                        </label>
+                    </div>
+                    <label>
+                        <span>头像路径</span>
+                        <input @bind="_monster.PortraitUrl" />
+                    </label>
+                </article>
+
+                <article class="admin-card">
+                    <div class="admin-section-title">基础三维</div>
+                    <div class="admin-grid-3">
+                        <label><span>基础力量</span><input type="number" min="0" step="0.1" @bind="_monster.BaseStrength" /></label>
+                        <label><span>基础智力</span><input type="number" min="0" step="0.1" @bind="_monster.BaseIntelligence" /></label>
+                        <label><span>基础敏捷</span><input type="number" min="0" step="0.1" @bind="_monster.BaseAgility" /></label>
+                        <label><span>力量成长</span><input type="number" min="0" step="0.01" @bind="_monster.StrengthGrowth" /></label>
+                        <label><span>智力成长</span><input type="number" min="0" step="0.01" @bind="_monster.IntelligenceGrowth" /></label>
+                        <label><span>敏捷成长</span><input type="number" min="0" step="0.01" @bind="_monster.AgilityGrowth" /></label>
+                    </div>
+                </article>
+
+                <article class="admin-card">
+                    <div class="admin-section-title">基础战斗属性</div>
+                    <div class="admin-grid-3">
+                        <label><span>最大生命</span><input type="number" min="1" step="1" @bind="_monster.BaseMaxHp" /></label>
+                        <label><span>物理攻击</span><input type="number" min="1" step="0.1" @bind="_monster.BasePhysicalAttack" /></label>
+                        <label><span>魔法强度</span><input type="number" min="0" step="0.1" @bind="_monster.BaseMagicPower" /></label>
+                        <label><span>物理护甲</span><input type="number" min="0" step="0.1" @bind="_monster.BasePhysicalArmor" /></label>
+                        <label><span>魔法抗性</span><input type="number" min="0" step="0.1" @bind="_monster.BaseMagicResist" /></label>
+                        <label><span>物理暴击</span><input type="number" min="0" step="0.1" @bind="_monster.BasePhysicalCrit" /></label>
+                        <label><span>生命回复</span><input type="number" min="0" step="0.1" @bind="_monster.BaseHpRegen" /></label>
+                        <label><span>能量回复</span><input type="number" min="0" step="0.01" @bind="_monster.BaseEnergyRegen" /></label>
+                        <label><span>打断阈值</span><input type="number" min="0" step="0.1" @bind="_monster.BaseInterruptThreshold" /></label>
+                    </div>
+                </article>
+
+                <article class="admin-card">
+                    <div class="admin-section-title">战斗行为</div>
+                    <div class="admin-grid-3">
+                        <label><span>移动速度</span><input type="number" min="0.1" step="0.01" @bind="_monster.MoveSpeed" /></label>
+                        <label><span>攻击距离</span><input type="number" min="0.1" step="0.01" @bind="_monster.AttackRange" /></label>
+                        <label><span>攻击间隔</span><input type="number" min="0.1" step="0.01" @bind="_monster.AttackInterval" /></label>
+                    </div>
+                </article>
+            </div>
+        }
+    </section>
+</main>
+
+@code {
+    [Parameter]
+    public string TemplateId { get; set; } = string.Empty;
+
+    private MonsterTemplateConfig? _monster;
+    private string _originalTemplateId = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnInitialized()
+    {
+        _originalTemplateId = TemplateId;
+        _monster = Configs.GetMonsterTemplate(TemplateId);
+    }
+
+    private void Save()
+    {
+        if (_monster is null)
+        {
+            return;
+        }
+
+        ConfigSaveResult result = Configs.SaveMonsterTemplate(_monster, _originalTemplateId);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            _originalTemplateId = _monster.TemplateId;
+        }
+    }
+
+    private void SyncPortrait()
+    {
+        if (_monster is null || string.IsNullOrWhiteSpace(_monster.UnitAssetId))
+        {
+            return;
+        }
+
+        _monster.UnitAssetId = _monster.UnitAssetId.Trim();
+        _monster.PortraitUrl = $"/battle-client/unit/{_monster.UnitAssetId}/stand/0000.png";
+    }
+
+    private void GoList()
+        => Navigation.NavigateTo("/admin/monsters");
+}

@@ -1,0 +1,100 @@
+@page "/battle/result"
+@inject NavigationManager Navigation
+@inject GameSession Session
+
+<PageTitle>战斗结算</PageTitle>
+
+<main class="wap-page battle-result-page">
+    <section class="wap-panel battle-result-panel">
+        <div class="wap-title">战斗结算</div>
+
+        @if (_result is null)
+        {
+            <div class="wap-line">没有可显示的战斗结果</div>
+            <button class="wap-button" @onclick="GoHome">返回主页</button>
+        }
+        else
+        {
+            <div class="battle-result-banner @(_result.Victory ? "victory" : "defeat")">
+                <b>@ResolveResultTitle()</b>
+                <span>@_result.StageCode @_result.StageName</span>
+            </div>
+
+            @if (_result.Victory)
+            {
+                <div class="wap-line">@ResolveClearText()</div>
+                @if (!string.IsNullOrWhiteSpace(_result.NextStageCode))
+                {
+                    <div class="wap-line">下一关：@_result.NextStageCode</div>
+                }
+
+                <div class="battle-result-rewards">
+                    <div class="battle-result-section-title">获得奖励</div>
+                    @foreach (QuestReward reward in _result.Rewards)
+                    {
+                        <div class="battle-result-reward">
+                            <span>@reward.Name</span>
+                            <b>x@(reward.Quantity)</b>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="wap-line">未通关，没有获得奖励。</div>
+            }
+
+            <div class="battle-result-actions">
+                <button class="wap-button" @onclick="GoCampaign">继续副本</button>
+                <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            </div>
+        }
+    </section>
+</main>
+
+@code {
+    private CampaignBattleResult? _result;
+
+    protected override void OnInitialized()
+    {
+        _result = Session.LastBattleResult;
+    }
+
+    private string ResolveResultTitle()
+    {
+        if (_result is null)
+        {
+            return string.Empty;
+        }
+
+        return _result.Swept ? "扫荡完成" : _result.Victory ? "胜利" : "失败";
+    }
+
+    private string ResolveClearText()
+    {
+        if (_result is null)
+        {
+            return string.Empty;
+        }
+
+        if (_result.Swept)
+        {
+            return "扫荡奖励已发放";
+        }
+
+        return _result.FirstClear ? "首次通关" : "再次通关";
+    }
+
+    private void GoCampaign()
+    {
+        Session.ClearBattleResult();
+        Navigation.NavigateTo("/campaign");
+    }
+
+    private void GoHome()
+    {
+        Session.ClearBattleResult();
+        Session.ClearSelectedStage();
+        Navigation.NavigateTo("/");
+    }
+}

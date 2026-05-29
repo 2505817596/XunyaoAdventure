@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+.verify-build/
+
+# IDE and editor state
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Runtime data and local logs
+App_Data/GameData/
+**/App_Data/GameData/
+*.db
+*.db-*
+*.log
+.server.*.log
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store

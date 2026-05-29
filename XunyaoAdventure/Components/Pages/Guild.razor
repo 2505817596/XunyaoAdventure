@@ -1,0 +1,152 @@
+@page "/guild"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject GuildStore GuildService
+
+<PageTitle>我的公会</PageTitle>
+
+<main class="wap-page guild-page">
+    <section class="wap-panel guild-panel">
+        <div class="wap-title">我的公会</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else if (_guild is null)
+        {
+            <div class="wap-line">你还没有加入公会</div>
+            <div class="guild-create">
+                <input maxlength="12" placeholder="输入公会名称" @bind="_guildName" @bind:event="oninput" />
+                <button disabled="@string.IsNullOrWhiteSpace(_guildName)" @onclick="CreateGuild">创建公会</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+            }
+            <button class="wap-button" @onclick="GoGuilds">查找公会</button>
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+        else
+        {
+            <div class="guild-header">
+                <b>@_guild.Name</b>
+                <span>@_guild.Members.Count 人</span>
+            </div>
+
+            @if (IsLeader)
+            {
+                <div class="guild-notice-editor">
+                    <textarea maxlength="80" placeholder="输入公会公告" @bind="_notice" @bind:event="oninput"></textarea>
+                    <button @onclick="SaveNotice">保存公告</button>
+                </div>
+            }
+            else
+            {
+                <div class="guild-notice-block">
+                    @(string.IsNullOrWhiteSpace(_guild.Notice) ? "暂无公告" : _guild.Notice)
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+            }
+
+            <div class="guild-member-list">
+                @foreach (GuildMember member in _guild.Members.OrderBy(member => member.Role).ThenBy(member => member.JoinedAt))
+                {
+                    <article class="guild-member">
+                        <div>
+                            <b>@member.RoleName</b>
+                            <small>@member.UserName</small>
+                        </div>
+                        <span>@ResolveRoleName(member.Role)</span>
+                    </article>
+                }
+            </div>
+
+            <div class="wap-menu">
+                <button class="wap-button muted" @onclick="LeaveGuild">退出公会</button>
+                <button class="wap-button muted" @onclick="GoGuilds">公会列表</button>
+                <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            </div>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private XunyaoAdventure.Game.Guild? _guild;
+    private string _guildName = string.Empty;
+    private string _notice = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+
+    private bool IsLeader
+        => _guild is not null
+            && string.Equals(_guild.LeaderUserName, Session.UserName, StringComparison.OrdinalIgnoreCase);
+
+    protected override void OnInitialized()
+    {
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        _guild = GuildService.GetGuildByMember(Session.UserName);
+        _notice = _guild?.Notice ?? string.Empty;
+    }
+
+    private void CreateGuild()
+    {
+        GuildActionResult result = GuildService.CreateGuild(Session.UserName, _guildName);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            _guildName = string.Empty;
+        }
+
+        Reload();
+    }
+
+    private void SaveNotice()
+    {
+        GuildActionResult result = GuildService.UpdateNotice(Session.UserName, _notice);
+        _success = result.Success;
+        _message = result.Message;
+        Reload();
+    }
+
+    private void LeaveGuild()
+    {
+        GuildActionResult result = GuildService.LeaveGuild(Session.UserName);
+        _success = result.Success;
+        _message = result.Message;
+        Reload();
+    }
+
+    private static string ResolveRoleName(GuildMemberRole role)
+        => role == GuildMemberRole.Leader ? "会长" : "成员";
+
+    private void GoGuilds()
+        => Navigation.NavigateTo("/guilds");
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+}

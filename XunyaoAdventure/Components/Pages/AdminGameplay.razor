@@ -1,0 +1,139 @@
+@page "/admin/gameplay"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>初始化配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">初始化配置</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="Save">保存</button>
+            <button class="wap-button muted" @onclick="GoAdmin">返回后台</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        <div class="admin-detail">
+            <article class="admin-card">
+                <div class="admin-section-title">新账号</div>
+                <div class="admin-grid-2">
+                    <label>
+                        <span>初始等级</span>
+                        <input type="number" min="1" @bind="_initialAccount.Level" />
+                    </label>
+                    <label>
+                        <span>初始铜钱</span>
+                        <input type="number" min="0" @bind="_initialAccount.Copper" />
+                    </label>
+                </div>
+                <div class="admin-grid-2">
+                    <label>
+                        <span>默认关卡</span>
+                        <select @bind="_initialAccount.DefaultStageId">
+                            <option value="">不自动选择</option>
+                            @foreach (CampaignStageConfig stage in _stages)
+                            {
+                                <option value="@stage.Id">@stage.Code / @stage.Name</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        <span>默认阵容数量</span>
+                        <input type="number" min="1" @bind="_initialAccount.FormationSize" />
+                    </label>
+                </div>
+            </article>
+
+            <article class="admin-card">
+                <div class="admin-section-title">创建角色赠送妖怪</div>
+                <label>
+                    <span>赠送妖怪</span>
+                    <select multiple size="8" @onchange="UpdateSelectedMonsters">
+                        @foreach (MonsterTemplateConfig monster in _monsters)
+                        {
+                            <option value="@monster.TemplateId" selected="@IsSelected(monster.TemplateId)">
+                                @monster.TemplateId / @monster.Name
+                            </option>
+                        }
+                    </select>
+                </label>
+
+                <div class="admin-index-meta">已选择：@SelectedMonsterText</div>
+
+                @if (!_monsters.Any())
+                {
+                    <div class="wap-line">还没有妖怪模板，请先去妖怪配置创建。</div>
+                }
+            </article>
+        </div>
+    </section>
+</main>
+
+@code {
+    private List<MonsterTemplateConfig> _monsters = new();
+    private List<CampaignStageConfig> _stages = new();
+    private InitialRoleConfig _initialRole = new();
+    private InitialAccountConfig _initialAccount = new();
+    private string _message = string.Empty;
+    private bool _success;
+
+    private string SelectedMonsterText
+        => _initialRole.MonsterTemplateIds.Count == 0
+            ? "无"
+            : string.Join("、", _initialRole.MonsterTemplateIds);
+
+    protected override void OnInitialized()
+    {
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _monsters = Configs.GetMonsterTemplates().ToList();
+        _stages = Configs.GetCampaignStages()
+            .OrderBy(stage => stage.ChapterId)
+            .ThenBy(stage => stage.Order)
+            .ToList();
+        _initialRole = Configs.GetInitialRoleConfig();
+        _initialAccount = Configs.GetInitialAccountConfig();
+    }
+
+    private bool IsSelected(string templateId)
+        => _initialRole.MonsterTemplateIds.Contains(templateId, StringComparer.OrdinalIgnoreCase);
+
+    private void UpdateSelectedMonsters(ChangeEventArgs args)
+    {
+        _initialRole.MonsterTemplateIds.Clear();
+        if (args.Value is string[] values)
+        {
+            _initialRole.MonsterTemplateIds.AddRange(values);
+        }
+        else if (args.Value is IEnumerable<string> enumerable)
+        {
+            _initialRole.MonsterTemplateIds.AddRange(enumerable);
+        }
+        else if (args.Value is string value && !string.IsNullOrWhiteSpace(value))
+        {
+            _initialRole.MonsterTemplateIds.Add(value);
+        }
+    }
+
+    private void Save()
+    {
+        ConfigSaveResult result = Configs.SaveGameplayConfig(_initialRole, _initialAccount);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            Reload();
+        }
+    }
+
+    private void GoAdmin()
+        => Navigation.NavigateTo("/admin");
+}

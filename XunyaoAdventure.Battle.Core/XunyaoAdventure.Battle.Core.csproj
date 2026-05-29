@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>preview</LangVersion>
+		<DebugType>none</DebugType>
+		<DebugSymbols>false</DebugSymbols>
+		<PublishAot>false</PublishAot>
+		<LeanClrLibraryDir>$(MSBuildProjectDirectory)\..\..\leanclr\src\libraries\dotnetframework4.x\</LeanClrLibraryDir>
+		<LeanClrViewPublicDir>$(MSBuildProjectDirectory)\..\XunyaoAdventure.Battle.View\public\</LeanClrViewPublicDir>
+		<LeanClrTrimOutputDir>$(BaseIntermediateOutputPath)leanclr-trimmed\</LeanClrTrimOutputDir>
+		<LeanClrTrimResponseFile>$(BaseIntermediateOutputPath)leanclr-illink.rsp</LeanClrTrimResponseFile>
+		<LeanClrILLinkPath>D:\LocalCache\nuget\packages\microsoft.net.illink.tasks\10.0.5\tools\net\illink.dll</LeanClrILLinkPath>
+		<LeanClrBrotliScript>$(MSBuildProjectDirectory)\compress-leanclr-brotli.js</LeanClrBrotliScript>
+		<LeanClrEnableBrotli>true</LeanClrEnableBrotli>
+		<Configurations>Debug;Release;SelfTest</Configurations>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'SelfTest'">
+		<OutputType>Exe</OutputType>
+		<StartupObject>SelfTestProgram</StartupObject>
+		<LeanClrEnablePostBuild>false</LeanClrEnablePostBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="System.Numerics">
+			<HintPath>$(LeanClrLibraryDir)System.Numerics.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+	<Target Name="TrimLeanClrAssemblies" AfterTargets="Build" Condition="'$(LeanClrEnablePostBuild)' != 'false'">
+		<Error Text="ILLink was not found at $(LeanClrILLinkPath)." Condition="!Exists('$(LeanClrILLinkPath)')" />
+		<RemoveDir Directories="$(LeanClrTrimOutputDir)" />
+		<MakeDir Directories="$(LeanClrTrimOutputDir)" />
+		<WriteLinesToFile File="$(LeanClrTrimResponseFile)" Overwrite="true" Lines="-x&#xA;&quot;$(MSBuildProjectDirectory)\leanclr-linker.xml&quot;&#xA;-a&#xA;&quot;$(TargetPath)&quot;&#xA;all&#xA;-d&#xA;&quot;$(TargetDir.TrimEnd('\'))&quot;&#xA;-d&#xA;&quot;$(LeanClrLibraryDir.TrimEnd('\'))&quot;&#xA;-out&#xA;&quot;$(LeanClrTrimOutputDir.TrimEnd('\'))&quot;&#xA;--ignore-descriptors&#xA;--action&#xA;link&#xA;--keep-metadata&#xA;all&#xA;--skip-unresolved" />
+		<Exec Command="dotnet &quot;$(LeanClrILLinkPath)&quot; @&quot;$(LeanClrTrimResponseFile)&quot;" />
+	</Target>
+
+	<Target Name="CopyLeanClrAssemblyToView" AfterTargets="TrimLeanClrAssemblies" Condition="'$(LeanClrEnablePostBuild)' != 'false'">
+		<MakeDir Directories="$(LeanClrViewPublicDir)" />
+		<Copy SourceFiles="$(LeanClrTrimOutputDir)$(AssemblyName).dll" DestinationFiles="$(LeanClrViewPublicDir)$(AssemblyName).dll.bytes" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="$(LeanClrTrimOutputDir)mscorlib.dll" DestinationFiles="$(LeanClrViewPublicDir)mscorlib.dll.bytes" SkipUnchangedFiles="false" Condition="Exists('$(LeanClrTrimOutputDir)mscorlib.dll')" />
+		<Copy SourceFiles="$(LeanClrTrimOutputDir)netstandard.dll" DestinationFiles="$(LeanClrViewPublicDir)netstandard.dll.bytes" SkipUnchangedFiles="false" Condition="Exists('$(LeanClrTrimOutputDir)netstandard.dll')" />
+		<Copy SourceFiles="$(LeanClrTrimOutputDir)System.dll" DestinationFiles="$(LeanClrViewPublicDir)System.dll.bytes" SkipUnchangedFiles="false" Condition="Exists('$(LeanClrTrimOutputDir)System.dll')" />
+		<Copy SourceFiles="$(LeanClrTrimOutputDir)System.Core.dll" DestinationFiles="$(LeanClrViewPublicDir)System.Core.dll.bytes" SkipUnchangedFiles="false" Condition="Exists('$(LeanClrTrimOutputDir)System.Core.dll')" />
+		<Copy SourceFiles="$(LeanClrTrimOutputDir)System.Numerics.dll" DestinationFiles="$(LeanClrViewPublicDir)System.Numerics.dll.bytes" SkipUnchangedFiles="false" Condition="Exists('$(LeanClrTrimOutputDir)System.Numerics.dll')" />
+		<Copy SourceFiles="$(TargetDir)$(AssemblyName).pdb" DestinationFiles="$(LeanClrViewPublicDir)$(AssemblyName).pdb.bytes" SkipUnchangedFiles="false" Condition="Exists('$(TargetDir)$(AssemblyName).pdb')" />
+	</Target>
+
+	<Target Name="CompressLeanClrBrotli" AfterTargets="CopyLeanClrAssemblyToView" Condition="'$(LeanClrEnablePostBuild)' != 'false' and '$(LeanClrEnableBrotli)' == 'true'">
+		<Error Text="Brotli compression script was not found at $(LeanClrBrotliScript)." Condition="!Exists('$(LeanClrBrotliScript)')" />
+		<Exec Command="node &quot;$(LeanClrBrotliScript)&quot; &quot;$(LeanClrViewPublicDir.TrimEnd('\'))&quot;" />
+	</Target>
+
+</Project>

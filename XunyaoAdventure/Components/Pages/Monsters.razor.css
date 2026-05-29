@@ -1,0 +1,128 @@
+.monster-page {
+    background: #252733;
+}
+
+.monster-panel {
+    width: min(100%, 430px);
+    background: #d9d0bb;
+    border-color: #1b1b22;
+}
+
+.monster-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 9px;
+    padding: 10px;
+}
+
+.monster-card {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #241b12;
+    cursor: pointer;
+}
+
+.monster-name {
+    max-width: 100%;
+    color: #4a2c14;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.15;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.monster-portrait {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 92px;
+    aspect-ratio: 1;
+    border: 3px solid #f4e9d0;
+    background: #141522;
+    box-sizing: border-box;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 2px #191919;
+}
+
+.monster-portrait.stage-1 {
+    border-color: #f4e9d0;
+}
+
+.monster-portrait.stage-2 {
+    border-color: #8ed24d;
+}
+
+.monster-portrait.stage-3 {
+    border-color: #42bce8;
+}
+
+.monster-portrait.stage-4 {
+    border-color: #a66cff;
+}
+
+.monster-portrait.stage-5 {
+    border-color: #f25b4f;
+}
+
+.monster-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.monster-level {
+    position: absolute;
+    left: 4px;
+    bottom: 18px;
+    color: #fff;
+    font-weight: 900;
+    font-size: 22px;
+    line-height: 1;
+    text-shadow: 0 2px 2px #000;
+}
+
+.monster-stars {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1px;
+    color: #ffd55b;
+    font-size: 16px;
+    letter-spacing: 0;
+    text-align: center;
+    line-height: 1;
+    text-shadow: 0 1px 2px #4b2600;
+}
+
+@media (max-width: 430px) {
+    .monster-list {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 7px;
+        padding: 8px;
+    }
+
+    .monster-portrait {
+        max-width: 82px;
+    }
+
+    .monster-name {
+        font-size: 13px;
+    }
+
+    .monster-level {
+        bottom: 16px;
+        font-size: 19px;
+    }
+
+    .monster-stars {
+        font-size: 14px;
+    }
+}

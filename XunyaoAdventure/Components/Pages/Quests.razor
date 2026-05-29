@@ -1,0 +1,145 @@
+@page "/quests"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject QuestStore QuestService
+
+<PageTitle>任务</PageTitle>
+
+<main class="wap-page quest-page">
+    <section class="wap-panel quest-panel">
+        <div class="wap-title">任务</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else
+        {
+            <div class="quest-tabs">
+                <button class="@(_category == QuestCategory.Main ? "active" : "")" @onclick="() => SelectCategory(QuestCategory.Main)">主线</button>
+                <button class="@(_category == QuestCategory.Daily ? "active" : "")" @onclick="() => SelectCategory(QuestCategory.Daily)">日常</button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="wap-message">@_message</div>
+            }
+
+            <div class="quest-list">
+                @foreach (QuestViewItem quest in VisibleQuests)
+                {
+                    <article class="quest-item @(quest.Completed ? "completed" : "") @(quest.RewardClaimed ? "claimed" : "")">
+                        <div class="quest-main">
+                            <header>
+                                <b>@quest.Definition.Title</b>
+                                <span>@ResolveStateText(quest)</span>
+                            </header>
+                            <p>@quest.Definition.Description</p>
+                            <div class="quest-progress">
+                                <span style="width:@ResolveProgressPercent(quest)%"></span>
+                            </div>
+                            <small>@Math.Min(quest.Progress, quest.Definition.RequiredCount) / @quest.Definition.RequiredCount</small>
+                            <div class="quest-rewards">
+                                奖励：@FormatRewards(quest.Definition.Rewards)
+                            </div>
+                        </div>
+                        <button disabled="@(!CanClaim(quest))" @onclick="() => ClaimReward(quest.Definition.Id)">
+                            @(quest.RewardClaimed ? "已领" : "领取")
+                        </button>
+                    </article>
+                }
+            </div>
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private QuestCategory _category = QuestCategory.Main;
+    private List<QuestViewItem> _quests = new();
+    private string _message = string.Empty;
+
+    private IEnumerable<QuestViewItem> VisibleQuests
+        => _category == QuestCategory.Main
+            ? GetVisibleMainQuests()
+            : _quests.Where(quest => quest.Unlocked);
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        RefreshQuests();
+    }
+
+    private void SelectCategory(QuestCategory category)
+    {
+        _category = category;
+        _message = string.Empty;
+        RefreshQuests();
+    }
+
+    private void ClaimReward(string questId)
+    {
+        QuestClaimResult result = QuestService.ClaimReward(Session.UserName, questId, Accounts);
+        _message = result.Message;
+        _account = result.Account ?? Accounts.GetAccount(Session.UserName);
+        RefreshQuests();
+    }
+
+    private void RefreshQuests()
+        => _quests = QuestService.GetQuestViews(Session.UserName, _category).ToList();
+
+    private IEnumerable<QuestViewItem> GetVisibleMainQuests()
+    {
+        QuestViewItem? current = _quests.FirstOrDefault(quest => quest.Unlocked && !quest.RewardClaimed);
+        if (current is not null)
+        {
+            yield return current;
+            yield break;
+        }
+
+        QuestViewItem? lastClaimed = _quests.LastOrDefault(quest => quest.RewardClaimed);
+        if (lastClaimed is not null)
+        {
+            yield return lastClaimed;
+        }
+    }
+
+    private static bool CanClaim(QuestViewItem quest)
+        => quest.Unlocked && quest.Completed && !quest.RewardClaimed;
+
+    private static int ResolveProgressPercent(QuestViewItem quest)
+        => quest.Definition.RequiredCount <= 0
+            ? 0
+            : Math.Clamp(quest.Progress * 100 / quest.Definition.RequiredCount, 0, 100);
+
+    private static string ResolveStateText(QuestViewItem quest)
+    {
+        if (quest.RewardClaimed)
+        {
+            return "已领取";
+        }
+
+        return quest.Completed ? "可领取" : "进行中";
+    }
+
+    private static string FormatRewards(IReadOnlyList<QuestReward> rewards)
+        => string.Join("，", rewards.Select(reward => $"{reward.Name} x{reward.Quantity}"));
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+}

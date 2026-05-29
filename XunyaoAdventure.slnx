@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="XunyaoAdventure.Battle.Core/XunyaoAdventure.Battle.Core.csproj" />
+  <Project Path="XunyaoAdventure/XunyaoAdventure.csproj" />
+</Solution>

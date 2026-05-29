@@ -1,0 +1,280 @@
+@page "/forge"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject QuestStore Quests
+
+<PageTitle>熔炼炉</PageTitle>
+
+<main class="wap-page forge-page">
+    <section class="wap-panel forge-panel">
+        <div class="wap-title">熔炼大炉子</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else
+        {
+            <div class="forge-tip">先指定1件主装备，再放入同阶材料装备。1升2消耗1件，2升3消耗2件，依次递增。</div>
+
+            <div class="forge-grid">
+                <button class="forge-cell main @(MainItem is null ? "" : $"filled {ResolveEquipmentQualityClass(MainItem.Quality)}")" @onclick="ClearMain">
+                    @if (MainItem is null)
+                    {
+                        <span>主</span>
+                        <small>主装备</small>
+                    }
+                    else
+                    {
+                        <b>@MainItem.IconText</b>
+                        <em class="equipment-level-badge">+@MainItem.UpgradeLevel</em>
+                        <small>@MainItem.Quality</small>
+                    }
+                </button>
+
+                @for (int index = 0; index < 8; index++)
+                {
+                    BackpackEquipmentItem? item = index < MaterialItems.Count ? MaterialItems[index] : null;
+                    <button class="forge-cell @(item is null ? "" : $"filled {ResolveEquipmentQualityClass(item.Quality)}")" @onclick="() => RemoveMaterialAt(index)">
+                        @if (item is null)
+                        {
+                            <span>+</span>
+                            <small>材料</small>
+                        }
+                        else
+                        {
+                            <b>@item.IconText</b>
+                            <em class="equipment-level-badge">+@item.UpgradeLevel</em>
+                            <small>@item.Quality</small>
+                        }
+                    </button>
+                }
+            </div>
+
+            <div class="forge-result">
+                <span>预览</span>
+                @if (MainItem is null)
+                {
+                    <b>请选择主装备</b>
+                }
+                else if (PreviewQuality is null)
+                {
+                    <b>主装备已达最高阶</b>
+                }
+                else
+                {
+                    <b>@MainItem.Name：@MainItem.Quality -> @PreviewQuality，需要 @RequiredMaterialCount 件材料</b>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="wap-message">@_message</div>
+            }
+
+            <div class="forge-actions">
+                <button class="wap-button" disabled="@(!CanFuse)" @onclick="FuseSelected">升阶</button>
+                <button class="wap-button muted" @onclick="ClearSelected">清空</button>
+            </div>
+
+            <div class="forge-list">
+                @foreach (BackpackEquipmentItem item in CandidateItems)
+                {
+                    <button class="forge-item @ResolveEquipmentQualityClass(item.Quality) @ResolveItemClass(item)" disabled="@(!CanSelectItem(item))" @onclick="() => SelectItem(item.InstanceId)">
+                        <span class="@ResolveEquipmentQualityClass(item.Quality)">
+                            @item.IconText
+                            <em class="equipment-level-badge">+@item.UpgradeLevel</em>
+                        </span>
+                        <b>@item.Name</b>
+                        <small>@ResolveSlotName(item.SlotKey) / @item.Quality / +@item.UpgradeLevel / 战力 @item.Power</small>
+                    </button>
+                }
+            </div>
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private int? _mainItemId;
+    private readonly List<int> _materialIds = new();
+    private string _message = string.Empty;
+
+    private List<BackpackEquipmentItem> CandidateItems
+        => _account?.Backpack
+            .OrderByDescending(item => item.InstanceId == _mainItemId)
+            .ThenBy(item => item.EquippedMonsterId is not null)
+            .ThenBy(item => item.Quality)
+            .ThenBy(item => item.SlotKey)
+            .ThenBy(item => item.Power)
+            .ToList()
+            ?? new List<BackpackEquipmentItem>();
+
+    private BackpackEquipmentItem? MainItem
+        => _mainItemId is int id ? _account?.Backpack.FirstOrDefault(item => item.InstanceId == id) : null;
+
+    private List<BackpackEquipmentItem> MaterialItems
+        => _materialIds
+            .Select(id => _account?.Backpack.FirstOrDefault(item => item.InstanceId == id))
+            .Where(item => item is not null)
+            .Select(item => item!)
+            .ToList();
+
+    private string? PreviewQuality
+        => MainItem is null ? null : ResolveNextQuality(MainItem.Quality);
+
+    private int RequiredMaterialCount
+        => MainItem is null ? 0 : GameAccountStore.GetRequiredFuseMaterialCount(MainItem.Quality);
+
+    private bool CanFuse
+        => MainItem is not null
+            && PreviewQuality is not null
+            && MaterialItems.Count == RequiredMaterialCount
+            && MaterialItems.All(item => item.Quality == MainItem.Quality && item.EquippedMonsterId is null);
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+    }
+
+    private void SelectItem(int itemInstanceId)
+    {
+        _message = string.Empty;
+        BackpackEquipmentItem? item = _account?.Backpack.FirstOrDefault(candidate => candidate.InstanceId == itemInstanceId);
+        if (item is null || !CanSelectItem(item))
+        {
+            return;
+        }
+
+        if (_mainItemId is null)
+        {
+            _mainItemId = itemInstanceId;
+            return;
+        }
+
+        _materialIds.Add(itemInstanceId);
+    }
+
+    private void ClearMain()
+    {
+        _mainItemId = null;
+        _materialIds.Clear();
+        _message = string.Empty;
+    }
+
+    private void RemoveMaterialAt(int index)
+    {
+        if (index < 0 || index >= _materialIds.Count)
+        {
+            return;
+        }
+
+        _materialIds.RemoveAt(index);
+    }
+
+    private void ClearSelected()
+    {
+        _message = string.Empty;
+        _mainItemId = null;
+        _materialIds.Clear();
+    }
+
+    private void FuseSelected()
+    {
+        if (_mainItemId is not int mainItemId)
+        {
+            return;
+        }
+
+        GameEquipResult result = Accounts.FuseEquipmentByMain(Session.UserName, mainItemId, _materialIds);
+        _message = result.Message;
+        if (result.Success)
+        {
+            Quests.ReportEvent(Session.UserName, QuestEventType.FuseEquipment);
+        }
+        _account = result.Account ?? Accounts.GetAccount(Session.UserName);
+        _mainItemId = mainItemId;
+        _materialIds.Clear();
+    }
+
+    private bool CanSelectItem(BackpackEquipmentItem item)
+    {
+        if (_mainItemId is null)
+        {
+            return ResolveNextQuality(item.Quality) is not null;
+        }
+
+        if (item.InstanceId == _mainItemId || _materialIds.Contains(item.InstanceId))
+        {
+            return false;
+        }
+
+        if (MainItem is null || _materialIds.Count >= RequiredMaterialCount)
+        {
+            return false;
+        }
+
+        return item.EquippedMonsterId is null && item.Quality == MainItem.Quality;
+    }
+
+    private string ResolveItemClass(BackpackEquipmentItem item)
+    {
+        if (item.InstanceId == _mainItemId)
+        {
+            return "selected main";
+        }
+
+        return _materialIds.Contains(item.InstanceId) ? "selected" : string.Empty;
+    }
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+
+    private static string? ResolveNextQuality(string quality)
+        => quality switch
+        {
+            "白" => "绿",
+            "绿" => "蓝",
+            "蓝" => "紫",
+            "紫" => "红",
+            _ => null,
+        };
+
+    private static string ResolveSlotName(string slotKey)
+        => slotKey switch
+        {
+            "weapon" => "武器",
+            "armor" => "护甲",
+            "necklace" => "饰品",
+            "boots" => "鞋子",
+            "relic" => "法器",
+            "soul" => "命星",
+            _ => "装备",
+        };
+
+    private static string ResolveEquipmentQualityClass(string quality)
+        => quality switch
+        {
+            "白" => "quality-1",
+            "绿" => "quality-2",
+            "蓝" => "quality-3",
+            "紫" => "quality-4",
+            "红" => "quality-5",
+            _ => "quality-1",
+        };
+}

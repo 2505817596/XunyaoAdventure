@@ -1,0 +1,195 @@
+@page "/admin/campaign/{ChapterId}"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>章节配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">@(_chapter?.Name ?? "章节配置")</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="AddStage">新增关卡</button>
+            <button class="wap-button" @onclick="Save">保存</button>
+            <button class="wap-button muted" @onclick="GoCampaign">返回章节</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        @if (_chapter is null)
+        {
+            <div class="wap-line">章节不存在</div>
+        }
+        else
+        {
+            <div class="admin-detail">
+                <article class="admin-card">
+                    <div class="admin-section-title">章节信息</div>
+                    <div class="admin-grid-2">
+                        <label>
+                            <span>章节ID</span>
+                            <input @bind="_chapter.Id" />
+                        </label>
+                        <label>
+                            <span>排序</span>
+                            <input type="number" min="1" @bind="_chapter.Order" />
+                        </label>
+                    </div>
+                    <label>
+                        <span>章节名</span>
+                        <input @bind="_chapter.Name" />
+                    </label>
+                    <label>
+                        <span>描述</span>
+                        <input @bind="_chapter.Description" />
+                    </label>
+                    <label class="admin-check">
+                        <input type="checkbox" @bind="_chapter.Unlocked" />
+                        <span>章节开放</span>
+                    </label>
+                </article>
+            </div>
+
+            <div class="admin-list">
+                @for (int stageIndex = 0; stageIndex < _chapterStages.Count; stageIndex++)
+                {
+                    int currentStageIndex = stageIndex;
+                    CampaignStageConfig stage = _chapterStages[currentStageIndex];
+                    <article class="admin-card admin-clickable" @onclick="() => GoStage(stage.Id)">
+                        <header>
+                            <b>@stage.Id</b>
+                            <button @onclick:stopPropagation="true" @onclick="() => RemoveStage(currentStageIndex)">删除</button>
+                        </header>
+                        <div class="admin-index-title">@stage.Code @stage.Name</div>
+                        <div class="admin-index-meta">难度 @stage.Difficulty / 推荐战力 @stage.RecommendedPower</div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</main>
+
+@code {
+    [Parameter]
+    public string ChapterId { get; set; } = string.Empty;
+
+    private List<CampaignChapterConfig> _chapters = new();
+    private List<CampaignStageConfig> _allStages = new();
+    private List<CampaignStageConfig> _chapterStages = new();
+    private CampaignChapterConfig? _chapter;
+    private string _originalChapterId = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnInitialized()
+    {
+        _originalChapterId = ChapterId;
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _chapters = Configs.GetCampaignChapters().ToList();
+        _allStages = Configs.GetCampaignStages().ToList();
+        _chapter = _chapters.FirstOrDefault(chapter => string.Equals(chapter.Id, _originalChapterId, StringComparison.OrdinalIgnoreCase));
+        _chapterStages = _allStages
+            .Where(stage => string.Equals(stage.ChapterId, _originalChapterId, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(stage => stage.Order)
+            .ToList();
+    }
+
+    private void AddStage()
+    {
+        if (_chapter is null)
+        {
+            return;
+        }
+
+        int nextIndex = _chapterStages.Count + 1;
+        string stageId;
+        do
+        {
+            stageId = $"{_chapter.Id}-stage-{nextIndex++}";
+        }
+        while (_allStages.Any(stage => string.Equals(stage.Id, stageId, StringComparison.OrdinalIgnoreCase)));
+
+        CampaignStageConfig stage = new()
+        {
+            Id = stageId,
+            ChapterId = _chapter.Id,
+            Code = $"{nextIndex - 1}",
+            Name = $"新关卡{nextIndex - 1}",
+            Description = "新关卡描述",
+            Order = nextIndex - 1,
+            RecommendedPower = 180,
+            Difficulty = 1,
+            BaseUnlocked = _chapterStages.Count == 0,
+            Waves = new List<CampaignEnemyWaveConfig>(),
+        };
+
+        _chapterStages.Add(stage);
+        Save();
+        if (_success)
+        {
+            GoStage(stage.Id);
+        }
+    }
+
+    private void RemoveStage(int index)
+    {
+        if (index < 0 || index >= _chapterStages.Count)
+        {
+            return;
+        }
+
+        _chapterStages.RemoveAt(index);
+        Save();
+    }
+
+    private void Save()
+    {
+        if (_chapter is null)
+        {
+            return;
+        }
+
+        List<CampaignChapterConfig> mergedChapters = _chapters
+            .Where(chapter => !string.Equals(chapter.Id, _originalChapterId, StringComparison.OrdinalIgnoreCase))
+            .Append(_chapter)
+            .ToList();
+        List<CampaignStageConfig> mergedStages = _allStages
+            .Where(stage => !string.Equals(stage.ChapterId, _originalChapterId, StringComparison.OrdinalIgnoreCase))
+            .Concat(_chapterStages.Select(stage =>
+            {
+                stage.ChapterId = _chapter.Id;
+                return stage;
+            }))
+            .ToList();
+
+        ConfigSaveResult result = Configs.SaveCampaignConfig(mergedChapters, mergedStages);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            _originalChapterId = _chapter.Id;
+        }
+
+        Reload();
+    }
+
+    private void GoStage(string stageId)
+    {
+        Save();
+        Navigation.NavigateTo($"/admin/campaign/{Uri.EscapeDataString(_originalChapterId)}/{Uri.EscapeDataString(stageId)}");
+    }
+
+    private void GoCampaign()
+    {
+        Save();
+        Navigation.NavigateTo("/admin/campaign");
+    }
+
+}

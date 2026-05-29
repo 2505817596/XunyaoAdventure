@@ -1,0 +1,72 @@
+@page "/create-character"
+@inject NavigationManager Navigation
+@inject GameAccountStore Accounts
+@inject GameSession Session
+@inject QuestStore Quests
+
+<PageTitle>创建角色</PageTitle>
+
+<main class="wap-page">
+    <section class="wap-panel">
+        <div class="wap-title">创建角色</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else
+        {
+            <div class="wap-line">账号：@_account.UserName</div>
+            <label class="wap-field">
+                <span>角色名</span>
+                <InputText @bind-Value="_roleName" />
+            </label>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="wap-message">@_message</div>
+            }
+
+            <button class="wap-button" @onclick="CreateRole">进入游戏</button>
+            <div class="wap-tip">创建后默认获得妖怪：青鳞小妖</div>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private string _roleName = string.Empty;
+    private string _message = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        if (_account?.Profile is not null)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private void CreateRole()
+    {
+        if (!Session.IsLoggedIn || string.IsNullOrWhiteSpace(Session.UserName))
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        PlayerAccount? account = Accounts.CreateCharacter(Session.UserName, _roleName);
+        if (account is null)
+        {
+            _message = "角色名不能为空";
+            return;
+        }
+
+        Quests.ReportEvent(Session.UserName, QuestEventType.CreateCharacter);
+        Navigation.NavigateTo("/");
+    }
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+}

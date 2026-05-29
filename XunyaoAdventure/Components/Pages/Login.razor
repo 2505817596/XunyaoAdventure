@@ -1,0 +1,62 @@
+@page "/login"
+@inject NavigationManager Navigation
+@inject GameAccountStore Accounts
+@inject GameSession Session
+
+<PageTitle>登录</PageTitle>
+
+<main class="wap-page">
+    <section class="wap-panel">
+        <div class="wap-title">账号登录</div>
+
+        <label class="wap-field">
+            <span>账号</span>
+            <InputText @bind-Value="_userName" />
+        </label>
+
+        <label class="wap-field">
+            <span>密码</span>
+            <InputText type="password" @bind-Value="_password" />
+        </label>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="wap-message">@_message</div>
+        }
+
+        <div class="wap-menu">
+            <button class="wap-button" @onclick="LoginAccount">登录</button>
+            <button class="wap-button muted" @onclick="RegisterAccount">注册</button>
+        </div>
+    </section>
+</main>
+
+@code {
+    private string _userName = string.Empty;
+    private string _password = string.Empty;
+    private string _message = string.Empty;
+
+    private void LoginAccount()
+    {
+        GameLoginResult result = Accounts.Login(_userName, _password);
+        HandleLoginResult(result);
+    }
+
+    private void RegisterAccount()
+    {
+        GameLoginResult result = Accounts.Register(_userName, _password);
+        HandleLoginResult(result);
+    }
+
+    private void HandleLoginResult(GameLoginResult result)
+    {
+        if (!result.Success || result.Account is null)
+        {
+            _message = result.Message;
+            return;
+        }
+
+        Session.SignIn(result.Account.UserName);
+        Navigation.NavigateTo(result.Account.Profile is null ? "/create-character" : "/");
+    }
+}

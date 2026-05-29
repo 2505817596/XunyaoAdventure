@@ -1,0 +1,640 @@
+.monster-page {
+    background: #252733;
+}
+
+.monster-panel {
+    width: min(100%, 430px);
+    background: #d9d0bb;
+    border-color: #1b1b22;
+}
+
+.monster-detail-stage {
+    display: grid;
+    gap: 8px;
+    padding: 12px 10px 14px;
+    border-bottom: 1px solid #dbc995;
+    background: linear-gradient(180deg, #f0e5c8, #d4c6a8);
+}
+
+.monster-detail-header {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    align-items: center;
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.monster-attribute {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    background: #a02020;
+    color: #ffcc62;
+    border: 2px solid #502020;
+    font-size: 40px;
+    font-weight: 900;
+    line-height: 1;
+    clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    box-shadow: 0 0 0 2px #7b2d24;
+    transform: translateX(10px);
+}
+
+.monster-detail-name {
+    position: relative;
+    z-index: 1;
+    display: block;
+    min-width: 0;
+    margin-left: -10px;
+    padding: 10px 18px 10px 28px;
+    background: linear-gradient(180deg, #8f8777, #6e6658);
+    color: #fffdf3;
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1.12;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 2px #111;
+}
+
+.monster-detail-orbit {
+    display: grid;
+    grid-template-columns: 92px minmax(130px, 1fr) 92px;
+    grid-template-rows: repeat(3, 74px);
+    align-items: center;
+    justify-items: center;
+    gap: 14px 28px;
+    max-width: 520px;
+    width: 100%;
+    margin: 12px auto 2px;
+}
+
+.monster-detail-avatar-wrap {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+}
+
+.monster-portrait {
+    position: relative;
+    display: block;
+    width: 84px;
+    height: 84px;
+    border: 3px solid #f4e9d0;
+    background: #141522;
+    box-shadow: inset 0 0 0 2px #191919;
+    overflow: hidden;
+}
+
+.monster-portrait.stage-1 {
+    border-color: #f4e9d0;
+}
+
+.monster-portrait.stage-2 {
+    border-color: #8ed24d;
+}
+
+.monster-portrait.stage-3 {
+    border-color: #42bce8;
+}
+
+.monster-portrait.stage-4 {
+    border-color: #a66cff;
+}
+
+.monster-portrait.stage-5 {
+    border-color: #f25b4f;
+}
+
+.monster-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.monster-detail-avatar {
+    width: 142px;
+    height: 142px;
+    border-width: 4px;
+    box-shadow:
+        0 8px 18px rgba(40, 30, 18, 0.28),
+        inset 0 0 0 2px #191919;
+}
+
+.monster-stars {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    color: #ffd55b;
+    font-size: 18px;
+    letter-spacing: 0;
+    text-align: center;
+    line-height: 1;
+    text-shadow: 0 1px 2px #4b2600;
+}
+
+.monster-detail-equip {
+    position: relative;
+    display: grid;
+    gap: 4px;
+    justify-items: center;
+    width: 86px;
+    min-height: 74px;
+    box-sizing: border-box;
+    padding: 7px 4px 6px;
+    border: 2px solid #9b8b6a;
+    background: #eee5cc;
+    color: #302410;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.monster-detail-equip.equipped {
+    background: #233042;
+    box-shadow: none;
+}
+
+.monster-detail-equip.slot-weapon {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.monster-detail-equip.slot-necklace {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.monster-detail-equip.slot-relic {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.monster-detail-equip.slot-armor {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.monster-detail-equip.slot-boots {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.monster-detail-equip.slot-soul {
+    grid-column: 3;
+    grid-row: 3;
+}
+
+.monster-detail-equip span {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 38px;
+    box-sizing: border-box;
+    border: 0;
+    background: transparent;
+    color: #fff8e6;
+    font-size: 20px;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.monster-detail-equip .equipment-level-badge {
+    right: 5px;
+    top: 5px;
+    bottom: auto;
+}
+
+.monster-detail-equip.quality-1,
+.backpack-detail-icon.quality-1,
+.backpack-item.quality-1 {
+    border-color: #f4e9d0;
+}
+
+.monster-detail-equip.quality-2,
+.backpack-detail-icon.quality-2,
+.backpack-item.quality-2 {
+    border-color: #8ed24d;
+}
+
+.monster-detail-equip.quality-3,
+.backpack-detail-icon.quality-3,
+.backpack-item.quality-3 {
+    border-color: #42bce8;
+}
+
+.monster-detail-equip.quality-4,
+.backpack-detail-icon.quality-4,
+.backpack-item.quality-4 {
+    border-color: #a66cff;
+}
+
+.monster-detail-equip.quality-5,
+.backpack-detail-icon.quality-5,
+.backpack-item.quality-5 {
+    border-color: #f25b4f;
+}
+
+.monster-detail-equip small {
+    max-width: 100%;
+    color: #4b3b22;
+    font-size: 12px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.monster-detail-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+    border: 1px solid #9a875e;
+    background: #d1c29f;
+}
+
+.monster-detail-tabs button {
+    min-height: 42px;
+    border: 0;
+    border-right: 1px solid #9a875e;
+    background: #d9d0bb;
+    color: #5a3b1b;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.monster-detail-tabs button:last-child {
+    border-right: 0;
+}
+
+.monster-detail-tabs button.active {
+    background: #6d5225;
+    color: #fff2ba;
+}
+
+.monster-detail-basic,
+.monster-detail-attributes {
+    display: grid;
+    gap: 1px;
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+    border: 1px solid #9a875e;
+    background: #9a875e;
+}
+
+.monster-detail-basic div {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-height: 42px;
+    padding: 7px 10px;
+    background: #efe5cb;
+}
+
+.monster-detail-basic .monster-level-row {
+    grid-template-columns: 92px minmax(0, 1fr) 72px;
+}
+
+.monster-detail-basic .monster-dual-action-row {
+    grid-template-columns: 92px minmax(0, 1fr) 72px 72px;
+}
+
+.monster-detail-basic span {
+    color: #5f5137;
+}
+
+.monster-detail-basic b {
+    min-width: 0;
+    color: #3c2514;
+    font-size: 20px;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.monster-level-row button {
+    min-height: 30px;
+    border: 1px solid #7a5b28;
+    background: #6d5225;
+    color: #fff2ba;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.monster-detail-attributes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 2px;
+}
+
+.monster-detail-attributes div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    min-height: 32px;
+    padding: 6px 8px;
+    background: #efe5cb;
+}
+
+.monster-detail-attributes span {
+    min-width: 0;
+    color: #5f5137;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.monster-detail-attributes b {
+    color: #3c2514;
+    font-size: 15px;
+}
+
+.equipment-popup-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    align-items: center;
+    padding: 12px;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.62);
+}
+
+.equipment-popup,
+.levelup-popup {
+    width: min(100%, 430px);
+    margin: 0 auto;
+    display: grid;
+    border: 2px solid #1b1b22;
+    background: #d9d0bb;
+    box-shadow: inset 0 0 0 2px #eee4cc;
+}
+
+.equipment-popup {
+    max-height: min(78dvh, 620px);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.levelup-popup {
+    width: min(100%, 620px);
+    grid-template-rows: auto auto auto;
+}
+
+.levelup-body {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-bottom: 1px solid #806637;
+}
+
+.levelup-current {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    border: 1px solid #9a875e;
+    background: #9a875e;
+}
+
+.levelup-current div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+    background: #efe5cb;
+    color: #5f5137;
+}
+
+.levelup-current b {
+    color: #3c2514;
+}
+
+.levelup-preview {
+    padding: 8px 10px;
+    border: 1px solid #9a875e;
+    background: #efe5cb;
+    color: #4a2c14;
+    font-weight: 700;
+}
+
+.equipment-popup-title {
+    display: grid;
+    grid-template-columns: 1fr 40px;
+    align-items: center;
+    min-height: 44px;
+    border-bottom: 1px solid #806637;
+    background: #5c4320;
+    color: #fff2ba;
+    font-weight: 800;
+    text-align: center;
+}
+
+.equipment-popup-title button {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    background: transparent;
+    color: #fff2ba;
+    font-size: 26px;
+    cursor: pointer;
+}
+
+.equipment-popup-detail {
+    border-bottom: 1px solid #806637;
+}
+
+.equipment-empty-detail {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 6px;
+    align-content: center;
+    min-height: 74px;
+}
+
+.equipment-empty-detail b {
+    color: #4a2c14;
+    font-size: 22px;
+}
+
+.equipment-empty-detail small {
+    color: #5f5137;
+}
+
+.equipment-popup-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    align-content: start;
+    gap: 8px;
+    min-height: 86px;
+    overflow-y: auto;
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+}
+
+.equipment-popup-actions {
+    padding: 10px;
+}
+
+.backpack-detail {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 10px;
+    min-height: 104px;
+    padding: 12px;
+    border-bottom: 1px solid #806637;
+    background: #f0e5c8;
+}
+
+.backpack-detail-icon,
+.backpack-item {
+    display: grid;
+    place-items: center;
+}
+
+.backpack-detail-icon {
+    width: 70px;
+    height: 70px;
+    border: 3px solid #1d2027;
+    background: #233042;
+    color: #f7f1dd;
+    font-size: 24px;
+    font-weight: 800;
+    box-shadow: none;
+}
+
+.backpack-detail-main {
+    min-width: 0;
+}
+
+.backpack-detail-name {
+    color: #4a2c14;
+    font-size: 24px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.backpack-detail-line {
+    margin-top: 5px;
+    color: #5f5137;
+    line-height: 1.25;
+}
+
+.backpack-item {
+    position: relative;
+    aspect-ratio: 1;
+    min-width: 0;
+    padding: 0;
+    border: 2px solid #8d8477;
+    background: #b0a796;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 2px #d9d1c1;
+}
+
+.equipment-level-badge {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 3px;
+    box-sizing: border-box;
+    background: #5c4320;
+    color: #fff2ba;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.backpack-item.selected {
+    border-color: #a2291f;
+    box-shadow: inset 0 0 0 2px #d3a54d;
+}
+
+.backpack-icon {
+    color: #fff8e6;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+@media (max-width: 430px) {
+    .monster-detail-header {
+        grid-template-columns: 64px minmax(0, 1fr);
+    }
+
+    .monster-attribute {
+        width: 58px;
+        height: 58px;
+        font-size: 32px;
+        transform: translateX(8px);
+    }
+
+    .monster-detail-name {
+        margin-left: -8px;
+        padding: 8px 12px 8px 22px;
+        font-size: 28px;
+    }
+
+    .monster-detail-orbit {
+        grid-template-columns: 74px minmax(118px, 1fr) 74px;
+        grid-template-rows: repeat(3, 66px);
+        gap: 12px 20px;
+    }
+
+    .monster-detail-avatar {
+        width: 126px;
+        height: 126px;
+    }
+
+    .monster-detail-equip {
+        width: 72px;
+        min-height: 66px;
+        padding: 6px 3px 5px;
+    }
+
+    .monster-detail-equip span {
+        width: 44px;
+        height: 32px;
+        font-size: 18px;
+    }
+
+    .monster-detail-attributes {
+        grid-template-columns: 1fr;
+    }
+
+    .monster-detail-basic b {
+        font-size: 18px;
+    }
+
+    .monster-detail-basic .monster-level-row {
+        grid-template-columns: 76px minmax(0, 1fr) 64px;
+    }
+
+    .monster-detail-basic .monster-dual-action-row {
+        grid-template-columns: 76px minmax(0, 1fr) 58px 58px;
+        gap: 6px;
+    }
+
+    .levelup-current {
+        grid-template-columns: 1fr;
+    }
+}

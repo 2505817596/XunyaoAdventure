@@ -1,0 +1,343 @@
+@page "/admin/campaign/{ChapterId}/{StageId}"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>关卡详情配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">@(_stage is null ? "关卡详情配置" : $"{_stage.Code} {_stage.Name}")</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="Save">保存</button>
+            <button class="wap-button muted" @onclick="GoChapter">返回关卡</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        @if (_stage is null)
+        {
+            <div class="wap-line">关卡不存在</div>
+        }
+        else
+        {
+            <div class="admin-detail">
+                <article class="admin-card">
+                    <div class="admin-section-title">关卡信息</div>
+                    <div class="admin-grid-2">
+                        <label>
+                            <span>关卡ID</span>
+                            <input @bind="_stage.Id" />
+                        </label>
+                        <label>
+                            <span>编号</span>
+                            <input @bind="_stage.Code" />
+                        </label>
+                    </div>
+                    <div class="admin-grid-3">
+                        <label>
+                            <span>排序</span>
+                            <input type="number" min="1" @bind="_stage.Order" />
+                        </label>
+                        <label>
+                            <span>难度</span>
+                            <input type="number" min="1" max="10" @bind="_stage.Difficulty" />
+                        </label>
+                        <label>
+                            <span>推荐战力</span>
+                            <input type="number" min="1" @bind="_stage.RecommendedPower" />
+                        </label>
+                    </div>
+                    <label>
+                        <span>关卡名</span>
+                        <input @bind="_stage.Name" />
+                    </label>
+                    <label>
+                        <span>描述</span>
+                        <input @bind="_stage.Description" />
+                    </label>
+                    <label class="admin-check">
+                        <input type="checkbox" @bind="_stage.BaseUnlocked" />
+                        <span>默认解锁</span>
+                    </label>
+                </article>
+
+                <article class="admin-card">
+                    <header>
+                        <b>普通奖励</b>
+                        <button @onclick="() => AddReward(_stage.Rewards)">新增奖励</button>
+                    </header>
+                    @RenderRewards(_stage.Rewards)
+                </article>
+
+                <article class="admin-card">
+                    <header>
+                        <b>首通奖励</b>
+                        <button @onclick="() => AddReward(_stage.FirstClearRewards)">新增奖励</button>
+                    </header>
+                    @RenderRewards(_stage.FirstClearRewards)
+                </article>
+
+                <article class="admin-card">
+                    <header>
+                        <b>敌人波次</b>
+                        <button @onclick="AddWave">新增波次</button>
+                    </header>
+
+                    @for (int waveIndex = 0; waveIndex < _stage.Waves.Count; waveIndex++)
+                    {
+                        int currentWaveIndex = waveIndex;
+                        CampaignEnemyWaveConfig wave = _stage.Waves[currentWaveIndex];
+                        <div class="admin-wave">
+                            <header>
+                                <b>第 @(currentWaveIndex + 1) 波</b>
+                                <button @onclick="() => RemoveWave(currentWaveIndex)">删除波次</button>
+                            </header>
+                            <div class="admin-inline-actions">
+                                <button disabled="@(!_monsterTemplates.Any())" @onclick="() => AddEnemy(wave)">新增敌人</button>
+                            </div>
+
+                            @if (!_monsterTemplates.Any())
+                            {
+                                <div class="wap-tip">请先在妖怪配置里创建至少一个妖怪模板，再配置敌人。</div>
+                            }
+
+                            @for (int enemyIndex = 0; enemyIndex < wave.Enemies.Count; enemyIndex++)
+                            {
+                                int currentEnemyIndex = enemyIndex;
+                                CampaignEnemyConfig enemy = wave.Enemies[currentEnemyIndex];
+                                <div class="admin-enemy">
+                                    <header>
+                                        <b>@(string.IsNullOrWhiteSpace(enemy.Name) ? "未命名敌人" : enemy.Name)</b>
+                                        <button @onclick="() => RemoveEnemy(wave, currentEnemyIndex)">删除敌人</button>
+                                    </header>
+
+                                    <div class="admin-grid-2">
+                                        <label>
+                                            <span>妖怪模板</span>
+                                            <select @bind="enemy.TemplateId">
+                                                <option value="">请选择妖怪模板</option>
+                                                @foreach (MonsterTemplateConfig monster in _monsterTemplates)
+                                                {
+                                                    <option value="@monster.TemplateId">@monster.TemplateId / @monster.Name</option>
+                                                }
+                                            </select>
+                                        </label>
+                                        <label>
+                                            <span>备注名</span>
+                                            <input @bind="enemy.Name" />
+                                        </label>
+                                    </div>
+                                    <div class="admin-grid-3">
+                                        <label>
+                                            <span>等级</span>
+                                            <input type="number" min="1" @bind="enemy.Level" />
+                                        </label>
+                                        <label>
+                                            <span>星级</span>
+                                            <input type="number" min="1" max="@GameAccountStore.MaxMonsterStar" @bind="enemy.Star" />
+                                        </label>
+                                        <label>
+                                            <span>阶级</span>
+                                            <input type="number" min="1" max="@GameAccountStore.MaxMonsterStage" @bind="enemy.Stage" />
+                                        </label>
+                                    </div>
+                                    <div class="admin-grid-2">
+                                        <label>
+                                            <span>X</span>
+                                            <input type="number" step="0.01" @bind="enemy.X" />
+                                        </label>
+                                        <label>
+                                            <span>Y</span>
+                                            <input type="number" step="0.01" @bind="enemy.Y" />
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </article>
+            </div>
+        }
+    </section>
+</main>
+
+@code {
+    [Parameter]
+    public string ChapterId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string StageId { get; set; } = string.Empty;
+
+    private List<CampaignChapterConfig> _chapters = new();
+    private List<CampaignStageConfig> _allStages = new();
+    private List<MonsterTemplateConfig> _monsterTemplates = new();
+    private List<ConsumableTemplateConfig> _consumables = new();
+    private CampaignStageConfig? _stage;
+    private string _originalStageId = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnInitialized()
+    {
+        _originalStageId = StageId;
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _chapters = Configs.GetCampaignChapters().ToList();
+        _allStages = Configs.GetCampaignStages().ToList();
+        _monsterTemplates = Configs.GetMonsterTemplates().ToList();
+        _consumables = Configs.GetConsumableTemplates().ToList();
+        _stage = _allStages.FirstOrDefault(stage => string.Equals(stage.Id, _originalStageId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private RenderFragment RenderRewards(List<CampaignRewardConfig> rewards) => @<div class="admin-rewards">
+        @for (int rewardIndex = 0; rewardIndex < rewards.Count; rewardIndex++)
+        {
+            int currentRewardIndex = rewardIndex;
+            CampaignRewardConfig reward = rewards[currentRewardIndex];
+            <div class="admin-enemy">
+                <header>
+                    <b>@(string.IsNullOrWhiteSpace(reward.Name) ? "奖励" : reward.Name)</b>
+                    <button @onclick="() => RemoveReward(rewards, currentRewardIndex)">删除奖励</button>
+                </header>
+                <div class="admin-grid-3">
+                    <label>
+                        <span>类型</span>
+                        <select @bind="reward.Type">
+                            <option value="Copper">铜钱</option>
+                            <option value="Consumable">消耗品</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>名称</span>
+                        <input @bind="reward.Name" />
+                    </label>
+                    <label>
+                        <span>数量</span>
+                        <input type="number" min="1" @bind="reward.Quantity" />
+                    </label>
+                </div>
+                @if (reward.Type == "Consumable")
+                {
+                    <label>
+                        <span>道具模板</span>
+                        <select @bind="reward.TemplateId">
+                            <option value="">请选择道具模板</option>
+                            @foreach (ConsumableTemplateConfig item in _consumables)
+                            {
+                                <option value="@item.TemplateId">@item.TemplateId / @item.Name</option>
+                            }
+                        </select>
+                    </label>
+                }
+            </div>
+        }
+    </div>;
+
+    private void AddReward(List<CampaignRewardConfig> rewards)
+    {
+        rewards.Add(new CampaignRewardConfig());
+    }
+
+    private static void RemoveReward(List<CampaignRewardConfig> rewards, int rewardIndex)
+    {
+        if (rewardIndex < 0 || rewardIndex >= rewards.Count)
+        {
+            return;
+        }
+
+        rewards.RemoveAt(rewardIndex);
+    }
+
+    private void AddWave()
+    {
+        if (_stage is null || _stage.Waves.Count >= 3)
+        {
+            return;
+        }
+
+        _stage.Waves.Add(new CampaignEnemyWaveConfig
+        {
+            Enemies = new List<CampaignEnemyConfig>(),
+        });
+    }
+
+    private void RemoveWave(int waveIndex)
+    {
+        if (_stage is null || waveIndex < 0 || waveIndex >= _stage.Waves.Count)
+        {
+            return;
+        }
+
+        _stage.Waves.RemoveAt(waveIndex);
+    }
+
+    private void AddEnemy(CampaignEnemyWaveConfig wave)
+    {
+        if (wave.Enemies.Count >= 6)
+        {
+            return;
+        }
+
+        int nextIndex = wave.Enemies.Count + 1;
+        wave.Enemies.Add(CreateDefaultEnemy($"新敌人{nextIndex}", _monsterTemplates.FirstOrDefault()?.TemplateId ?? string.Empty));
+    }
+
+    private static void RemoveEnemy(CampaignEnemyWaveConfig wave, int enemyIndex)
+    {
+        if (enemyIndex < 0 || enemyIndex >= wave.Enemies.Count)
+        {
+            return;
+        }
+
+        wave.Enemies.RemoveAt(enemyIndex);
+    }
+
+    private void Save()
+    {
+        if (_stage is null)
+        {
+            return;
+        }
+
+        _stage.ChapterId = ChapterId;
+        List<CampaignStageConfig> mergedStages = _allStages
+            .Where(stage => !string.Equals(stage.Id, _originalStageId, StringComparison.OrdinalIgnoreCase))
+            .Append(_stage)
+            .ToList();
+
+        ConfigSaveResult result = Configs.SaveCampaignConfig(_chapters, mergedStages);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            _originalStageId = _stage.Id;
+        }
+
+        Reload();
+    }
+
+    private void GoChapter()
+    {
+        Save();
+        Navigation.NavigateTo($"/admin/campaign/{Uri.EscapeDataString(ChapterId)}");
+    }
+
+    private static CampaignEnemyConfig CreateDefaultEnemy(string name, string templateId)
+        => new()
+        {
+            TemplateId = templateId,
+            Name = name,
+            Level = 28,
+            Star = 2,
+            Stage = 3,
+            X = 5.72,
+            Y = -0.28,
+        };
+}

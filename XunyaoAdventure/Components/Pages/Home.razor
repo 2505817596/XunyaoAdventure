@@ -1,0 +1,161 @@
+@page "/"
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject ChatStore Chats
+@inject CampaignStore Campaigns
+@inject GameConfigStore Configs
+@inject GuildStore GuildService
+
+<PageTitle>主页</PageTitle>
+
+<main class="wap-page">
+    <section class="wap-panel">
+        <div class="wap-title">寻妖录</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">尚未登录</div>
+            <button class="wap-button" @onclick="GoLogin">登录 / 注册</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">账号：@_account.UserName</div>
+            <div class="wap-line">还没有角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else
+        {
+            <div class="wap-line">角色：@_account.Profile.Name</div>
+            <div class="wap-line">等级：@_account.Level</div>
+            <div class="wap-line">铜钱：@_account.Copper</div>
+            <button class="home-chat-preview" @onclick="GoChat">
+                <span class="home-chat-title">@LatestChatTitle</span>
+                @if (_latestChatMessage is null)
+                {
+                    <span class="home-chat-empty">暂无聊天</span>
+                }
+                else
+                {
+                    <span class="home-chat-line">
+                        <b>@_latestChatMessage.SenderDisplayName：</b>@_latestChatMessage.Content
+                    </span>
+                }
+            </button>
+            <div class="wap-menu">
+                <button class="wap-button" @onclick="GoMonsters">妖怪</button>
+                <button class="wap-button" @onclick="GoQuests">任务</button>
+                <button class="wap-button" @onclick="GoCampaign">副本</button>
+                <button class="wap-button" @onclick="GoBackpack">背包</button>
+                <button class="wap-button" @onclick="GoForge">熔炼炉</button>
+                <button class="wap-button" @onclick="GoChat">聊天</button>
+                <button class="wap-button" @onclick="GoGuild">公会</button>
+                <button class="wap-button" @onclick="GoRankings">排行榜</button>
+                <button class="wap-button" @onclick="GoBattle">战斗</button>
+                <button class="wap-button muted" @onclick="GoAdmin">后台</button>
+                <button class="wap-button muted" @onclick="Logout">退出</button>
+            </div>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private XunyaoAdventure.Game.Guild? _guild;
+    private ChatMessage? _latestChatMessage;
+
+    private string LatestChatTitle
+        => _latestChatMessage?.Channel switch
+        {
+            ChatChannel.Guild => "公会聊天",
+            ChatChannel.System => "系统消息",
+            ChatChannel.World => "世界聊天",
+            _ => "聊天",
+        };
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        _guild = GuildService.GetGuildByMember(Session.UserName);
+        Chats.MessagesChanged += OnMessagesChanged;
+        RefreshLatestChatMessage();
+    }
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoMonsters()
+        => Navigation.NavigateTo("/monsters");
+
+    private void GoQuests()
+        => Navigation.NavigateTo("/quests");
+
+    private void GoCampaign()
+        => Navigation.NavigateTo("/campaign");
+
+    private void GoBackpack()
+        => Navigation.NavigateTo("/backpack");
+
+    private void GoForge()
+        => Navigation.NavigateTo("/forge");
+
+    private void GoChat()
+        => Navigation.NavigateTo("/chat");
+
+    private void GoGuild()
+        => Navigation.NavigateTo("/guild");
+
+    private void GoRankings()
+        => Navigation.NavigateTo("/rankings");
+
+    private void GoBattle()
+    {
+        if (Session.SelectedStage is null)
+        {
+            InitialAccountConfig initialAccount = Configs.GetInitialAccountConfig();
+            if (!string.IsNullOrWhiteSpace(initialAccount.DefaultStageId))
+            {
+                CampaignStageSelection? selection = Campaigns.CreateSelection(Session.UserName, initialAccount.DefaultStageId);
+                if (selection is not null)
+                {
+                    Session.SelectStage(selection);
+                }
+            }
+        }
+
+        Navigation.NavigateTo("/battle/formation");
+    }
+
+    private void GoAdmin()
+        => Navigation.NavigateTo("/admin");
+
+    private void Logout()
+    {
+        Session.SignOut();
+        Navigation.NavigateTo("/login");
+    }
+
+    private void RefreshLatestChatMessage()
+    {
+        _guild = GuildService.GetGuildByMember(Session.UserName);
+        _latestChatMessage = Chats.GetLatestVisibleMessage(_guild?.Id);
+    }
+
+    private void OnMessagesChanged()
+    {
+        _ = InvokeAsync(() =>
+        {
+            RefreshLatestChatMessage();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Chats.MessagesChanged -= OnMessagesChanged;
+    }
+}

@@ -1,0 +1,645 @@
+h1:focus {
+    outline: none;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: #e7e0c5;
+    color: #302410;
+    font-family: "Microsoft YaHei", Arial, sans-serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.wap-page {
+    min-height: 100dvh;
+    box-sizing: border-box;
+    padding: 12px;
+    background: #e7e0c5;
+}
+
+.wap-panel {
+    width: min(100%, 430px);
+    margin: 0 auto;
+    border: 1px solid #806637;
+    background: #fff8df;
+    box-shadow: inset 0 0 0 1px #d1bc82;
+}
+
+.wap-title {
+    padding: 9px 10px;
+    border-bottom: 1px solid #806637;
+    background: #5c4320;
+    color: #fff2ba;
+    font-weight: 700;
+    text-align: center;
+}
+
+.wap-line,
+.wap-message,
+.wap-tip {
+    padding: 9px 10px;
+    border-bottom: 1px solid #dbc995;
+    line-height: 1.45;
+}
+
+.wap-message {
+    color: #a01818;
+}
+
+.wap-tip {
+    color: #6d5a34;
+    font-size: 13px;
+}
+
+.wap-menu {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+}
+
+.wap-button {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid #624719;
+    background: #8d6a27;
+    color: #fff7d8;
+    cursor: pointer;
+}
+
+.wap-button.muted {
+    background: #efe2b9;
+    color: #3d2e13;
+}
+
+.wap-button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.admin-page {
+    min-height: 100dvh;
+    padding: 24px;
+    background: #f3f5f8;
+}
+
+.admin-page .admin-panel {
+    width: min(100%, 1440px);
+    margin: 0 auto;
+    border: 1px solid #d3d9e3;
+    background: #ffffff;
+    box-shadow: 0 12px 32px rgba(26, 38, 64, 0.08);
+}
+
+.admin-page .wap-title {
+    padding: 16px 22px;
+    border-bottom: 1px solid #dfe5ee;
+    background: #1f2937;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 800;
+    text-align: left;
+}
+
+.admin-page .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 22px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.admin-page .admin-actions.two,
+.admin-page .admin-actions.one {
+    padding-top: 0;
+}
+
+.admin-page .admin-actions .wap-button,
+.admin-page .admin-menu .wap-button,
+.admin-page > .wap-button,
+.admin-page .admin-panel > .wap-button {
+    width: auto;
+    min-width: 120px;
+    min-height: 36px;
+    padding: 0 16px;
+    border: 1px solid #2563eb;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admin-page .wap-button.muted,
+.admin-page .admin-actions .wap-button.muted,
+.admin-page .admin-menu .wap-button.muted {
+    border-color: #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+.admin-page .admin-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 22px;
+}
+
+.admin-page .admin-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 22px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.admin-page .admin-tabs button {
+    min-height: 34px;
+    padding: 0 18px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.admin-page .admin-tabs button.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.admin-page .admin-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+    padding: 22px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-page .admin-card {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #d8dee8;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(26, 38, 64, 0.06);
+}
+
+.admin-page .admin-clickable {
+    cursor: pointer;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.admin-page .admin-clickable:hover {
+    border-color: #2563eb;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.14);
+    transform: translateY(-1px);
+}
+
+.admin-page .admin-card header,
+.admin-page .admin-wave header,
+.admin-page .admin-enemy header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.admin-page .admin-card header b,
+.admin-page .admin-wave header b,
+.admin-page .admin-enemy header b {
+    min-width: 0;
+    overflow: hidden;
+    color: #111827;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-page .admin-card button,
+.admin-page .admin-wave button,
+.admin-page .admin-enemy button {
+    flex: 0 0 auto;
+    min-height: 30px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #1f2937;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-page .admin-fold {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+}
+
+.admin-page .admin-card label,
+.admin-page .admin-enemy label {
+    display: grid;
+    gap: 5px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.admin-page .admin-card input,
+.admin-page .admin-card select,
+.admin-page .admin-enemy input,
+.admin-page .admin-enemy select {
+    min-width: 0;
+    height: 36px;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #111827;
+    padding: 0 10px;
+}
+
+.admin-page .admin-card select[multiple] {
+    height: auto;
+    min-height: 180px;
+    padding: 8px;
+}
+
+.admin-page .admin-card select[multiple] option {
+    padding: 6px 8px;
+}
+
+.admin-page .admin-grid-2,
+.admin-page .admin-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.admin-page .admin-check {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-page .admin-check-line {
+    justify-content: flex-start;
+    min-height: 34px;
+    padding: 8px 10px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.admin-page .admin-check input {
+    width: 18px;
+    height: 18px;
+}
+
+.admin-page .admin-section-title {
+    margin: 4px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.admin-page .admin-meta {
+    display: grid;
+    place-items: center;
+    min-height: 36px;
+    border: 1px solid #dbe3ee;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.admin-page .admin-index-title {
+    color: #111827;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.admin-page .admin-index-meta {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.admin-page .admin-detail {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 16px;
+    padding: 22px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-page .admin-inline-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.admin-page .admin-wave {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid #dbe3ee;
+    background: #f8fafc;
+}
+
+.admin-page .admin-enemy {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #dbe3ee;
+    background: #ffffff;
+}
+
+.admin-page .wap-message,
+.admin-page .wap-tip,
+.admin-page .wap-line {
+    padding: 12px 22px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.wap-field {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+}
+
+.wap-field input {
+    min-width: 0;
+    height: 34px;
+    box-sizing: border-box;
+    border: 1px solid #9f854d;
+    background: #fffdf3;
+    color: #302410;
+    padding: 0 8px;
+}
+
+.wap-list-item {
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+    line-height: 1.55;
+}
+
+.wap-list-title {
+    font-weight: 700;
+    color: #5b3511;
+}
+
+.ranking-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+}
+
+.ranking-tabs button {
+    min-height: 34px;
+    border: 1px solid #9f854d;
+    background: #fffdf3;
+    color: #3d2e13;
+    font-weight: 700;
+}
+
+.ranking-tabs button.active {
+    background: #5c4320;
+    color: #fff2ba;
+}
+
+.ranking-list {
+    display: grid;
+}
+
+.ranking-item {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 58px;
+    padding: 9px 10px;
+    border-bottom: 1px solid #dbc995;
+    background: #fff8df;
+}
+
+.ranking-item.self {
+    background: #fff0bf;
+}
+
+.ranking-rank {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #806637;
+    background: #efe2b9;
+    color: #5b3511;
+    font-weight: 900;
+}
+
+.ranking-main {
+    min-width: 0;
+}
+
+.ranking-main header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ranking-main b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ranking-main span {
+    flex: 0 0 auto;
+    padding: 1px 5px;
+    border: 1px solid #806637;
+    color: #5b3511;
+    font-size: 12px;
+}
+
+.ranking-main small {
+    display: block;
+    overflow: hidden;
+    color: #6d5a34;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ranking-score {
+    color: #5b3511;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.guild-create {
+    display: grid;
+    grid-template-columns: 1fr 86px;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+}
+
+.guild-create input,
+.guild-notice-editor textarea {
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid #9f854d;
+    background: #fffdf3;
+    color: #302410;
+    padding: 8px;
+}
+
+.guild-create button,
+.guild-card button,
+.guild-notice-editor button {
+    border: 1px solid #624719;
+    background: #8d6a27;
+    color: #fff7d8;
+    font-weight: 700;
+}
+
+.guild-create button:disabled {
+    opacity: 0.55;
+}
+
+.guild-list {
+    display: grid;
+}
+
+.guild-card {
+    display: grid;
+    gap: 7px;
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+}
+
+.guild-card header,
+.guild-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.guild-card header b,
+.guild-header b {
+    color: #5b3511;
+}
+
+.guild-card header span,
+.guild-header span,
+.guild-member span {
+    color: #6d5a34;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.guild-meta,
+.guild-notice,
+.guild-notice-block {
+    color: #6d5a34;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.guild-header,
+.guild-notice-block,
+.guild-notice-editor {
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+}
+
+.guild-notice-editor {
+    display: grid;
+    gap: 8px;
+}
+
+.guild-notice-editor textarea {
+    min-height: 72px;
+    resize: vertical;
+}
+
+.guild-member-list {
+    display: grid;
+}
+
+.guild-member {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+}
+
+.guild-member div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.guild-member b,
+.guild-member small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.guild-member small {
+    color: #6d5a34;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e50000;
+}
+
+.validation-message {
+    color: #e50000;
+}
+
+.blazor-error-boundary {
+    background: #b32121;
+    padding: 1rem;
+    color: white;
+}
+
+.blazor-error-boundary::after {
+    content: "An error has occurred.";
+}
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
