@@ -1,0 +1,243 @@
+@page "/admin/gacha"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+
+<PageTitle>抽卡配置</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">抽卡配置</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="Save">保存</button>
+            <button class="wap-button" @onclick="AddPool">新增奖池</button>
+            <button class="wap-button muted" @onclick="GoAdmin">返回后台</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        <div class="admin-list">
+            @for (int poolIndex = 0; poolIndex < _pools.Count; poolIndex++)
+            {
+                int currentPoolIndex = poolIndex;
+                GachaPoolConfig pool = _pools[currentPoolIndex];
+                <article class="admin-card">
+                    <header>
+                        <b>@pool.Id / @pool.Name</b>
+                        <button @onclick="() => RemovePool(currentPoolIndex)">删除奖池</button>
+                    </header>
+
+                    <div class="admin-grid-2">
+                        <label>
+                            <span>奖池ID</span>
+                            <input @bind="pool.Id" />
+                        </label>
+                        <label>
+                            <span>名称</span>
+                            <input @bind="pool.Name" />
+                        </label>
+                    </div>
+
+                    <label>
+                        <span>描述</span>
+                        <input @bind="pool.Description" />
+                    </label>
+
+                    <div class="admin-grid-3">
+                        <label>
+                            <span>消耗道具</span>
+                            <select @bind="pool.CostItemTemplateId">
+                                <option value="">请选择</option>
+                                @foreach (TemplateOption option in _consumables)
+                                {
+                                    <option value="@option.Id">@option.Id / @option.Name</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>保底抽数</span>
+                            <input type="number" min="0" @bind="pool.PityDrawCount" />
+                        </label>
+                        <label>
+                            <span>过滤权重</span>
+                            <input type="number" min="0" @bind="pool.PityMaxWeight" />
+                        </label>
+                    </div>
+
+                    <div class="admin-index-meta">保底说明：累计达到保底抽数时，过滤掉权重大于过滤权重的掉落项，再在剩余项里等概率随机。保底抽数为0表示关闭。</div>
+
+                    <div class="admin-section-title">掉落项</div>
+                    <div class="admin-inline-actions">
+                        <button @onclick="() => AddEntry(pool)">新增掉落</button>
+                    </div>
+
+                    @for (int entryIndex = 0; entryIndex < pool.Entries.Count; entryIndex++)
+                    {
+                        int currentEntryIndex = entryIndex;
+                        GachaEntryConfig entry = pool.Entries[currentEntryIndex];
+                        <div class="admin-enemy">
+                            <header>
+                                <b>@entry.Name</b>
+                                <button @onclick="() => RemoveEntry(pool, currentEntryIndex)">删除</button>
+                            </header>
+
+                            <div class="admin-grid-3">
+                                <label>
+                                    <span>类型</span>
+                                    <select @bind="entry.Type">
+                                        <option value="Monster">妖怪</option>
+                                        <option value="Consumable">道具</option>
+                                        <option value="Fragment">碎片</option>
+                                        <option value="Copper">铜钱</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>模板</span>
+                                    <select @bind="entry.TemplateId" disabled="@(entry.Type == "Copper")">
+                                        <option value="">无</option>
+                                        @foreach (TemplateOption option in GetTemplateOptions(entry.Type))
+                                        {
+                                            <option value="@option.Id">@option.Id / @option.Name</option>
+                                        }
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>名称</span>
+                                    <input @bind="entry.Name" />
+                                </label>
+                            </div>
+
+                            <div class="admin-grid-3">
+                                <label>
+                                    <span>图标</span>
+                                    <input @bind="entry.IconText" />
+                                </label>
+                                <label>
+                                    <span>数量</span>
+                                    <input type="number" min="1" @bind="entry.Quantity" />
+                                </label>
+                                <label>
+                                    <span>权重</span>
+                                    <input type="number" min="1" @bind="entry.Weight" />
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    </section>
+</main>
+
+@code {
+    private List<GachaPoolConfig> _pools = new();
+    private List<TemplateOption> _monsters = new();
+    private List<TemplateOption> _consumables = new();
+    private List<TemplateOption> _fragments = new();
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnInitialized()
+    {
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _pools = Configs.GetGachaPools().ToList();
+        _monsters = Configs.GetMonsterTemplates()
+            .Select(item => new TemplateOption(item.TemplateId, item.Name, item.PortraitUrl))
+            .ToList();
+        _consumables = Configs.GetConsumableTemplates()
+            .Select(item => new TemplateOption(item.TemplateId, item.Name, item.IconText))
+            .ToList();
+        _fragments = Configs.GetFragmentTemplates()
+            .Select(item => new TemplateOption(item.TemplateId, item.Name, item.IconText))
+            .ToList();
+    }
+
+    private void Save()
+    {
+        ConfigSaveResult result = Configs.SaveGachaPools(_pools);
+        _success = result.Success;
+        _message = result.Message;
+        if (result.Success)
+        {
+            Reload();
+        }
+    }
+
+    private void AddPool()
+    {
+        GachaPoolConfig pool = new()
+        {
+            Id = NextId("gacha", _pools.Select(item => item.Id)),
+            Name = "新奖池",
+            Description = "抽取妖怪和养成材料",
+            CostItemTemplateId = _consumables.FirstOrDefault()?.Id ?? string.Empty,
+        };
+        AddEntry(pool);
+        _pools.Add(pool);
+    }
+
+    private void RemovePool(int index)
+    {
+        if (index >= 0 && index < _pools.Count)
+        {
+            _pools.RemoveAt(index);
+        }
+    }
+
+    private void AddEntry(GachaPoolConfig pool)
+    {
+        TemplateOption? monster = _monsters.FirstOrDefault();
+        pool.Entries.Add(new GachaEntryConfig
+        {
+            Type = monster is null ? "Copper" : "Monster",
+            TemplateId = monster?.Id ?? string.Empty,
+            Name = monster?.Name ?? "铜钱",
+            IconText = monster?.IconText ?? "钱",
+            Quantity = 1,
+            Weight = 100,
+        });
+    }
+
+    private static void RemoveEntry(GachaPoolConfig pool, int index)
+    {
+        if (index >= 0 && index < pool.Entries.Count)
+        {
+            pool.Entries.RemoveAt(index);
+        }
+    }
+
+    private IEnumerable<TemplateOption> GetTemplateOptions(string type)
+        => type switch
+        {
+            "Monster" => _monsters,
+            "Consumable" => _consumables,
+            "Fragment" => _fragments,
+            _ => Enumerable.Empty<TemplateOption>(),
+        };
+
+    private void GoAdmin()
+        => Navigation.NavigateTo("/admin");
+
+    private static string NextId(string prefix, IEnumerable<string> existingIds)
+    {
+        HashSet<string> existing = existingIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        int index = existing.Count + 1;
+        string id;
+        do
+        {
+            id = $"{prefix}-{index++}";
+        }
+        while (existing.Contains(id));
+
+        return id;
+    }
+
+    private sealed record TemplateOption(string Id, string Name, string IconText);
+}

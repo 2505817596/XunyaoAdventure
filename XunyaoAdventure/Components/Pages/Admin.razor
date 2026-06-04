@@ -13,6 +13,8 @@
             <button class="wap-button" @onclick="GoItems">物品配置</button>
             <button class="wap-button" @onclick="GoQuests">任务配置</button>
             <button class="wap-button" @onclick="GoCampaign">副本配置</button>
+            <button class="wap-button" @onclick="GoGacha">抽卡配置</button>
+            <button class="wap-button" @onclick="GoMail">邮件后台</button>
             <button class="wap-button muted" @onclick="GoHome">返回主页</button>
         </div>
     </section>
@@ -33,6 +35,12 @@
 
     private void GoCampaign()
         => Navigation.NavigateTo("/admin/campaign");
+
+    private void GoGacha()
+        => Navigation.NavigateTo("/admin/gacha");
+
+    private void GoMail()
+        => Navigation.NavigateTo("/admin/mail");
 
     private void GoHome()
         => Navigation.NavigateTo("/");

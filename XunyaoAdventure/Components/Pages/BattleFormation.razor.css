@@ -13,7 +13,7 @@
     min-height: calc(100dvh - 20px);
     margin: 0 auto;
     display: grid;
-    grid-template-rows: auto auto 1fr auto auto;
+    grid-template-rows: auto auto auto auto 1fr auto auto;
     border: 2px solid #a99f89;
     background: rgba(35, 35, 32, 0.72);
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
@@ -56,6 +56,137 @@
     padding: 10px;
     border-bottom: 1px solid #8f8775;
     overflow-x: auto;
+}
+
+.enemy-waves {
+    padding: 8px 10px 10px;
+    border-bottom: 1px solid #8f8775;
+    background: rgba(18, 20, 22, 0.42);
+}
+
+.enemy-waves-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.enemy-waves-title {
+    color: #f3d271;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.enemy-wave-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+}
+
+.enemy-wave-tab {
+    flex: 0 0 auto;
+    min-width: 54px;
+    height: 28px;
+    border: 1px solid rgba(201, 185, 150, 0.72);
+    background: rgba(34, 34, 34, 0.72);
+    color: #e7dac0;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.enemy-wave-tab.active {
+    border-color: #f3d271;
+    background: #8c6841;
+    color: #fff4d0;
+}
+
+.enemy-wave-stage {
+    padding: 8px;
+    border: 1px solid rgba(201, 185, 150, 0.65);
+    background: rgba(27, 27, 27, 0.72);
+}
+
+.enemy-units {
+    display: grid;
+    grid-template-columns: repeat(6, 48px);
+    gap: 6px;
+    overflow-x: auto;
+}
+
+.enemy-unit {
+    position: relative;
+    width: 48px;
+    height: 58px;
+    border: 2px solid #a79c82;
+    background: rgba(10, 10, 10, 0.55);
+    overflow: hidden;
+}
+
+.enemy-unit.stage-1 {
+    border-color: #f4e9d0;
+}
+
+.enemy-unit.stage-2 {
+    border-color: #8ed24d;
+}
+
+.enemy-unit.stage-3 {
+    border-color: #42bce8;
+}
+
+.enemy-unit.stage-4 {
+    border-color: #a66cff;
+}
+
+.enemy-unit.stage-5 {
+    border-color: #f25b4f;
+}
+
+.enemy-unit img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.enemy-level {
+    position: absolute;
+    left: 3px;
+    top: 2px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    text-shadow: 0 1px 2px #000;
+}
+
+.enemy-unit b {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12px;
+    color: #ffd55b;
+    font-size: 10px;
+    line-height: 1;
+    text-align: center;
+    letter-spacing: 0;
+    text-shadow: 0 1px 2px #4b2600;
+}
+
+.enemy-unit small {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    bottom: 1px;
+    overflow: hidden;
+    color: #fff4d0;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.1;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 2px #000;
+    white-space: nowrap;
 }
 
 .formation-slot,

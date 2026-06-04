@@ -195,4 +195,31 @@ public sealed class FragmentTemplateConfig
     public string Description { get; set; } = string.Empty;
 }
 
+public sealed class GachaConfigFile
+{
+    public int Version { get; set; } = 1;
+    public List<GachaPoolConfig> Pools { get; set; } = new();
+}
+
+public sealed class GachaPoolConfig
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string CostItemTemplateId { get; set; } = string.Empty;
+    public int PityDrawCount { get; set; }
+    public int PityMaxWeight { get; set; }
+    public List<GachaEntryConfig> Entries { get; set; } = new();
+}
+
+public sealed class GachaEntryConfig
+{
+    public string Type { get; set; } = string.Empty;
+    public string TemplateId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string IconText { get; set; } = string.Empty;
+    public int Quantity { get; set; } = 1;
+    public int Weight { get; set; } = 1;
+}
+
 public sealed record ConfigSaveResult(bool Success, string Message);

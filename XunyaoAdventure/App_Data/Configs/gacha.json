@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "pools": [
+    {
+      "id": "standard",
+      "name": "寻妖池",
+      "description": "可获得妖怪、碎片和养成材料",
+      "costItemTemplateId": "soul-stone",
+      "pityDrawCount": 5,
+      "pityMaxWeight": 20,
+      "entries": [
+        {
+          "type": "Monster",
+          "templateId": "monster-1",
+          "name": "新妖怪",
+          "iconText": "/battle-client/unit/001/stand/0000.png",
+          "quantity": 1,
+          "weight": 20
+        },
+        {
+          "type": "Monster",
+          "templateId": "monster-2",
+          "name": "新妖怪",
+          "iconText": "/battle-client/unit/001/stand/0000.png",
+          "quantity": 1,
+          "weight": 20
+        },
+        {
+          "type": "Consumable",
+          "templateId": "small-exp-potion",
+          "name": "经验药水",
+          "iconText": "药",
+          "quantity": 3,
+          "weight": 180
+        },
+        {
+          "type": "Consumable",
+          "templateId": "demon-essence",
+          "name": "妖元",
+          "iconText": "元",
+          "quantity": 2,
+          "weight": 120
+        },
+        {
+          "type": "Fragment",
+          "templateId": "qinglin-shard",
+          "name": "青麟小妖碎片",
+          "iconText": "碎",
+          "quantity": 5,
+          "weight": 160
+        }
+      ]
+    }
+  ]
+}

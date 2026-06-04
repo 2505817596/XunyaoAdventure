@@ -4,6 +4,7 @@
 @inject GameAccountStore Accounts
 @inject CampaignStore Campaigns
 @inject QuestStore Quests
+@inject GameConfigStore Configs
 
 <PageTitle>章节</PageTitle>
 
@@ -38,13 +39,28 @@
                 @foreach (CampaignStageView stageView in _stages)
                 {
                     CampaignStage stage = stageView.Stage;
+                    IReadOnlyList<StageEnemyPreview> lastWaveEnemies = GetLastWaveEnemies(stage.Id);
                     <article class="stage-item @(stageView.Unlocked ? "" : "locked") @(stageView.Cleared ? "cleared" : "")">
-                        <div>
+                        <div class="stage-main">
                             <header>
                                 <b>@stage.Code @stage.Name</b>
                                 <span>推荐战力 @stage.RecommendedPower</span>
                             </header>
                             <p>@stage.Description</p>
+                            @if (lastWaveEnemies.Count > 0)
+                            {
+                                <div class="stage-enemies" aria-label="最后一波敌方妖怪">
+                                    <span class="stage-enemies-label">末波</span>
+                                    @foreach (StageEnemyPreview enemy in lastWaveEnemies)
+                                    {
+                                        <div class="stage-enemy @ResolveStageFrameClass(enemy.Stage)" title="@enemy.Name">
+                                            <img src="@enemy.PortraitUrl" alt="@enemy.Name" />
+                                            <span>@enemy.Level</span>
+                                            <b>@BuildStars(enemy.Star)</b>
+                                        </div>
+                                    }
+                                </div>
+                            }
                             <small>难度 @stage.Difficulty / @ResolveStageStatus(stageView)</small>
                         </div>
                         <div class="stage-actions">
@@ -72,12 +88,14 @@
     private PlayerAccount? _account;
     private CampaignChapterDefinition? _chapter;
     private IReadOnlyList<CampaignStageView> _stages = Array.Empty<CampaignStageView>();
+    private readonly Dictionary<string, IReadOnlyList<StageEnemyPreview>> _lastWaveEnemies = new(StringComparer.OrdinalIgnoreCase);
 
     protected override void OnInitialized()
     {
         _account = Accounts.GetAccount(Session.UserName);
         _chapter = Campaigns.GetChapter(ChapterId);
         _stages = Campaigns.GetStageViews(Session.UserName, ChapterId);
+        LoadStageEnemyPreviews();
     }
 
     private void Challenge(string stageId)
@@ -105,6 +123,42 @@
         Navigation.NavigateTo("/battle/result");
     }
 
+    private void LoadStageEnemyPreviews()
+    {
+        _lastWaveEnemies.Clear();
+        foreach (CampaignStageConfig stage in Configs.GetCampaignStages())
+        {
+            CampaignEnemyWaveConfig? lastWave = stage.Waves.LastOrDefault(wave => wave.Enemies.Count > 0);
+            if (lastWave is null)
+            {
+                continue;
+            }
+
+            _lastWaveEnemies[stage.Id] = lastWave.Enemies
+                .Select(ToStageEnemyPreview)
+                .ToList();
+        }
+    }
+
+    private IReadOnlyList<StageEnemyPreview> GetLastWaveEnemies(string stageId)
+        => _lastWaveEnemies.TryGetValue(stageId, out IReadOnlyList<StageEnemyPreview>? enemies)
+            ? enemies
+            : Array.Empty<StageEnemyPreview>();
+
+    private StageEnemyPreview ToStageEnemyPreview(CampaignEnemyConfig enemy)
+    {
+        MonsterTemplateConfig? template = Configs.GetMonsterTemplate(enemy.TemplateId);
+        string name = string.IsNullOrWhiteSpace(enemy.Name)
+            ? template?.Name ?? enemy.TemplateId
+            : enemy.Name;
+        return new StageEnemyPreview(
+            name,
+            template?.PortraitUrl ?? "/battle-client/unit/001/stand/0000.png",
+            Math.Clamp(enemy.Level, 1, GameAccountStore.MaxMonsterLevel),
+            Math.Clamp(enemy.Star, 1, GameAccountStore.MaxMonsterStar),
+            Math.Clamp(enemy.Stage, 1, GameAccountStore.MaxMonsterStage));
+    }
+
     private void GoLogin()
         => Navigation.NavigateTo("/login");
 
@@ -123,4 +177,12 @@
 
         return stageView.Unlocked ? "未通关" : "未解锁";
     }
+
+    private static string BuildStars(int star)
+        => new('★', Math.Clamp(star, 1, GameAccountStore.MaxMonsterStar));
+
+    private static string ResolveStageFrameClass(int stage)
+        => $"stage-{Math.Clamp(stage, 1, GameAccountStore.MaxMonsterStage)}";
+
+    private sealed record StageEnemyPreview(string Name, string PortraitUrl, int Level, int Star, int Stage);
 }

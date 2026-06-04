@@ -1,0 +1,94 @@
+@page "/mail"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject MailStore Mails
+
+<PageTitle>邮箱</PageTitle>
+
+<main class="wap-page mail-page">
+    <section class="wap-panel mail-panel">
+        <div class="wap-title">邮箱</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else if (!_mails.Any())
+        {
+            <div class="wap-line">暂无邮件</div>
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+        else
+        {
+            <div class="mail-list">
+                @foreach (MailMessage mail in _mails)
+                {
+                    <article class="mail-item @(mail.Read ? "read" : "") @(mail.Claimed ? "claimed" : "")">
+                        <button class="mail-main" @onclick="() => GoDetail(mail.Id)">
+                            <header>
+                                <b>@mail.Title</b>
+                                <span>@ResolveStatus(mail)</span>
+                            </header>
+                            <small>@mail.SenderName / @mail.SentAt.LocalDateTime.ToString("MM-dd HH:mm")</small>
+                            <small>@ResolveAttachmentHint(mail)</small>
+                        </button>
+                    </article>
+                }
+            </div>
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private List<MailMessage> _mails = new();
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        _mails = Mails.GetInbox(Session.UserName).ToList();
+    }
+
+    private void GoDetail(long id)
+        => Navigation.NavigateTo($"/mail/{id}");
+
+    private static string ResolveStatus(MailMessage mail)
+    {
+        if (mail.Attachments.Count > 0 && !mail.Claimed)
+        {
+            return mail.Read ? "可领取" : "未读";
+        }
+
+        if (mail.Claimed)
+        {
+            return "已领取";
+        }
+
+        return mail.Read ? "已读" : "未读";
+    }
+
+    private static string ResolveAttachmentHint(MailMessage mail)
+        => mail.Attachments.Count == 0
+            ? "无附件"
+            : mail.Claimed
+                ? "附件已领取"
+                : "有附件";
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+}

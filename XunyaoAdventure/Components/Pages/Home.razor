@@ -7,6 +7,7 @@
 @inject CampaignStore Campaigns
 @inject GameConfigStore Configs
 @inject GuildStore GuildService
+@inject MailStore Mails
 
 <PageTitle>主页</PageTitle>
 
@@ -47,6 +48,8 @@
                 <button class="wap-button" @onclick="GoMonsters">妖怪</button>
                 <button class="wap-button" @onclick="GoQuests">任务</button>
                 <button class="wap-button" @onclick="GoCampaign">副本</button>
+                <button class="wap-button" @onclick="GoGacha">聚妖台</button>
+                <button class="wap-button" @onclick="GoMail">@MailButtonText</button>
                 <button class="wap-button" @onclick="GoBackpack">背包</button>
                 <button class="wap-button" @onclick="GoForge">熔炼炉</button>
                 <button class="wap-button" @onclick="GoChat">聊天</button>
@@ -64,6 +67,7 @@
     private PlayerAccount? _account;
     private XunyaoAdventure.Game.Guild? _guild;
     private ChatMessage? _latestChatMessage;
+    private int _unreadMailCount;
 
     private string LatestChatTitle
         => _latestChatMessage?.Channel switch
@@ -74,11 +78,16 @@
             _ => "聊天",
         };
 
+    private string MailButtonText
+        => _unreadMailCount > 0 ? $"邮箱（{_unreadMailCount}）" : "邮箱";
+
     protected override void OnInitialized()
     {
         _account = Accounts.GetAccount(Session.UserName);
         _guild = GuildService.GetGuildByMember(Session.UserName);
+        _unreadMailCount = Mails.GetUnreadCount(Session.UserName);
         Chats.MessagesChanged += OnMessagesChanged;
+        Mails.MailsChanged += OnMailsChanged;
         RefreshLatestChatMessage();
     }
 
@@ -96,6 +105,12 @@
 
     private void GoCampaign()
         => Navigation.NavigateTo("/campaign");
+
+    private void GoGacha()
+        => Navigation.NavigateTo("/gacha");
+
+    private void GoMail()
+        => Navigation.NavigateTo("/mail");
 
     private void GoBackpack()
         => Navigation.NavigateTo("/backpack");
@@ -154,8 +169,18 @@
         });
     }
 
+    private void OnMailsChanged()
+    {
+        _ = InvokeAsync(() =>
+        {
+            _unreadMailCount = Mails.GetUnreadCount(Session.UserName);
+            StateHasChanged();
+        });
+    }
+
     public void Dispose()
     {
         Chats.MessagesChanged -= OnMessagesChanged;
+        Mails.MailsChanged -= OnMailsChanged;
     }
 }

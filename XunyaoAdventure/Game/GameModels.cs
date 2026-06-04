@@ -10,6 +10,7 @@ public sealed class PlayerAccount
         List<BackpackEquipmentItem> backpack,
         List<BackpackConsumableItem> consumables,
         List<BackpackFragmentItem> fragments,
+        Dictionary<string, int> gachaPityCounters,
         int level,
         int copper)
     {
@@ -20,6 +21,7 @@ public sealed class PlayerAccount
         Backpack = backpack;
         Consumables = consumables;
         Fragments = fragments;
+        GachaPityCounters = gachaPityCounters;
         Level = level;
         Copper = copper;
     }
@@ -31,6 +33,7 @@ public sealed class PlayerAccount
     public List<BackpackEquipmentItem> Backpack { get; set; }
     public List<BackpackConsumableItem> Consumables { get; set; }
     public List<BackpackFragmentItem> Fragments { get; set; }
+    public Dictionary<string, int> GachaPityCounters { get; set; }
     public int Level { get; set; }
     public int Copper { get; set; }
 }
@@ -222,6 +225,20 @@ public sealed record GameMaterialUseResult(
     PlayerAccount? Account,
     int ConsumedCount);
 
+public sealed record GachaDrawResult(
+    bool Success,
+    string Message,
+    PlayerAccount? Account,
+    IReadOnlyList<GachaDrawItem> Items);
+
+public sealed record GachaDrawItem(
+    string Type,
+    string TemplateId,
+    string Name,
+    string IconText,
+    int Quantity,
+    int? MonsterId);
+
 public enum RankingBoardType
 {
     TotalPower,
@@ -284,3 +301,40 @@ public sealed class GuildMember
 }
 
 public sealed record GuildActionResult(bool Success, string Message, Guild? Guild);
+
+public sealed class MailMessage
+{
+    public MailMessage(
+        long id,
+        string userName,
+        string title,
+        string content,
+        string senderName,
+        DateTimeOffset sentAt,
+        bool read,
+        bool claimed,
+        List<QuestReward> attachments)
+    {
+        Id = id;
+        UserName = userName;
+        Title = title;
+        Content = content;
+        SenderName = senderName;
+        SentAt = sentAt;
+        Read = read;
+        Claimed = claimed;
+        Attachments = attachments;
+    }
+
+    public long Id { get; set; }
+    public string UserName { get; set; }
+    public string Title { get; set; }
+    public string Content { get; set; }
+    public string SenderName { get; set; }
+    public DateTimeOffset SentAt { get; set; }
+    public bool Read { get; set; }
+    public bool Claimed { get; set; }
+    public List<QuestReward> Attachments { get; set; }
+}
+
+public sealed record MailActionResult(bool Success, string Message, MailMessage? Mail, PlayerAccount? Account);

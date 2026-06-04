@@ -1,0 +1,76 @@
+@page "/gacha"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject GameConfigStore Configs
+
+<PageTitle>寻妖池</PageTitle>
+
+<main class="wap-page gacha-page">
+    <section class="wap-panel gacha-panel">
+        <div class="wap-title">寻妖池</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else if (!_pools.Any())
+        {
+            <div class="wap-line">后台还没有配置奖池</div>
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+        else
+        {
+            <div class="gacha-currency">铜钱：@_account.Copper</div>
+
+            <div class="gacha-pools">
+                @foreach (GachaPoolConfig pool in _pools)
+                {
+                    <button class="gacha-pool" @onclick="() => GoPool(pool.Id)">
+                        <b>@pool.Name</b>
+                        <small>@pool.Description</small>
+                        <span>@ResolveCostText(pool)</span>
+                    </button>
+                }
+            </div>
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private List<GachaPoolConfig> _pools = new();
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        _pools = Configs.GetGachaPools().ToList();
+    }
+
+    private void GoPool(string poolId)
+        => Navigation.NavigateTo($"/gacha/{Uri.EscapeDataString(poolId)}");
+
+    private string ResolveCostText(GachaPoolConfig pool)
+    {
+        ConsumableTemplateConfig? item = Configs.GetConsumableTemplates()
+            .FirstOrDefault(template => string.Equals(template.TemplateId, pool.CostItemTemplateId, StringComparison.OrdinalIgnoreCase));
+        return $"{item?.Name ?? "抽卡道具"} / 抽";
+    }
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+}

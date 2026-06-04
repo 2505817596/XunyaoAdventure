@@ -12,6 +12,7 @@ public sealed class PlayerAccountDocument
     public List<BackpackEquipmentItemDocument> Backpack { get; set; } = new();
     public List<BackpackConsumableItemDocument> Consumables { get; set; } = new();
     public List<BackpackFragmentItemDocument> Fragments { get; set; } = new();
+    public Dictionary<string, int> GachaPityCounters { get; set; } = new();
     public int Level { get; set; }
     public int Copper { get; set; }
 }
@@ -159,4 +160,18 @@ public sealed class OperationRewardItemDocument
     public string Name { get; set; } = string.Empty;
     public string TemplateId { get; set; } = string.Empty;
     public int Quantity { get; set; }
+}
+
+public sealed class MailMessageDocument
+{
+    [BsonId]
+    public long Id { get; set; }
+    public string UserName { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+    public string SenderName { get; set; } = string.Empty;
+    public DateTimeOffset SentAt { get; set; }
+    public bool Read { get; set; }
+    public bool Claimed { get; set; }
+    public List<OperationRewardItemDocument> Attachments { get; set; } = new();
 }

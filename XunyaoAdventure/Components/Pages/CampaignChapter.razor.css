@@ -34,6 +34,10 @@
     background: #edf0cf;
 }
 
+.stage-main {
+    min-width: 0;
+}
+
 .stage-item header {
     display: grid;
     gap: 3px;
@@ -60,6 +64,83 @@
     color: #5f5137;
     font-size: 13px;
     line-height: 1.35;
+}
+
+.stage-enemies {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin: 6px 0;
+    overflow-x: auto;
+}
+
+.stage-enemies-label {
+    flex: 0 0 auto;
+    color: #7a4a1d;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.stage-enemy {
+    position: relative;
+    flex: 0 0 auto;
+    width: 42px;
+    height: 48px;
+    border: 2px solid #a79c82;
+    background: rgba(45, 36, 22, 0.28);
+    overflow: hidden;
+}
+
+.stage-enemy.stage-1 {
+    border-color: #f4e9d0;
+}
+
+.stage-enemy.stage-2 {
+    border-color: #65a943;
+}
+
+.stage-enemy.stage-3 {
+    border-color: #2d9fc4;
+}
+
+.stage-enemy.stage-4 {
+    border-color: #8956d8;
+}
+
+.stage-enemy.stage-5 {
+    border-color: #d6493e;
+}
+
+.stage-enemy img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.stage-enemy span {
+    position: absolute;
+    left: 2px;
+    top: 1px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    text-shadow: 0 1px 2px #000;
+}
+
+.stage-enemy b {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1px;
+    overflow: hidden;
+    color: #ffd55b;
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0;
+    text-align: center;
+    text-shadow: 0 1px 2px #4b2600;
+    white-space: nowrap;
 }
 
 .stage-actions {

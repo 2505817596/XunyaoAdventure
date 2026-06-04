@@ -1,0 +1,105 @@
+.mail-page {
+    background: #252733;
+}
+
+.mail-panel {
+    width: min(100%, 430px);
+    background: #d9d0bb;
+    border-color: #1b1b22;
+}
+
+.mail-list {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid #806637;
+}
+
+.mail-item {
+    border: 1px solid #8a7446;
+    background: #f2e7c8;
+}
+
+.mail-item.read {
+    background: #e7dcc0;
+}
+
+.mail-item.claimed {
+    opacity: 0.75;
+}
+
+.mail-main {
+    display: grid;
+    gap: 5px;
+    width: 100%;
+    min-height: 58px;
+    padding: 9px;
+    border: 0;
+    background: transparent;
+    color: #302410;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mail-main header,
+.mail-detail header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mail-main b,
+.mail-detail b {
+    min-width: 0;
+    overflow: hidden;
+    color: #4a2c14;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mail-main span,
+.mail-detail span {
+    flex: 0 0 auto;
+    color: #8a3b20;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.mail-main small {
+    color: #6f6042;
+    font-size: 12px;
+}
+
+.mail-main small + small {
+    color: #8a3b20;
+    font-weight: 800;
+}
+
+.mail-detail {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid #806637;
+    background: #f0e5c8;
+}
+
+.mail-detail p {
+    margin: 0;
+    color: #5f5137;
+    line-height: 1.45;
+}
+
+.mail-detail small {
+    color: #6f6042;
+    font-size: 12px;
+}
+
+.mail-rewards {
+    padding: 8px;
+    border: 1px solid #9b8b6a;
+    background: #fff4cf;
+    color: #5b3511;
+    font-size: 13px;
+    font-weight: 800;
+}

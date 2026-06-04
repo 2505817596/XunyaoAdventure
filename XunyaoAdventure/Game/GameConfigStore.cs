@@ -1,4 +1,4 @@
-using System.Text.Encodings.Web;
+﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
 
@@ -20,11 +20,13 @@ public sealed class GameConfigStore
     private readonly string _itemsPath;
     private readonly string _gameplayPath;
     private readonly string _questsPath;
+    private readonly string _gachaPath;
     private MonsterConfigFile _monsterConfig = new();
     private CampaignConfigFile _campaignConfig = new();
     private ItemConfigFile _itemConfig = new();
     private GameplayConfigFile _gameplayConfig = new();
     private QuestConfigFile _questConfig = new();
+    private GachaConfigFile _gachaConfig = new();
 
     public GameConfigStore(IWebHostEnvironment environment)
     {
@@ -34,6 +36,7 @@ public sealed class GameConfigStore
         _itemsPath = Path.Combine(_configDirectory, "items.json");
         _gameplayPath = Path.Combine(_configDirectory, "gameplay.json");
         _questsPath = Path.Combine(_configDirectory, "quests.json");
+        _gachaPath = Path.Combine(_configDirectory, "gacha.json");
 
         Directory.CreateDirectory(_configDirectory);
         EnsureConfigFile(_monstersPath, new MonsterConfigFile());
@@ -41,12 +44,14 @@ public sealed class GameConfigStore
         EnsureConfigFile(_itemsPath, new ItemConfigFile());
         EnsureConfigFile(_gameplayPath, new GameplayConfigFile());
         EnsureConfigFile(_questsPath, new QuestConfigFile());
+        EnsureConfigFile(_gachaPath, new GachaConfigFile());
 
         ReloadMonsters();
         ReloadCampaign();
         ReloadItems();
         ReloadGameplay();
         ReloadQuests();
+        ReloadGacha();
     }
 
     public IReadOnlyList<MonsterTemplateConfig> GetMonsterTemplates()
@@ -93,7 +98,7 @@ public sealed class GameConfigStore
             _monsterConfig = NormalizeMonsterConfig(config);
         }
 
-        return new ConfigSaveResult(true, "保存成功");
+        return new ConfigSaveResult(true, "淇濆瓨鎴愬姛");
     }
 
     public ConfigSaveResult SaveMonsterTemplate(MonsterTemplateConfig template, string? originalTemplateId = null)
@@ -157,7 +162,7 @@ public sealed class GameConfigStore
             _gameplayConfig = NormalizeGameplayConfig(config);
         }
 
-        return new ConfigSaveResult(true, "保存成功");
+        return new ConfigSaveResult(true, "淇濆瓨鎴愬姛");
     }
 
     public IReadOnlyList<QuestDefinitionConfig> GetQuestDefinitions()
@@ -188,7 +193,53 @@ public sealed class GameConfigStore
             _questConfig = NormalizeQuestConfig(config);
         }
 
-        return new ConfigSaveResult(true, "保存成功");
+        return new ConfigSaveResult(true, "淇濆瓨鎴愬姛");
+    }
+
+    public IReadOnlyList<GachaPoolConfig> GetGachaPools()
+    {
+        lock (_gate)
+        {
+            return _gachaConfig.Pools.Select(CloneGachaPool).ToList();
+        }
+    }
+
+    public GachaPoolConfig? GetGachaPool(string? poolId)
+    {
+        if (string.IsNullOrWhiteSpace(poolId))
+        {
+            return null;
+        }
+
+        lock (_gate)
+        {
+            GachaPoolConfig? pool = _gachaConfig.Pools.FirstOrDefault(item =>
+                string.Equals(item.Id, poolId.Trim(), StringComparison.OrdinalIgnoreCase));
+            return pool is null ? null : CloneGachaPool(pool);
+        }
+    }
+
+    public ConfigSaveResult SaveGachaPools(IReadOnlyList<GachaPoolConfig> pools)
+    {
+        GachaConfigFile config = new()
+        {
+            Version = 1,
+            Pools = pools.Select(CloneGachaPool).ToList(),
+        };
+
+        string? error = ValidateGachaConfig(config);
+        if (error is not null)
+        {
+            return new ConfigSaveResult(false, error);
+        }
+
+        lock (_gate)
+        {
+            WriteConfig(_gachaPath, config);
+            _gachaConfig = NormalizeGachaConfig(config);
+        }
+
+        return new ConfigSaveResult(true, "淇濆瓨鎴愬姛");
     }
 
     public IReadOnlyList<ConsumableTemplateConfig> GetConsumableTemplates()
@@ -240,7 +291,7 @@ public sealed class GameConfigStore
             _itemConfig = NormalizeItemConfig(config);
         }
 
-        return new ConfigSaveResult(true, "保存成功");
+        return new ConfigSaveResult(true, "淇濆瓨鎴愬姛");
     }
 
     public IReadOnlyList<CampaignChapterConfig> GetCampaignChapters()
@@ -297,7 +348,7 @@ public sealed class GameConfigStore
             _campaignConfig = NormalizeCampaignConfig(config);
         }
 
-        return new ConfigSaveResult(true, "保存成功");
+        return new ConfigSaveResult(true, "淇濆瓨鎴愬姛");
     }
 
     private static void EnsureConfigFile<T>(string path, T emptyConfig)
@@ -341,6 +392,12 @@ public sealed class GameConfigStore
         _questConfig = NormalizeQuestConfig(config ?? new QuestConfigFile());
     }
 
+    private void ReloadGacha()
+    {
+        GachaConfigFile? config = JsonSerializer.Deserialize<GachaConfigFile>(File.ReadAllText(_gachaPath), JsonOptions);
+        _gachaConfig = NormalizeGachaConfig(config ?? new GachaConfigFile());
+    }
+
     private static MonsterConfigFile NormalizeMonsterConfig(MonsterConfigFile config)
         => new()
         {
@@ -378,6 +435,13 @@ public sealed class GameConfigStore
         {
             Version = config.Version <= 0 ? 1 : config.Version,
             Quests = config.Quests.Select(CloneQuest).ToList(),
+        };
+
+    private static GachaConfigFile NormalizeGachaConfig(GachaConfigFile config)
+        => new()
+        {
+            Version = config.Version <= 0 ? 1 : config.Version,
+            Pools = config.Pools.Select(CloneGachaPool).ToList(),
         };
 
     private static MonsterTemplateConfig CloneTemplate(MonsterTemplateConfig template)
@@ -555,6 +619,32 @@ public sealed class GameConfigStore
             Quality = item.Quality.Trim(),
             Description = item.Description.Trim(),
         };
+
+    private static GachaPoolConfig CloneGachaPool(GachaPoolConfig pool)
+        => new()
+        {
+            Id = pool.Id.Trim(),
+            Name = pool.Name.Trim(),
+            Description = pool.Description.Trim(),
+            CostItemTemplateId = pool.CostItemTemplateId.Trim(),
+            PityDrawCount = Math.Max(0, pool.PityDrawCount),
+            PityMaxWeight = Math.Max(0, pool.PityMaxWeight),
+            Entries = pool.Entries.Select(CloneGachaEntry).ToList(),
+        };
+
+    private static GachaEntryConfig CloneGachaEntry(GachaEntryConfig entry)
+    {
+        string type = NormalizeGachaEntryType(entry.Type);
+        return new GachaEntryConfig
+        {
+            Type = type,
+            TemplateId = type == "Copper" ? string.Empty : entry.TemplateId.Trim(),
+            Name = entry.Name.Trim(),
+            IconText = entry.IconText.Trim(),
+            Quantity = Math.Max(1, entry.Quantity),
+            Weight = Math.Max(1, entry.Weight),
+        };
+    }
 
     private static HeroAttributeConfig CloneAttributeConfig(HeroAttributeConfig? stats)
     {
@@ -781,7 +871,7 @@ public sealed class GameConfigStore
 
             if (stage.Waves.Count > 3)
             {
-                return $"{stage.Code} 最多配置 3 波敌人";
+                return $"{stage.Code} 最多配置3波敌人";
             }
 
             string? rewardError = ValidateCampaignRewards(stage);
@@ -795,20 +885,20 @@ public sealed class GameConfigStore
                 CampaignEnemyWaveConfig wave = stage.Waves[waveIndex];
                 if (wave.Enemies.Count > 6)
                 {
-                    return $"{stage.Code} 第 {waveIndex + 1} 波最多配置 6 个敌人";
+                    return $"{stage.Code} 第{waveIndex + 1}波最多配置6个敌人";
                 }
 
                 foreach (CampaignEnemyConfig enemy in wave.Enemies)
                 {
                     if (string.IsNullOrWhiteSpace(enemy.TemplateId))
                     {
-                        return $"{stage.Code} 第 {waveIndex + 1} 波妖怪模板ID不能为空";
+                        return $"{stage.Code} 第{waveIndex + 1}波妖怪模板ID不能为空";
                     }
 
                     if (!_monsterConfig.Monsters.Any(monster =>
                             string.Equals(monster.TemplateId, enemy.TemplateId, StringComparison.OrdinalIgnoreCase)))
                     {
-                        return $"{stage.Code} 第 {waveIndex + 1} 波模板不存在：{enemy.TemplateId}";
+                        return $"{stage.Code} 第{waveIndex + 1}波模板不存在：{enemy.TemplateId}";
                     }
                 }
             }
@@ -848,6 +938,99 @@ public sealed class GameConfigStore
         return null;
     }
 
+    private string? ValidateGachaConfig(GachaConfigFile config)
+    {
+        string? duplicate = FindDuplicateId(config.Pools.Select(pool => pool.Id));
+        if (duplicate is not null)
+        {
+            return $"奖池ID重复：{duplicate}";
+        }
+
+        foreach (GachaPoolConfig pool in config.Pools)
+        {
+            if (string.IsNullOrWhiteSpace(pool.Id) || string.IsNullOrWhiteSpace(pool.Name))
+            {
+                return "奖池ID和名称不能为空";
+            }
+
+            if (string.IsNullOrWhiteSpace(pool.CostItemTemplateId))
+            {
+                return $"{pool.Name} 的消耗道具不能为空";
+            }
+
+            if (!_itemConfig.Consumables.Any(item =>
+                string.Equals(item.TemplateId, pool.CostItemTemplateId, StringComparison.OrdinalIgnoreCase)))
+            {
+                return $"{pool.Name} 的消耗道具不存在：{pool.CostItemTemplateId}";
+            }
+
+            if (pool.Entries.Count == 0)
+            {
+                return $"{pool.Name} 至少需要一个掉落项";
+            }
+
+            if (pool.PityDrawCount > 0)
+            {
+                if (pool.PityMaxWeight <= 0)
+                {
+                    return $"{pool.Name} 开启保底时必须配置过滤权重";
+                }
+
+                if (!pool.Entries.Any(entry => entry.Weight <= pool.PityMaxWeight))
+                {
+                    return $"{pool.Name} 的保底过滤后没有可抽取掉落项";
+                }
+            }
+
+            foreach (GachaEntryConfig entry in pool.Entries)
+            {
+                string type = NormalizeGachaEntryType(entry.Type);
+                if (type is not ("Monster" or "Consumable" or "Fragment" or "Copper"))
+                {
+                    return $"{pool.Name} 的掉落类型只支持 Monster/Consumable/Fragment/Copper";
+                }
+
+                if (string.IsNullOrWhiteSpace(entry.Name))
+                {
+                    return $"{pool.Name} 的掉落名称不能为空";
+                }
+
+                if (entry.Quantity <= 0)
+                {
+                    return $"{pool.Name} 的掉落数量必须大于0";
+                }
+
+                if (entry.Weight <= 0)
+                {
+                    return $"{pool.Name} 的掉落权重必须大于0";
+                }
+
+                if (type == "Monster"
+                    && !_monsterConfig.Monsters.Any(item =>
+                        string.Equals(item.TemplateId, entry.TemplateId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return $"{pool.Name} 的妖怪模板不存在：{entry.TemplateId}";
+                }
+
+                if (type == "Consumable"
+                    && !_itemConfig.Consumables.Any(item =>
+                        string.Equals(item.TemplateId, entry.TemplateId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return $"{pool.Name} 的道具模板不存在：{entry.TemplateId}";
+                }
+
+                if (type == "Fragment"
+                    && !_itemConfig.Fragments.Any(item =>
+                        string.Equals(item.TemplateId, entry.TemplateId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return $"{pool.Name} 的碎片模板不存在：{entry.TemplateId}";
+                }
+            }
+        }
+
+        return null;
+    }
+
     private static string NormalizeRewardType(string? type)
     {
         if (string.Equals(type, "Copper", StringComparison.OrdinalIgnoreCase))
@@ -858,6 +1041,31 @@ public sealed class GameConfigStore
         if (string.Equals(type, "Consumable", StringComparison.OrdinalIgnoreCase))
         {
             return "Consumable";
+        }
+
+        return string.Empty;
+    }
+
+    private static string NormalizeGachaEntryType(string? type)
+    {
+        if (string.Equals(type, "Monster", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Monster";
+        }
+
+        if (string.Equals(type, "Consumable", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Consumable";
+        }
+
+        if (string.Equals(type, "Fragment", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Fragment";
+        }
+
+        if (string.Equals(type, "Copper", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Copper";
         }
 
         return string.Empty;

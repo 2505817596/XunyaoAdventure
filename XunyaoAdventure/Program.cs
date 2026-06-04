@@ -21,6 +21,7 @@ builder.Services.AddSingleton<ChatStore>();
 builder.Services.AddSingleton<QuestStore>();
 builder.Services.AddSingleton<CampaignStore>();
 builder.Services.AddSingleton<GuildStore>();
+builder.Services.AddSingleton<MailStore>();
 builder.Services.AddScoped<GameSession>();
 
 var app = builder.Build();

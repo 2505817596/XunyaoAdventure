@@ -1,0 +1,159 @@
+@page "/gacha/{PoolId}"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject GameConfigStore Configs
+
+<PageTitle>寻妖池</PageTitle>
+
+<main class="wap-page gacha-page">
+    <section class="wap-panel gacha-panel">
+        <div class="wap-title">@(_pool?.Name ?? "寻妖池")</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else if (_pool is null)
+        {
+            <div class="wap-line">奖池不存在</div>
+            <button class="wap-button muted" @onclick="GoGacha">返回奖池</button>
+        }
+        else
+        {
+            <div class="gacha-currency">@CostItemName：@OwnedCostItemCount</div>
+            <div class="gacha-pool-detail">
+                <b>@_pool.Name</b>
+                <span>@_pool.Description</span>
+                <small>单抽：1 @CostItemName / 十连：10 @CostItemName</small>
+            </div>
+
+            <div class="gacha-preview">
+                @foreach (GachaEntryConfig entry in _pool.Entries.OrderByDescending(entry => entry.Weight))
+                {
+                    <article>
+                        @if (IsImageIcon(entry.IconText))
+                        {
+                            <img src="@entry.IconText" alt="@entry.Name" />
+                        }
+                        else
+                        {
+                            <span>@ResolveEntryIcon(entry)</span>
+                        }
+                        <b>@entry.Name</b>
+                        <small>@ResolveTypeName(entry.Type) x@(entry.Quantity) / 权重 @entry.Weight</small>
+                    </article>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+            }
+
+            @if (_lastItems.Any())
+            {
+                <div class="gacha-results">
+                    @foreach (GachaDrawItem item in _lastItems)
+                    {
+                        <article class="gacha-result-item">
+                            @if (IsImageIcon(item.IconText))
+                            {
+                                <img src="@item.IconText" alt="@item.Name" />
+                            }
+                            else
+                            {
+                                <span>@item.IconText</span>
+                            }
+                            <b>@item.Name</b>
+                            <small>@ResolveTypeName(item.Type) x@(item.Quantity)</small>
+                        </article>
+                    }
+                </div>
+            }
+
+            <div class="gacha-actions">
+                <button class="wap-button" disabled="@(!CanDraw(1))" @onclick="() => Draw(1)">抽 1 次</button>
+                <button class="wap-button" disabled="@(!CanDraw(10))" @onclick="() => Draw(10)">抽 10 次</button>
+                <button class="wap-button muted" @onclick="GoGacha">返回奖池</button>
+            </div>
+        }
+    </section>
+</main>
+
+@code {
+    [Parameter]
+    public string? PoolId { get; set; }
+
+    private PlayerAccount? _account;
+    private GachaPoolConfig? _pool;
+    private List<GachaDrawItem> _lastItems = new();
+    private string _message = string.Empty;
+    private bool _success;
+
+    private string CostItemName
+        => Configs.GetConsumableTemplates()
+            .FirstOrDefault(item => _pool is not null && string.Equals(item.TemplateId, _pool.CostItemTemplateId, StringComparison.OrdinalIgnoreCase))
+            ?.Name
+            ?? "抽卡道具";
+
+    private int OwnedCostItemCount
+        => _account?.Consumables
+            .FirstOrDefault(item => _pool is not null && string.Equals(item.TemplateId, _pool.CostItemTemplateId, StringComparison.OrdinalIgnoreCase))
+            ?.Quantity
+            ?? 0;
+
+    protected override void OnParametersSet()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        _pool = Configs.GetGachaPool(PoolId);
+    }
+
+    private bool CanDraw(int count)
+        => _pool is not null && OwnedCostItemCount >= count;
+
+    private void Draw(int count)
+    {
+        if (_pool is null)
+        {
+            return;
+        }
+
+        GachaDrawResult result = Accounts.DrawGacha(Session.UserName, _pool.Id, count);
+        _success = result.Success;
+        _message = result.Message;
+        _account = result.Account ?? _account;
+        _lastItems = result.Items.ToList();
+    }
+
+    private static string ResolveEntryIcon(GachaEntryConfig entry)
+        => string.IsNullOrWhiteSpace(entry.IconText) ? ResolveTypeName(entry.Type)[0].ToString() : entry.IconText;
+
+    private static bool IsImageIcon(string? iconText)
+        => !string.IsNullOrWhiteSpace(iconText) && iconText.StartsWith("/", StringComparison.Ordinal);
+
+    private static string ResolveTypeName(string type)
+        => type switch
+        {
+            "Monster" => "妖怪",
+            "Consumable" => "道具",
+            "Fragment" => "碎片",
+            "Copper" => "铜钱",
+            _ => "奖励",
+        };
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoGacha()
+        => Navigation.NavigateTo("/gacha");
+}

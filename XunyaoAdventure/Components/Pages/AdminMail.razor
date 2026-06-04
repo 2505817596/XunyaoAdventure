@@ -1,0 +1,180 @@
+@page "/admin/mail"
+@inject NavigationManager Navigation
+@inject GameConfigStore Configs
+@inject GameAccountStore Accounts
+@inject MailStore Mails
+
+<PageTitle>邮件后台</PageTitle>
+
+<main class="wap-page admin-page">
+    <section class="wap-panel admin-panel">
+        <div class="wap-title">邮件后台</div>
+
+        <div class="admin-actions">
+            <button class="wap-button" @onclick="Send">发送</button>
+            <button class="wap-button" @onclick="AddReward">新增附件</button>
+            <button class="wap-button muted" @onclick="GoAdmin">返回后台</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+        }
+
+        <div class="admin-detail">
+            <article class="admin-card">
+                <div class="admin-section-title">收件人</div>
+                <label>
+                    <span>玩家账号</span>
+                    <input @bind="_targetUserName" />
+                </label>
+
+                <div class="admin-section-title">正文</div>
+                <div class="admin-grid-2">
+                    <label>
+                        <span>标题</span>
+                        <input @bind="_title" />
+                    </label>
+                    <label>
+                        <span>发件人</span>
+                        <input @bind="_senderName" />
+                    </label>
+                </div>
+                <label>
+                    <span>内容</span>
+                    <textarea rows="5" @bind="_content"></textarea>
+                </label>
+            </article>
+
+            <article class="admin-card">
+                <div class="admin-section-title">附件</div>
+                @for (int index = 0; index < _rewards.Count; index++)
+                {
+                    int currentIndex = index;
+                    MailRewardEditor reward = _rewards[currentIndex];
+                    <div class="admin-reward">
+                        <div class="admin-grid-4">
+                            <label>
+                                <span>类型</span>
+                                <select @bind="reward.Type">
+                                    @foreach (QuestRewardType type in Enum.GetValues<QuestRewardType>())
+                                    {
+                                        <option value="@type.ToString()">@ResolveRewardTypeName(type)</option>
+                                    }
+                                </select>
+                            </label>
+                            <label>
+                                <span>名称</span>
+                                <input @bind="reward.Name" />
+                            </label>
+                            <label>
+                                <span>数量</span>
+                                <input type="number" min="1" @bind="reward.Quantity" />
+                            </label>
+                            <label>
+                                <span>道具模板</span>
+                                <select disabled="@(reward.Type != QuestRewardType.Consumable.ToString())" @bind="reward.TemplateId">
+                                    <option value="">无</option>
+                                    @foreach (ConsumableTemplateConfig item in _consumables)
+                                    {
+                                        <option value="@item.TemplateId">@item.TemplateId / @item.Name</option>
+                                    }
+                                </select>
+                            </label>
+                        </div>
+                        <div class="admin-inline-actions">
+                            <button @onclick="() => RemoveReward(currentIndex)">删除附件</button>
+                        </div>
+                    </div>
+                }
+            </article>
+        </div>
+    </section>
+</main>
+
+@code {
+    private List<ConsumableTemplateConfig> _consumables = new();
+    private List<MailRewardEditor> _rewards = new();
+    private string _targetUserName = string.Empty;
+    private string _title = string.Empty;
+    private string _senderName = "系统";
+    private string _content = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnInitialized()
+    {
+        _consumables = Configs.GetConsumableTemplates().ToList();
+    }
+
+    private void Send()
+    {
+        PlayerAccount? account = Accounts.GetAccount(_targetUserName);
+        if (account is null)
+        {
+            _success = false;
+            _message = "玩家账号不存在";
+            return;
+        }
+
+        List<QuestReward> rewards = _rewards
+            .Where(reward => reward.Quantity > 0)
+            .Select(ToReward)
+            .ToList();
+
+        Mails.SendMail(account.UserName, _title, _content, rewards, _senderName);
+        _success = true;
+        _message = "邮件已发送";
+        _title = string.Empty;
+        _content = string.Empty;
+        _rewards.Clear();
+    }
+
+    private void AddReward()
+        => _rewards.Add(new MailRewardEditor
+        {
+            Type = QuestRewardType.Copper.ToString(),
+            Name = "铜钱",
+            Quantity = 100,
+            TemplateId = string.Empty,
+        });
+
+    private void RemoveReward(int index)
+    {
+        if (index >= 0 && index < _rewards.Count)
+        {
+            _rewards.RemoveAt(index);
+        }
+    }
+
+    private static QuestReward ToReward(MailRewardEditor editor)
+    {
+        QuestRewardType type = Enum.TryParse(editor.Type, ignoreCase: true, out QuestRewardType parsed)
+            ? parsed
+            : QuestRewardType.Copper;
+
+        return new QuestReward(
+            type,
+            editor.Name.Trim(),
+            Math.Max(1, editor.Quantity),
+            type == QuestRewardType.Consumable ? editor.TemplateId : null);
+    }
+
+    private static string ResolveRewardTypeName(QuestRewardType type)
+        => type switch
+        {
+            QuestRewardType.Consumable => "道具",
+            _ => "铜钱",
+        };
+
+    private void GoAdmin()
+        => Navigation.NavigateTo("/admin");
+
+    private sealed class MailRewardEditor
+    {
+        public string Type { get; set; } = QuestRewardType.Copper.ToString();
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; } = 1;
+        public string TemplateId { get; set; } = string.Empty;
+    }
+}

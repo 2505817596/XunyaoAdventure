@@ -56,6 +56,7 @@ public sealed class GameAccountStore
                 new List<BackpackEquipmentItem>(),
                 new List<BackpackConsumableItem>(),
                 new List<BackpackFragmentItem>(),
+                new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase),
                 initialAccount.Level,
                 initialAccount.Copper);
             _accounts.Add(userName, account);
@@ -599,6 +600,79 @@ public sealed class GameAccountStore
         }
     }
 
+    public GachaDrawResult DrawGacha(string? userName, string? poolId, int drawCount)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return new GachaDrawResult(false, "请先登录", null, Array.Empty<GachaDrawItem>());
+        }
+
+        if (drawCount is not (1 or 10))
+        {
+            return new GachaDrawResult(false, "只支持1抽或10抽", GetAccount(userName), Array.Empty<GachaDrawItem>());
+        }
+
+        GachaPoolConfig? pool = _configs.GetGachaPool(poolId);
+        if (pool is null)
+        {
+            return new GachaDrawResult(false, "奖池不存在", GetAccount(userName), Array.Empty<GachaDrawItem>());
+        }
+
+        if (pool.Entries.Count == 0)
+        {
+            return new GachaDrawResult(false, "奖池没有配置掉落", GetAccount(userName), Array.Empty<GachaDrawItem>());
+        }
+
+        lock (_gate)
+        {
+            if (!_accounts.TryGetValue(Normalize(userName), out PlayerAccount? account))
+            {
+                return new GachaDrawResult(false, "账号不存在", null, Array.Empty<GachaDrawItem>());
+            }
+
+            if (account.Profile is null)
+            {
+                return new GachaDrawResult(false, "请先创建角色", account, Array.Empty<GachaDrawItem>());
+            }
+
+            int totalCost = drawCount;
+            BackpackConsumableItem? costItem = account.Consumables.FirstOrDefault(item =>
+                string.Equals(item.TemplateId, pool.CostItemTemplateId, StringComparison.OrdinalIgnoreCase));
+            if (costItem is null || costItem.Quantity < totalCost)
+            {
+                string costItemName = ResolveConsumableName(pool.CostItemTemplateId);
+                return new GachaDrawResult(false, $"{costItemName}不足，需要{totalCost}", account, Array.Empty<GachaDrawItem>());
+            }
+
+            List<GachaEntryConfig> entries = new();
+            for (int i = 0; i < drawCount; i++)
+            {
+                entries.Add(PickGachaEntry(account, pool));
+            }
+
+            string? validationError = ValidateGachaEntries(entries);
+            if (validationError is not null)
+            {
+                return new GachaDrawResult(false, validationError, account, Array.Empty<GachaDrawItem>());
+            }
+
+            List<GachaDrawItem> items = new();
+            foreach (GachaEntryConfig entry in entries)
+            {
+                if (!ApplyGachaEntry(account, entry, out GachaDrawItem item, out string error))
+                {
+                    return new GachaDrawResult(false, error, account, items);
+                }
+
+                items.Add(item);
+            }
+
+            costItem.Quantity -= totalCost;
+            SaveAccount(account);
+            return new GachaDrawResult(true, "抽取成功", account, items);
+        }
+    }
+
     public static int GetRequiredExperienceForNextLevel(int level)
     {
         level = Math.Clamp(level, 1, MaxMonsterLevel);
@@ -695,6 +769,175 @@ public sealed class GameAccountStore
                 template.EffectType,
                 template.EffectValue,
                 template.Description);
+    }
+
+    private BackpackFragmentItem? CreateFragmentFromTemplate(string templateId, int quantity)
+    {
+        FragmentTemplateConfig? template = _configs.GetFragmentTemplates()
+            .FirstOrDefault(item => string.Equals(item.TemplateId, templateId, StringComparison.OrdinalIgnoreCase));
+        return template is null
+            ? null
+            : new BackpackFragmentItem(
+                template.TemplateId,
+                template.Name,
+                template.IconText,
+                Math.Max(0, quantity),
+                template.Quality,
+                template.Description);
+    }
+
+    private string ResolveConsumableName(string templateId)
+        => _configs.GetConsumableTemplates()
+            .FirstOrDefault(item => string.Equals(item.TemplateId, templateId, StringComparison.OrdinalIgnoreCase))
+            ?.Name
+            ?? "抽卡道具";
+
+    private bool ApplyGachaEntry(PlayerAccount account, GachaEntryConfig entry, out GachaDrawItem item, out string error)
+    {
+        item = new GachaDrawItem(entry.Type, entry.TemplateId, entry.Name, entry.IconText, entry.Quantity, null);
+        error = string.Empty;
+
+        if (entry.Type == "Copper")
+        {
+            account.Copper += entry.Quantity;
+            return true;
+        }
+
+        if (entry.Type == "Monster")
+        {
+            MonsterTemplateConfig? template = _configs.GetMonsterTemplate(entry.TemplateId);
+            if (template is null)
+            {
+                error = $"妖怪模板不存在：{entry.TemplateId}";
+                return false;
+            }
+
+            OwnedMonster monster = CreateMonsterFromTemplate(template, account.Monsters.Count == 0);
+            account.Monsters.Add(monster);
+            item = new GachaDrawItem(entry.Type, template.TemplateId, template.Name, template.PortraitUrl, 1, monster.Id);
+            return true;
+        }
+
+        if (entry.Type == "Consumable")
+        {
+            int index = account.Consumables.FindIndex(backpackItem =>
+                string.Equals(backpackItem.TemplateId, entry.TemplateId, StringComparison.OrdinalIgnoreCase));
+            if (index >= 0)
+            {
+                account.Consumables[index].Quantity += entry.Quantity;
+                BackpackConsumableItem current = account.Consumables[index];
+                item = new GachaDrawItem(entry.Type, current.TemplateId, current.Name, current.IconText, entry.Quantity, null);
+                return true;
+            }
+
+            BackpackConsumableItem? newItem = CreateConsumableFromTemplate(entry.TemplateId, entry.Quantity);
+            if (newItem is null)
+            {
+                error = $"道具模板不存在：{entry.TemplateId}";
+                return false;
+            }
+
+            account.Consumables.Add(newItem);
+            item = new GachaDrawItem(entry.Type, newItem.TemplateId, newItem.Name, newItem.IconText, entry.Quantity, null);
+            return true;
+        }
+
+        if (entry.Type == "Fragment")
+        {
+            int index = account.Fragments.FindIndex(backpackItem =>
+                string.Equals(backpackItem.TemplateId, entry.TemplateId, StringComparison.OrdinalIgnoreCase));
+            if (index >= 0)
+            {
+                account.Fragments[index].Quantity += entry.Quantity;
+                BackpackFragmentItem current = account.Fragments[index];
+                item = new GachaDrawItem(entry.Type, current.TemplateId, current.Name, current.IconText, entry.Quantity, null);
+                return true;
+            }
+
+            BackpackFragmentItem? newItem = CreateFragmentFromTemplate(entry.TemplateId, entry.Quantity);
+            if (newItem is null)
+            {
+                error = $"碎片模板不存在：{entry.TemplateId}";
+                return false;
+            }
+
+            account.Fragments.Add(newItem);
+            item = new GachaDrawItem(entry.Type, newItem.TemplateId, newItem.Name, newItem.IconText, entry.Quantity, null);
+            return true;
+        }
+
+        error = $"不支持的掉落类型：{entry.Type}";
+        return false;
+    }
+
+    private string? ValidateGachaEntries(IReadOnlyList<GachaEntryConfig> entries)
+    {
+        foreach (GachaEntryConfig entry in entries)
+        {
+            if (entry.Type == "Monster" && _configs.GetMonsterTemplate(entry.TemplateId) is null)
+            {
+                return $"妖怪模板不存在：{entry.TemplateId}";
+            }
+
+            if (entry.Type == "Consumable"
+                && !_configs.GetConsumableTemplates().Any(item =>
+                    string.Equals(item.TemplateId, entry.TemplateId, StringComparison.OrdinalIgnoreCase)))
+            {
+                return $"道具模板不存在：{entry.TemplateId}";
+            }
+
+            if (entry.Type == "Fragment"
+                && !_configs.GetFragmentTemplates().Any(item =>
+                    string.Equals(item.TemplateId, entry.TemplateId, StringComparison.OrdinalIgnoreCase)))
+            {
+                return $"碎片模板不存在：{entry.TemplateId}";
+            }
+        }
+
+        return null;
+    }
+
+    private static GachaEntryConfig PickGachaEntry(PlayerAccount account, GachaPoolConfig pool)
+    {
+        string poolId = pool.Id.Trim();
+        account.GachaPityCounters.TryGetValue(poolId, out int currentCount);
+        int nextCount = currentCount + 1;
+        bool hitPity = pool.PityDrawCount > 0 && nextCount >= pool.PityDrawCount;
+
+        if (hitPity)
+        {
+            List<GachaEntryConfig> pityEntries = pool.Entries
+                .Where(entry => entry.Weight <= pool.PityMaxWeight)
+                .ToList();
+            if (pityEntries.Count > 0)
+            {
+                account.GachaPityCounters[poolId] = 0;
+                return PickGachaEntryEvenly(pityEntries);
+            }
+        }
+
+        account.GachaPityCounters[poolId] = nextCount;
+        return PickGachaEntryByWeight(pool.Entries);
+    }
+
+    private static GachaEntryConfig PickGachaEntryEvenly(IReadOnlyList<GachaEntryConfig> entries)
+        => entries[Random.Shared.Next(0, entries.Count)];
+
+    private static GachaEntryConfig PickGachaEntryByWeight(IReadOnlyList<GachaEntryConfig> entries)
+    {
+        int totalWeight = entries.Sum(entry => Math.Max(1, entry.Weight));
+        int roll = Random.Shared.Next(1, totalWeight + 1);
+        int cursor = 0;
+        foreach (GachaEntryConfig entry in entries)
+        {
+            cursor += Math.Max(1, entry.Weight);
+            if (roll <= cursor)
+            {
+                return entry;
+            }
+        }
+
+        return entries[^1];
     }
 
     private BackpackEquipmentItem? CreateEquipmentFromTemplate(int instanceId, string templateId)
@@ -995,6 +1238,7 @@ public sealed class GameAccountStore
             Backpack = account.Backpack.Select(ToDocument).ToList(),
             Consumables = account.Consumables.Select(ToDocument).ToList(),
             Fragments = account.Fragments.Select(ToDocument).ToList(),
+            GachaPityCounters = new Dictionary<string, int>(account.GachaPityCounters, StringComparer.OrdinalIgnoreCase),
             Level = account.Level,
             Copper = account.Copper,
         });
@@ -1034,6 +1278,7 @@ public sealed class GameAccountStore
             document.Backpack.Select(ToBackpackEquipment).ToList(),
             document.Consumables.Select(ToConsumable).ToList(),
             document.Fragments.Select(ToFragment).ToList(),
+            new Dictionary<string, int>(document.GachaPityCounters, StringComparer.OrdinalIgnoreCase),
             document.Level,
             document.Copper);
 

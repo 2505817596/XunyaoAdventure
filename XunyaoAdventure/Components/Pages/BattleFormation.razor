@@ -29,8 +29,8 @@
     {
         <section class="formation-shell">
             <header class="formation-top">
-                <button class="formation-back" @onclick="GoHome">←</button>
-                <div class="formation-title">@(Session.SelectedStage?.StageCode ?? "阵容") @_selectedIds.Count/5</div>
+                <button class="formation-back" @onclick="GoHome">‹</button>
+                <div class="formation-title">@(Session.SelectedStage?.StageCode ?? "阵容") @_selectedIds.Count/@_initialAccount.FormationSize</div>
                 <div class="formation-power">战力 @_selectedPower</div>
             </header>
 
@@ -41,8 +41,47 @@
                 </div>
             }
 
+            @if (_enemyWaves.Count > 0)
+            {
+                <section class="enemy-waves" aria-label="敌方波次阵容">
+                    <div class="enemy-waves-head">
+                        <div class="enemy-waves-title">敌方阵容</div>
+                        <div class="enemy-wave-tabs">
+                            @for (int i = 0; i < _enemyWaves.Count; i++)
+                            {
+                                int waveIndex = i;
+                                <button class="enemy-wave-tab @(waveIndex == _selectedEnemyWaveIndex ? "active" : "")"
+                                        @onclick="() => SelectEnemyWave(waveIndex)">
+                                    第 @_enemyWaves[waveIndex].Index 波
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="enemy-wave-stage">
+                        @foreach (EnemyWaveView wave in _enemyWaves)
+                        {
+                            if (wave.Index - 1 == _selectedEnemyWaveIndex)
+                            {
+                                <div class="enemy-units">
+                                    @foreach (EnemyUnitView enemy in wave.Enemies)
+                                    {
+                                        <div class="enemy-unit @ResolveStageFrameClass(enemy.Stage)" title="@enemy.Name">
+                                            <img src="@enemy.PortraitUrl" alt="@enemy.Name" />
+                                            <span class="enemy-level">@enemy.Level</span>
+                                            <b>@BuildStars(enemy.Star)</b>
+                                            <small>@enemy.Name</small>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </section>
+            }
+
             <div class="formation-selected">
-                @for (int i = 0; i < 5; i++)
+                @for (int i = 0; i < _initialAccount.FormationSize; i++)
                 {
                     OwnedMonster? monster = i < _selectedMonsters.Count ? _selectedMonsters[i] : null;
                     <button class="formation-slot @(monster is null ? "" : $"filled {ResolveStageFrameClass(monster.Stage)}")" @onclick="() => RemoveAt(i)">
@@ -105,8 +144,10 @@
     private PlayerAccount? _account;
     private readonly List<int> _selectedIds = new();
     private readonly List<OwnedMonster> _selectedMonsters = new();
+    private readonly List<EnemyWaveView> _enemyWaves = new();
     private InitialAccountConfig _initialAccount = new();
     private int _selectedPower;
+    private int _selectedEnemyWaveIndex;
     private string _message = string.Empty;
 
     protected override void OnInitialized()
@@ -126,6 +167,8 @@
                 Session.EnsureSelectedStage(defaultStage);
             }
         }
+
+        LoadEnemyWaves();
 
         if (Session.BattleMonsterIds.Count > 0)
         {
@@ -232,6 +275,51 @@
         _selectedPower = _selectedMonsters.Sum(monster => monster.Power);
     }
 
+    private void LoadEnemyWaves()
+    {
+        _enemyWaves.Clear();
+        if (Session.SelectedStage is null)
+        {
+            return;
+        }
+
+        CampaignStageConfig? stage = Configs.GetCampaignStage(Session.SelectedStage.StageId);
+        if (stage is null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < stage.Waves.Count; i++)
+        {
+            List<EnemyUnitView> enemies = stage.Waves[i].Enemies
+                .Select(ToEnemyUnitView)
+                .ToList();
+            if (enemies.Count > 0)
+            {
+                _enemyWaves.Add(new EnemyWaveView(i + 1, enemies));
+            }
+        }
+
+        _selectedEnemyWaveIndex = Math.Clamp(_selectedEnemyWaveIndex, 0, Math.Max(0, _enemyWaves.Count - 1));
+    }
+
+    private void SelectEnemyWave(int waveIndex)
+        => _selectedEnemyWaveIndex = Math.Clamp(waveIndex, 0, Math.Max(0, _enemyWaves.Count - 1));
+
+    private EnemyUnitView ToEnemyUnitView(CampaignEnemyConfig enemy)
+    {
+        MonsterTemplateConfig? template = Configs.GetMonsterTemplate(enemy.TemplateId);
+        string name = string.IsNullOrWhiteSpace(enemy.Name)
+            ? template?.Name ?? enemy.TemplateId
+            : enemy.Name;
+        return new EnemyUnitView(
+            name,
+            template?.PortraitUrl ?? "/battle-client/unit/001/stand/0000.png",
+            Math.Clamp(enemy.Level, 1, GameAccountStore.MaxMonsterLevel),
+            Math.Clamp(enemy.Star, 1, GameAccountStore.MaxMonsterStar),
+            Math.Clamp(enemy.Stage, 1, GameAccountStore.MaxMonsterStage));
+    }
+
     private void GoLogin()
         => Navigation.NavigateTo("/login");
 
@@ -252,16 +340,20 @@
 
     private static int ResolvePositionOrder(string position)
     {
-        if (position == "中排" || position.Contains('中') || position.Contains('涓'))
+        if (position == "中排" || position.Contains('中'))
         {
             return 1;
         }
 
-        if (position == "后排" || position.Contains('后') || position.Contains('鍚'))
+        if (position == "后排" || position.Contains('后'))
         {
             return 2;
         }
 
         return 0;
     }
+
+    private sealed record EnemyWaveView(int Index, IReadOnlyList<EnemyUnitView> Enemies);
+
+    private sealed record EnemyUnitView(string Name, string PortraitUrl, int Level, int Star, int Stage);
 }

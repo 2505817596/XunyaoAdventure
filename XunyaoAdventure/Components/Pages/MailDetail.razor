@@ -1,0 +1,121 @@
+@page "/mail/{MailId:long}"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject MailStore Mails
+
+<PageTitle>邮件详情</PageTitle>
+
+<main class="wap-page mail-page">
+    <section class="wap-panel mail-panel">
+        <div class="wap-title">邮件详情</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else if (_mail is null)
+        {
+            <div class="wap-line">邮件不存在</div>
+            <button class="wap-button muted" @onclick="GoMail">返回邮箱</button>
+        }
+        else
+        {
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+            }
+
+            <section class="mail-detail">
+                <header>
+                    <b>@_mail.Title</b>
+                    <span>@_mail.SenderName</span>
+                </header>
+                <small>@_mail.SentAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</small>
+                <p>@_mail.Content</p>
+            </section>
+
+            <section class="mail-detail">
+                <header>
+                    <b>附件</b>
+                    <span>@ResolveAttachmentStatus()</span>
+                </header>
+                @if (_mail.Attachments.Any())
+                {
+                    <div class="mail-rewards">@RewardText(_mail.Attachments)</div>
+                    <button class="wap-button" disabled="@_mail.Claimed" @onclick="Claim">领取附件</button>
+                }
+                else
+                {
+                    <div class="mail-rewards">无附件</div>
+                }
+            </section>
+
+            <button class="wap-button muted" @onclick="GoMail">返回邮箱</button>
+        }
+    </section>
+</main>
+
+@code {
+    [Parameter]
+    public long MailId { get; set; }
+
+    private PlayerAccount? _account;
+    private MailMessage? _mail;
+    private string _message = string.Empty;
+    private bool _success;
+
+    protected override void OnParametersSet()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        if (_account is null)
+        {
+            return;
+        }
+
+        MailActionResult result = Mails.MarkRead(Session.UserName, MailId);
+        _mail = result.Mail ?? Mails.GetMail(Session.UserName, MailId);
+        if (!result.Success)
+        {
+            _success = false;
+            _message = result.Message;
+        }
+    }
+
+    private void Claim()
+    {
+        MailActionResult result = Mails.ClaimAttachments(Session.UserName, MailId);
+        _success = result.Success;
+        _message = result.Message;
+        _account = result.Account ?? _account;
+        _mail = result.Mail ?? Mails.GetMail(Session.UserName, MailId);
+    }
+
+    private string ResolveAttachmentStatus()
+    {
+        if (_mail is null || !_mail.Attachments.Any())
+        {
+            return "无附件";
+        }
+
+        return _mail.Claimed ? "已领取" : "可领取";
+    }
+
+    private static string RewardText(IReadOnlyList<QuestReward> rewards)
+        => string.Join(" / ", rewards.Select(reward => $"{reward.Name} x{reward.Quantity}"));
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoMail()
+        => Navigation.NavigateTo("/mail");
+}
