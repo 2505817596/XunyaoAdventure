@@ -47,6 +47,7 @@ declare const createStartupModule: (
 type BattleMountOptions = {
   setupBytes?: Uint8Array | number[];
   heroes?: BattleHeroMountMetadata[];
+  enemies?: BattleHeroMountMetadata[];
   assetBaseUrl?: string;
   onExit?: {
     invokeMethodAsync(methodName: string): Promise<void>;
@@ -73,6 +74,7 @@ class XunyaoAdventureBattleViewApp {
   private readonly container: HTMLElement;
   private readonly setupBytes: Uint8Array | null;
   private readonly heroes: BattleHeroMountMetadata[];
+  private readonly enemies: BattleHeroMountMetadata[];
   private readonly assetBaseUrl: string;
   private readonly onExit: BattleMountOptions["onExit"];
   private readonly onBattleEnded: BattleMountOptions["onBattleEnded"];
@@ -103,6 +105,7 @@ class XunyaoAdventureBattleViewApp {
       ? new Uint8Array(options.setupBytes)
       : null;
     this.heroes = Array.isArray(options.heroes) ? options.heroes : [];
+    this.enemies = Array.isArray(options.enemies) ? options.enemies : [];
     this.onExit = options.onExit;
     this.onBattleEnded = options.onBattleEnded;
   }
@@ -301,6 +304,17 @@ class XunyaoAdventureBattleViewApp {
         unitAssetId: hero.unitAssetId,
         stage: hero.stage,
         star: hero.star,
+      });
+    }
+    for (const enemy of this.enemies) {
+      this.unitMetadata.set(enemy.unitId, {
+        profileId: 0,
+        profileName: "ArenaOpponent",
+        roleName: enemy.name ?? "Enemy",
+        portraitUrl: enemy.portraitUrl,
+        unitAssetId: enemy.unitAssetId,
+        stage: enemy.stage,
+        star: enemy.star,
       });
     }
     return this.setupBytes;

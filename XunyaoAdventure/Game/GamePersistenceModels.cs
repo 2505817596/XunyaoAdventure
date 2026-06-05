@@ -206,3 +206,15 @@ public sealed class MailMessageDocument
     public bool Claimed { get; set; }
     public List<OperationRewardItemDocument> Attachments { get; set; } = new();
 }
+
+public sealed class ArenaProfileDocument
+{
+    [BsonId]
+    public string UserName { get; set; } = string.Empty;
+    public string RoleName { get; set; } = string.Empty;
+    public int Score { get; set; }
+    public int Wins { get; set; }
+    public int Losses { get; set; }
+    public int ChallengeCount { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}

@@ -1,0 +1,85 @@
+@page "/arena/result"
+@inject NavigationManager Navigation
+@inject GameSession Session
+
+<PageTitle>竞技结算</PageTitle>
+
+<main class="wap-page battle-result-page">
+    <section class="wap-panel battle-result-panel">
+        <div class="wap-title">竞技结算</div>
+
+        @if (_result is null)
+        {
+            <div class="wap-line">没有可显示的竞技场结果</div>
+            <button class="wap-button" @onclick="GoArena">返回竞技场</button>
+        }
+        else
+        {
+            <div class="battle-result-banner @(_result.Victory ? "victory" : "defeat")">
+                <b>@(_result.Victory ? "胜利" : "失败")</b>
+                <span>对手 @_result.OpponentRoleName</span>
+            </div>
+
+            <div class="arena-result-grid">
+                <div>
+                    <span>积分变化</span>
+                    <b class="@(_result.ScoreDelta >= 0 ? "positive" : "negative")">@FormatSigned(_result.ScoreDelta)</b>
+                </div>
+                <div>
+                    <span>当前积分</span>
+                    <b>@_result.NewScore</b>
+                </div>
+                <div>
+                    <span>排名变化</span>
+                    <b>@ResolveRankText()</b>
+                </div>
+                <div>
+                    <span>胜负</span>
+                    <b>@_result.Wins / @_result.Losses</b>
+                </div>
+            </div>
+
+            <div class="battle-result-actions">
+                <button class="wap-button" @onclick="GoArena">继续挑战</button>
+                <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            </div>
+        }
+    </section>
+</main>
+
+@code {
+    private ArenaBattleResult? _result;
+
+    protected override void OnInitialized()
+    {
+        _result = Session.LastArenaBattleResult;
+    }
+
+    private string ResolveRankText()
+    {
+        if (_result is null || _result.OldRank <= 0 || _result.NewRank <= 0)
+        {
+            return "-";
+        }
+
+        int delta = _result.OldRank - _result.NewRank;
+        return delta == 0 ? $"第 {_result.NewRank}" : $"第 {_result.NewRank} ({FormatSigned(delta)})";
+    }
+
+    private static string FormatSigned(int value)
+        => value > 0 ? $"+{value}" : value.ToString();
+
+    private void GoArena()
+    {
+        Session.ClearArenaBattle();
+        Session.ClearBattleResult();
+        Navigation.NavigateTo("/arena");
+    }
+
+    private void GoHome()
+    {
+        Session.ClearArenaBattle();
+        Session.ClearBattleResult();
+        Navigation.NavigateTo("/");
+    }
+}

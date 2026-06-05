@@ -29,8 +29,8 @@
     {
         <section class="formation-shell">
             <header class="formation-top">
-                <button class="formation-back" @onclick="GoHome">‹</button>
-                <div class="formation-title">@(Session.SelectedStage?.StageCode ?? "阵容") @_selectedIds.Count/@_initialAccount.FormationSize</div>
+                <button class="formation-back" @onclick="GoBack">‹</button>
+                <div class="formation-title">@ResolveFormationTitle() @_selectedIds.Count/@_initialAccount.FormationSize</div>
                 <div class="formation-power">战力 @_selectedPower</div>
             </header>
 
@@ -40,10 +40,16 @@
                     @Session.SelectedStage.StageName / 推荐战力 @Session.SelectedStage.RecommendedPower
                 </div>
             }
+            else if (Session.SelectedArenaBattle is not null)
+            {
+                <div class="formation-message">
+                    竞技场挑战 @Session.SelectedArenaBattle.OpponentRoleName / 战力 @Session.SelectedArenaBattle.OpponentPower
+                </div>
+            }
 
             @if (_enemyWaves.Count > 0)
             {
-                <section class="enemy-waves" aria-label="敌方波次阵容">
+                <section class="enemy-waves" aria-label="敌方阵容">
                     <div class="enemy-waves-head">
                         <div class="enemy-waves-title">敌方阵容</div>
                         <div class="enemy-wave-tabs">
@@ -159,7 +165,7 @@
         }
 
         _initialAccount = Configs.GetInitialAccountConfig();
-        if (!string.IsNullOrWhiteSpace(_initialAccount.DefaultStageId))
+        if (!Session.IsArenaBattle && !string.IsNullOrWhiteSpace(_initialAccount.DefaultStageId))
         {
             CampaignStageSelection? defaultStage = Campaigns.CreateSelection(Session.UserName, _initialAccount.DefaultStageId);
             if (defaultStage is not null)
@@ -170,14 +176,11 @@
 
         LoadEnemyWaves();
 
-        if (Session.BattleMonsterIds.Count > 0)
+        foreach (int monsterId in Session.BattleMonsterIds)
         {
-            foreach (int monsterId in Session.BattleMonsterIds)
+            if (_account.Monsters.Any(monster => monster.Id == monsterId))
             {
-                if (_account.Monsters.Any(monster => monster.Id == monsterId))
-                {
-                    _selectedIds.Add(monsterId);
-                }
+                _selectedIds.Add(monsterId);
             }
         }
 
@@ -230,7 +233,10 @@
 
         _message = string.Empty;
         _selectedIds.Clear();
-        _selectedIds.AddRange(_account.Monsters.Take(_initialAccount.FormationSize).Select(monster => monster.Id));
+        _selectedIds.AddRange(_account.Monsters
+            .OrderByDescending(monster => monster.Power)
+            .Take(_initialAccount.FormationSize)
+            .Select(monster => monster.Id));
         RefreshSelectedMonsters();
     }
 
@@ -243,7 +249,11 @@
         }
 
         Session.SetBattleMonsters(_selectedIds, _initialAccount.FormationSize);
-        Quests.ReportEvent(Session.UserName, QuestEventType.EnterBattle);
+        if (!Session.IsArenaBattle)
+        {
+            Quests.ReportEvent(Session.UserName, QuestEventType.EnterBattle);
+        }
+
         Navigation.NavigateTo("/battle");
     }
 
@@ -278,6 +288,17 @@
     private void LoadEnemyWaves()
     {
         _enemyWaves.Clear();
+        if (Session.SelectedArenaBattle is not null)
+        {
+            _enemyWaves.Add(new EnemyWaveView(
+                1,
+                Session.SelectedArenaBattle.OpponentFormation
+                    .Select(monster => new EnemyUnitView(monster.Name, monster.PortraitUrl, monster.Level, monster.Star, monster.Stage))
+                    .ToList()));
+            _selectedEnemyWaveIndex = 0;
+            return;
+        }
+
         if (Session.SelectedStage is null)
         {
             return;
@@ -326,11 +347,23 @@
     private void GoCreateCharacter()
         => Navigation.NavigateTo("/create-character");
 
-    private void GoHome()
+    private void GoBack()
     {
+        if (Session.IsArenaBattle)
+        {
+            Session.ClearArenaBattle();
+            Navigation.NavigateTo("/arena");
+            return;
+        }
+
         Session.ClearSelectedStage();
         Navigation.NavigateTo("/");
     }
+
+    private string ResolveFormationTitle()
+        => Session.SelectedArenaBattle is not null
+            ? "竞技场"
+            : Session.SelectedStage?.StageCode ?? "阵容";
 
     private static string BuildStars(int star)
         => new('★', Math.Clamp(star, 1, GameAccountStore.MaxMonsterStar));

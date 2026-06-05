@@ -50,6 +50,7 @@
                 <button class="wap-button" @onclick="GoQuests">任务</button>
                 <button class="wap-button" @onclick="GoCampaign">副本</button>
                 <button class="wap-button" @onclick="GoGacha">聚妖台</button>
+                <button class="wap-button" @onclick="GoArena">竞技场</button>
                 <button class="wap-button" @onclick="GoMail">@MailButtonText</button>
                 <button class="wap-button" @onclick="GoBackpack">背包</button>
                 <button class="wap-button" @onclick="GoForge">熔炼炉</button>
@@ -116,6 +117,9 @@
     private void GoGacha()
         => Navigation.NavigateTo("/gacha");
 
+    private void GoArena()
+        => Navigation.NavigateTo("/arena");
+
     private void GoMail()
         => Navigation.NavigateTo("/mail");
 
@@ -154,6 +158,7 @@
 
     private void GoBattle()
     {
+        Session.ClearArenaBattle();
         if (Session.SelectedStage is null)
         {
             InitialAccountConfig initialAccount = Configs.GetInitialAccountConfig();

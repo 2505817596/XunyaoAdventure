@@ -2,6 +2,7 @@
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
+@inject ArenaStore Arenas
 
 <PageTitle>排行榜</PageTitle>
 
@@ -21,33 +22,66 @@
                 <button class="@TabClass(RankingBoardType.StrongestMonster)" @onclick="() => SelectBoard(RankingBoardType.StrongestMonster)">最强妖怪</button>
                 <button class="@TabClass(RankingBoardType.Level)" @onclick="() => SelectBoard(RankingBoardType.Level)">等级</button>
                 <button class="@TabClass(RankingBoardType.Copper)" @onclick="() => SelectBoard(RankingBoardType.Copper)">铜钱</button>
+                <button class="@ArenaTabClass()" @onclick="SelectArenaBoard">竞技场</button>
             </div>
 
-            @if (!_entries.Any())
+            @if (_showArena)
             {
-                <div class="wap-line">暂无排行数据</div>
+                @if (!_arenaEntries.Any())
+                {
+                    <div class="wap-line">暂无竞技排行数据</div>
+                }
+                else
+                {
+                    <div class="ranking-list">
+                        @foreach (ArenaRankingEntry entry in _arenaEntries)
+                        {
+                            <article class="ranking-item @(IsSelf(entry.UserName) ? "self" : "")">
+                                <div class="ranking-rank">@entry.Rank</div>
+                                <div class="ranking-main">
+                                    <header>
+                                        <b>@entry.RoleName</b>
+                                        @if (IsSelf(entry.UserName))
+                                        {
+                                            <span>自己</span>
+                                        }
+                                    </header>
+                                    <small>战力 @entry.TotalPower / 胜负 @entry.Wins-@entry.Losses</small>
+                                </div>
+                                <div class="ranking-score">@entry.Score</div>
+                            </article>
+                        }
+                    </div>
+                }
             }
             else
             {
-                <div class="ranking-list">
-                    @foreach (RankingEntry entry in _entries)
-                    {
-                        <article class="ranking-item @(IsSelf(entry) ? "self" : "")">
-                            <div class="ranking-rank">@entry.Rank</div>
-                            <div class="ranking-main">
-                                <header>
-                                    <b>@entry.RoleName</b>
-                                    @if (IsSelf(entry))
-                                    {
-                                        <span>自己</span>
-                                    }
-                                </header>
-                                <small>@ResolveSubText(entry)</small>
-                            </div>
-                            <div class="ranking-score">@ResolveScore(entry)</div>
-                        </article>
-                    }
-                </div>
+                @if (!_entries.Any())
+                {
+                    <div class="wap-line">暂无排行数据</div>
+                }
+                else
+                {
+                    <div class="ranking-list">
+                        @foreach (RankingEntry entry in _entries)
+                        {
+                            <article class="ranking-item @(IsSelf(entry.UserName) ? "self" : "")">
+                                <div class="ranking-rank">@entry.Rank</div>
+                                <div class="ranking-main">
+                                    <header>
+                                        <b>@entry.RoleName</b>
+                                        @if (IsSelf(entry.UserName))
+                                        {
+                                            <span>自己</span>
+                                        }
+                                    </header>
+                                    <small>@ResolveSubText(entry)</small>
+                                </div>
+                                <div class="ranking-score">@ResolveScore(entry)</div>
+                            </article>
+                        }
+                    </div>
+                }
             }
 
             <button class="wap-button muted" @onclick="GoHome">返回主页</button>
@@ -56,28 +90,54 @@
 </main>
 
 @code {
+    [SupplyParameterFromQuery(Name = "board")]
+    public string? Board { get; set; }
+
     private RankingBoardType _boardType = RankingBoardType.TotalPower;
     private List<RankingEntry> _entries = new();
+    private List<ArenaRankingEntry> _arenaEntries = new();
+    private bool _showArena;
 
     protected override void OnInitialized()
     {
+        _showArena = string.Equals(Board, "arena", StringComparison.OrdinalIgnoreCase);
         Refresh();
     }
 
     private void SelectBoard(RankingBoardType boardType)
     {
+        _showArena = false;
         _boardType = boardType;
         Refresh();
     }
 
+    private void SelectArenaBoard()
+    {
+        _showArena = true;
+        Refresh();
+    }
+
     private void Refresh()
-        => _entries = Accounts.GetRankings(_boardType, 50).ToList();
+    {
+        if (_showArena)
+        {
+            _arenaEntries = Arenas.GetRankings(50).ToList();
+            _entries.Clear();
+            return;
+        }
+
+        _entries = Accounts.GetRankings(_boardType, 50).ToList();
+        _arenaEntries.Clear();
+    }
 
     private string TabClass(RankingBoardType boardType)
-        => _boardType == boardType ? "active" : string.Empty;
+        => !_showArena && _boardType == boardType ? "active" : string.Empty;
 
-    private bool IsSelf(RankingEntry entry)
-        => string.Equals(entry.UserName, Session.UserName, StringComparison.OrdinalIgnoreCase);
+    private string ArenaTabClass()
+        => _showArena ? "active" : string.Empty;
+
+    private bool IsSelf(string userName)
+        => string.Equals(userName, Session.UserName, StringComparison.OrdinalIgnoreCase);
 
     private string ResolveScore(RankingEntry entry)
         => _boardType switch

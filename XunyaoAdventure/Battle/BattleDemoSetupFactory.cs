@@ -18,6 +18,16 @@ internal static class BattleDemoSetupFactory
         (0.10, 0.10),
     };
 
+    private static readonly (double X, double Y)[] EnemyFormationSlots =
+    {
+        (5.06, -0.30),
+        (5.20, 0.10),
+        (5.42, -0.30),
+        (5.56, 0.10),
+        (5.74, -0.30),
+        (5.88, 0.10),
+    };
+
     public static void Initialize(GameConfigStore configs)
     {
         _configs = configs;
@@ -41,6 +51,9 @@ internal static class BattleDemoSetupFactory
 
     public static byte[] CreateSetupBytes(IEnumerable<OwnedMonster> selectedMonsters, CampaignStageSelection? stage)
         => BattleSetupWire.EncodeSetup(CreateSetup(selectedMonsters, stage));
+
+    public static byte[] CreateArenaSetupBytes(IEnumerable<OwnedMonster> selectedMonsters, IEnumerable<OwnedMonster> opponentMonsters)
+        => BattleSetupWire.EncodeSetup(CreateArenaSetup(selectedMonsters, opponentMonsters));
 
     internal static HeroFinalStats CalculateMonsterStats(OwnedMonster monster, int formationIndex = 0)
         => CalculatePlayerMonsterStats(monster, formationIndex);
@@ -75,6 +88,26 @@ internal static class BattleDemoSetupFactory
         }
 
         AddDemoEnemyWaves(setup, stage);
+        return setup;
+    }
+
+    private static BattleEncounterSetup CreateArenaSetup(IEnumerable<OwnedMonster> selectedMonsters, IEnumerable<OwnedMonster> opponentMonsters)
+    {
+        BattleEncounterSetup setup = new();
+        List<OwnedMonster> monsters = selectedMonsters.Take(PlayerFormationSlots.Length).ToList();
+        List<OwnedMonster> opponents = opponentMonsters.Take(EnemyFormationSlots.Length).ToList();
+        if (monsters.Count == 0 || opponents.Count == 0)
+        {
+            throw new InvalidOperationException("Arena battle setup requires both player and opponent formations.");
+        }
+
+        for (int index = 0; index < monsters.Count; index++)
+        {
+            (double x, double y) = PlayerFormationSlots[index];
+            AddPlayer(setup, monsters[index], index, x, y);
+        }
+
+        AddArenaEnemyWave(setup, opponents);
         return setup;
     }
 
@@ -158,6 +191,22 @@ internal static class BattleDemoSetupFactory
             if (!wave.TryAddUnit(unit))
             {
                 throw new InvalidOperationException("Failed to add enemy unit.");
+            }
+        }
+    }
+
+    private static void AddArenaEnemyWave(BattleEncounterSetup setup, IReadOnlyList<OwnedMonster> opponents)
+    {
+        BattleWaveSetup wave = setup.CreateEnemyWave();
+        for (int index = 0; index < opponents.Count; index++)
+        {
+            (double x, double y) = EnemyFormationSlots[index];
+            OwnedMonster monster = opponents[index];
+            HeroFinalStats stats = CalculatePlayerMonsterStats(monster, index);
+            int skillProfileId = ResolveSkillProfileId(stats.PrimaryAttribute, monster.Position, index);
+            if (!wave.TryAddUnit(stats.ToBattleSpawn(x, y, skillProfileId)))
+            {
+                throw new InvalidOperationException($"Failed to add arena opponent monster {monster.Id}.");
             }
         }
     }

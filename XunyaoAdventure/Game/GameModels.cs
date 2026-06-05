@@ -258,6 +258,81 @@ public sealed record RankingEntry(
     string StrongestMonsterName,
     DateTime CreatedAt);
 
+public sealed class ArenaProfile
+{
+    public ArenaProfile(
+        string userName,
+        string roleName,
+        int score,
+        int wins,
+        int losses,
+        int challengeCount,
+        DateTimeOffset updatedAt)
+    {
+        UserName = userName;
+        RoleName = roleName;
+        Score = score;
+        Wins = wins;
+        Losses = losses;
+        ChallengeCount = challengeCount;
+        UpdatedAt = updatedAt;
+    }
+
+    public string UserName { get; set; }
+    public string RoleName { get; set; }
+    public int Score { get; set; }
+    public int Wins { get; set; }
+    public int Losses { get; set; }
+    public int ChallengeCount { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+public sealed record ArenaRankingEntry(
+    int Rank,
+    string UserName,
+    string RoleName,
+    int Score,
+    int Wins,
+    int Losses,
+    int TotalPower,
+    DateTimeOffset UpdatedAt);
+
+public sealed record ArenaOpponent(
+    string UserName,
+    string RoleName,
+    int Rank,
+    int Score,
+    int TotalPower,
+    int StrongestMonsterPower,
+    string StrongestMonsterName,
+    IReadOnlyList<OwnedMonster> Formation);
+
+public sealed record ArenaBattleSelection(
+    string OpponentUserName,
+    string OpponentRoleName,
+    int OpponentScore,
+    int OpponentRank,
+    int OpponentPower,
+    IReadOnlyList<OwnedMonster> OpponentFormation);
+
+public sealed record ArenaBattleResult(
+    bool Victory,
+    string OpponentUserName,
+    string OpponentRoleName,
+    int ScoreDelta,
+    int OldScore,
+    int NewScore,
+    int OldRank,
+    int NewRank,
+    int Wins,
+    int Losses);
+
+public sealed record ArenaChallengeResult(
+    bool Success,
+    string Message,
+    ArenaProfile? Profile,
+    ArenaBattleResult? BattleResult);
+
 public enum GuildMemberRole
 {
     Leader,

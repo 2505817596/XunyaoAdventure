@@ -1,0 +1,154 @@
+@page "/arena"
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject ArenaStore Arenas
+
+<PageTitle>竞技场</PageTitle>
+
+<main class="wap-page arena-page">
+    <section class="wap-panel arena-panel">
+        <div class="wap-title">竞技场</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else if (_profile is null)
+        {
+            <div class="wap-line">竞技场数据暂不可用</div>
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+        else
+        {
+            <div class="arena-summary">
+                <div>
+                    <span>排名</span>
+                    <b>@_selfRank</b>
+                </div>
+                <div>
+                    <span>积分</span>
+                    <b>@_profile.Score</b>
+                </div>
+                <div>
+                    <span>胜负</span>
+                    <b>@_profile.Wins / @_profile.Losses</b>
+                </div>
+            </div>
+
+            <div class="arena-actions">
+                <button class="wap-button" @onclick="Refresh">刷新对手</button>
+                <button class="wap-button muted" @onclick="GoRankings">竞技排行</button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="wap-message">@_message</div>
+            }
+
+            @if (_opponents.Count == 0)
+            {
+                <div class="wap-line">暂无可挑战对手</div>
+            }
+            else
+            {
+                <div class="arena-opponent-list">
+                    @foreach (ArenaOpponent opponent in _opponents)
+                    {
+                        <article class="arena-opponent">
+                            <header>
+                                <div>
+                                    <b>@opponent.RoleName</b>
+                                    <small>排名 @opponent.Rank / 积分 @opponent.Score</small>
+                                </div>
+                                <button @onclick="() => Challenge(opponent.UserName)">挑战</button>
+                            </header>
+                            <div class="arena-opponent-meta">
+                                <span>总战力 @opponent.TotalPower</span>
+                                <span>最强 @ResolveStrongestText(opponent)</span>
+                            </div>
+                            <div class="arena-formation">
+                                @foreach (OwnedMonster monster in opponent.Formation)
+                                {
+                                    <div class="arena-monster @ResolveStageFrameClass(monster.Stage)" title="@monster.Name">
+                                        <img src="@monster.PortraitUrl" alt="@monster.Name" />
+                                        <span>@monster.Level</span>
+                                        <b>@BuildStars(monster.Star)</b>
+                                    </div>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private ArenaProfile? _profile;
+    private List<ArenaOpponent> _opponents = new();
+    private int _selfRank;
+    private string _message = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _message = string.Empty;
+        _profile = Arenas.GetProfile(Session.UserName);
+        _selfRank = Arenas.GetRankings(200)
+            .FirstOrDefault(entry => string.Equals(entry.UserName, Session.UserName, StringComparison.OrdinalIgnoreCase))
+            ?.Rank ?? 0;
+        _opponents = Arenas.GetOpponents(Session.UserName, 3).ToList();
+    }
+
+    private void Challenge(string opponentUserName)
+    {
+        ArenaBattleSelection? selection = Arenas.CreateBattleSelection(Session.UserName, opponentUserName);
+        if (selection is null)
+        {
+            _message = "该对手已不可挑战，请刷新后重试";
+            return;
+        }
+
+        Session.SelectArenaBattle(selection);
+        Navigation.NavigateTo("/battle/formation");
+    }
+
+    private static string ResolveStrongestText(ArenaOpponent opponent)
+        => string.IsNullOrWhiteSpace(opponent.StrongestMonsterName)
+            ? opponent.StrongestMonsterPower.ToString()
+            : $"{opponent.StrongestMonsterName} {opponent.StrongestMonsterPower}";
+
+    private static string BuildStars(int star)
+        => new('★', Math.Clamp(star, 1, GameAccountStore.MaxMonsterStar));
+
+    private static string ResolveStageFrameClass(int stage)
+        => $"stage-{Math.Clamp(stage, 1, GameAccountStore.MaxMonsterStage)}";
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoRankings()
+        => Navigation.NavigateTo("/rankings?board=arena");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+}

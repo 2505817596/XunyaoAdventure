@@ -6,6 +6,7 @@
 @inject GameAccountStore Accounts
 @inject CampaignStore Campaigns
 @inject QuestStore Quests
+@inject ArenaStore Arenas
 
 <PageTitle>Battle</PageTitle>
 
@@ -24,6 +25,7 @@
     private bool _canEnterBattle;
     private byte[]? _setupBytes;
     private List<object> _heroHudItems = new();
+    private List<object> _enemyItems = new();
 
     protected override void OnInitialized()
     {
@@ -63,7 +65,9 @@
             return;
         }
 
-        _setupBytes = XunyaoAdventure.Battle.BattleDemoSetupFactory.CreateSetupBytes(selectedMonsters, Session.SelectedStage);
+        _setupBytes = Session.SelectedArenaBattle is null
+            ? XunyaoAdventure.Battle.BattleDemoSetupFactory.CreateSetupBytes(selectedMonsters, Session.SelectedStage)
+            : XunyaoAdventure.Battle.BattleDemoSetupFactory.CreateArenaSetupBytes(selectedMonsters, Session.SelectedArenaBattle.OpponentFormation);
         _heroHudItems = selectedMonsters
             .Select((monster, index) => new
             {
@@ -76,6 +80,18 @@
             })
             .Cast<object>()
             .ToList();
+        _enemyItems = Session.SelectedArenaBattle?.OpponentFormation
+            .Select((monster, index) => new
+            {
+                unitId = selectedMonsters.Count + index + 1,
+                name = monster.Name,
+                portraitUrl = monster.PortraitUrl,
+                unitAssetId = ResolveBattleUnitAssetId(monster.PortraitUrl),
+                stage = Math.Clamp(monster.Stage, 1, GameAccountStore.MaxMonsterStage),
+                star = Math.Clamp(monster.Star, 1, GameAccountStore.MaxMonsterStar),
+            })
+            .Cast<object>()
+            .ToList() ?? new List<object>();
         _canEnterBattle = true;
     }
 
@@ -86,7 +102,7 @@
             return;
         }
 
-        _battleModule = await JS.InvokeAsync<IJSObjectReference>("import", "/battle-client/assets/battle-view.js?v=jsmodule-12");
+        _battleModule = await JS.InvokeAsync<IJSObjectReference>("import", "/battle-client/assets/battle-view.js?v=jsmodule-13");
         _battleId = await _battleModule.InvokeAsync<int>(
             "mountBattle",
             _battleHost,
@@ -94,6 +110,7 @@
             {
                 setupBytes = _setupBytes!,
                 heroes = _heroHudItems,
+                enemies = _enemyItems,
                 assetBaseUrl = "/battle-client/",
                 onExit = _dotNetRef ??= DotNetObjectReference.Create(this),
                 onBattleEnded = _dotNetRef ??= DotNetObjectReference.Create(this),
@@ -109,6 +126,18 @@
     [JSInvokable]
     public void BattleEnded(bool victory)
     {
+        if (Session.SelectedArenaBattle is not null)
+        {
+            ArenaChallengeResult arenaResult = Arenas.CompleteChallenge(Session.UserName, Session.SelectedArenaBattle, victory);
+            if (arenaResult.BattleResult is not null)
+            {
+                Session.SetArenaBattleResult(arenaResult.BattleResult);
+            }
+
+            Navigation.NavigateTo("/arena/result");
+            return;
+        }
+
         CampaignBattleResult result = Campaigns.CompleteBattle(Session.UserName, Session.SelectedStage, victory, Accounts);
         if (result.Victory)
         {
