@@ -15,7 +15,16 @@
     border-bottom: 1px solid #806637;
 }
 
+.mail-actions {
+    padding: 10px;
+    border-bottom: 1px solid #806637;
+    background: #f0e5c8;
+}
+
 .mail-item {
+    display: grid;
+    grid-template-columns: 1fr 58px;
+    align-items: stretch;
     border: 1px solid #8a7446;
     background: #f2e7c8;
 }
@@ -39,6 +48,21 @@
     color: #302410;
     text-align: left;
     cursor: pointer;
+}
+
+.mail-delete {
+    border: 0;
+    border-left: 1px solid #8a7446;
+    background: #efe2b9;
+    color: #5b3511;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.mail-delete:disabled {
+    opacity: 0.45;
+    cursor: default;
 }
 
 .mail-main header,

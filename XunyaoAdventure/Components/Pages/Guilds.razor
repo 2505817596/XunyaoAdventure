@@ -50,9 +50,10 @@
                         <article class="guild-card">
                             <header>
                                 <b>@guild.Name</b>
-                                <span>@guild.Members.Count 人</span>
+                                <span>@guild.Level 级 / @guild.Members.Count 人</span>
                             </header>
                             <div class="guild-meta">会长：@ResolveLeaderName(guild)</div>
+                            <div class="guild-meta">总贡献：@guild.TotalContribution</div>
                             <div class="guild-notice">@(string.IsNullOrWhiteSpace(guild.Notice) ? "暂无公告" : guild.Notice)</div>
                             <button @onclick="() => JoinGuild(guild.Id)">加入公会</button>
                         </article>
@@ -83,7 +84,9 @@
         _account = Accounts.GetAccount(Session.UserName);
         _myGuild = GuildService.GetGuildByMember(Session.UserName);
         _guilds = GuildService.GetGuilds()
-            .OrderByDescending(guild => guild.Members.Count)
+            .OrderByDescending(guild => guild.Level)
+            .ThenByDescending(guild => guild.TotalContribution)
+            .ThenByDescending(guild => guild.Members.Count)
             .ThenBy(guild => guild.CreatedAt)
             .ToList();
     }

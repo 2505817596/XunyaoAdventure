@@ -44,6 +44,7 @@ public sealed class GameplayConfigFile
     public int Version { get; set; } = 1;
     public InitialRoleConfig InitialRole { get; set; } = new();
     public InitialAccountConfig InitialAccount { get; set; } = new();
+    public GuildConfig Guild { get; set; } = new();
 }
 
 public sealed class InitialRoleConfig
@@ -57,6 +58,18 @@ public sealed class InitialAccountConfig
     public int Copper { get; set; }
     public string DefaultStageId { get; set; } = string.Empty;
     public int FormationSize { get; set; } = 5;
+}
+
+public sealed class GuildConfig
+{
+    public int MaxLevel { get; set; } = 20;
+    public List<GuildLevelRequirementConfig> LevelRequirements { get; set; } = new();
+}
+
+public sealed class GuildLevelRequirementConfig
+{
+    public int Level { get; set; }
+    public int RequiredTotalContribution { get; set; }
 }
 
 public sealed class QuestConfigFile

@@ -57,6 +57,7 @@
                 }
             </section>
 
+            <button class="wap-button muted" disabled="@(!CanDelete())" @onclick="Delete">删除邮件</button>
             <button class="wap-button muted" @onclick="GoMail">返回邮箱</button>
         }
     </section>
@@ -96,6 +97,24 @@
         _account = result.Account ?? _account;
         _mail = result.Mail ?? Mails.GetMail(Session.UserName, MailId);
     }
+
+    private void Delete()
+    {
+        MailActionResult result = Mails.DeleteMail(Session.UserName, MailId);
+        _success = result.Success;
+        _message = result.Message;
+        _account = result.Account ?? _account;
+        if (result.Success)
+        {
+            GoMail();
+            return;
+        }
+
+        _mail = result.Mail ?? Mails.GetMail(Session.UserName, MailId);
+    }
+
+    private bool CanDelete()
+        => _mail is not null && (_mail.Attachments.Count == 0 || _mail.Claimed);
 
     private string ResolveAttachmentStatus()
     {

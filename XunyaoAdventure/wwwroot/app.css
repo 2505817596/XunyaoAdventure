@@ -577,6 +577,56 @@ input {
     resize: vertical;
 }
 
+.guild-contribution {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid #dbc995;
+}
+
+.guild-contribution header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.guild-contribution header b {
+    color: #5b3511;
+}
+
+.guild-contribution header span {
+    color: #6d5a34;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.guild-contribution-form {
+    display: grid;
+    grid-template-columns: 1fr 86px;
+    gap: 8px;
+}
+
+.guild-contribution-form input {
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid #9f854d;
+    background: #fffdf3;
+    color: #302410;
+    padding: 8px;
+}
+
+.guild-contribution-form button {
+    border: 1px solid #624719;
+    background: #8d6a27;
+    color: #fff7d8;
+    font-weight: 700;
+}
+
+.guild-contribution-form button:disabled {
+    opacity: 0.55;
+}
+
 .guild-member-list {
     display: grid;
 }

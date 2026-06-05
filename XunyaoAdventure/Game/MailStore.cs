@@ -81,23 +81,41 @@ public sealed class MailStore
         MailMessage mail;
         lock (_gate)
         {
-            mail = new MailMessage(
-                _nextMailId++,
-                userName.Trim(),
-                NormalizeText(title, "系统邮件"),
-                NormalizeText(content, string.Empty),
-                NormalizeText(senderName, "系统"),
-                DateTimeOffset.UtcNow,
-                false,
-                false,
-                attachments.Where(reward => reward.Quantity > 0).Select(CloneReward).ToList());
-
-            _mails.Add(mail);
-            SaveMail(mail);
+            mail = CreateMail(userName, title, content, attachments, senderName, DateTimeOffset.UtcNow);
         }
 
         MailsChanged?.Invoke();
         return CloneMail(mail);
+    }
+
+    public IReadOnlyList<MailMessage> SendMailToAll(
+        string title,
+        string content,
+        IReadOnlyList<QuestReward> attachments,
+        string senderName = "系统")
+    {
+        IReadOnlyList<PlayerAccount> accounts = _accounts.GetAccounts();
+        List<MailMessage> mails = new();
+        DateTimeOffset sentAt = DateTimeOffset.UtcNow;
+        lock (_gate)
+        {
+            foreach (PlayerAccount account in accounts)
+            {
+                if (string.IsNullOrWhiteSpace(account.UserName))
+                {
+                    continue;
+                }
+
+                mails.Add(CreateMail(account.UserName, title, content, attachments, senderName, sentAt));
+            }
+        }
+
+        if (mails.Count > 0)
+        {
+            MailsChanged?.Invoke();
+        }
+
+        return mails.Select(CloneMail).ToList();
     }
 
     public MailActionResult MarkRead(string? userName, long id)
@@ -170,9 +188,127 @@ public sealed class MailStore
         return new MailActionResult(true, "附件已领取", clonedMail, account);
     }
 
+    public MailClaimAllResult ClaimAllAttachments(string? userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return new MailClaimAllResult(false, "请先登录", Array.Empty<MailMessage>(), null, 0);
+        }
+
+        string normalized = userName.Trim();
+        List<MailMessage> inbox;
+        List<MailMessage> claimable;
+        PlayerAccount? account;
+        lock (_gate)
+        {
+            inbox = _mails
+                .Where(mail => string.Equals(mail.UserName, normalized, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            claimable = inbox
+                .Where(mail => mail.Attachments.Count > 0 && !mail.Claimed)
+                .ToList();
+
+            if (claimable.Count == 0)
+            {
+                return new MailClaimAllResult(
+                    false,
+                    "没有可领取附件",
+                    SortInbox(inbox).Select(CloneMail).ToList(),
+                    _accounts.GetAccount(userName),
+                    0);
+            }
+
+            List<QuestReward> rewards = claimable
+                .SelectMany(mail => mail.Attachments)
+                .Select(CloneReward)
+                .ToList();
+            account = _accounts.GrantRewards(userName, rewards);
+            if (account is null)
+            {
+                return new MailClaimAllResult(
+                    false,
+                    "账号不存在",
+                    SortInbox(inbox).Select(CloneMail).ToList(),
+                    null,
+                    0);
+            }
+
+            foreach (MailMessage mail in claimable)
+            {
+                mail.Read = true;
+                mail.Claimed = true;
+                SaveMail(mail);
+            }
+        }
+
+        MailsChanged?.Invoke();
+        IReadOnlyList<MailMessage> mails = GetInbox(userName);
+        return new MailClaimAllResult(true, $"已领取{claimable.Count}封邮件附件", mails, account, claimable.Count);
+    }
+
+    public MailActionResult DeleteMail(string? userName, long id)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return new MailActionResult(false, "请先登录", null, null);
+        }
+
+        PlayerAccount? account;
+        lock (_gate)
+        {
+            MailMessage? mail = FindOwnedMail(userName, id);
+            account = _accounts.GetAccount(userName);
+            if (mail is null)
+            {
+                return new MailActionResult(false, "邮件不存在", null, account);
+            }
+
+            if (mail.Attachments.Count > 0 && !mail.Claimed)
+            {
+                return new MailActionResult(false, "请先领取附件", CloneMail(mail), account);
+            }
+
+            _mails.Remove(mail);
+            DeleteMailDocument(mail.Id);
+        }
+
+        MailsChanged?.Invoke();
+        return new MailActionResult(true, "邮件已删除", null, account);
+    }
+
     private MailMessage? FindOwnedMail(string userName, long id)
         => _mails.FirstOrDefault(mail =>
             mail.Id == id && string.Equals(mail.UserName, userName.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    private MailMessage CreateMail(
+        string userName,
+        string title,
+        string content,
+        IReadOnlyList<QuestReward> attachments,
+        string senderName,
+        DateTimeOffset sentAt)
+    {
+        MailMessage mail = new(
+            _nextMailId++,
+            userName.Trim(),
+            NormalizeText(title, "系统邮件"),
+            NormalizeText(content, string.Empty),
+            NormalizeText(senderName, "系统"),
+            sentAt,
+            false,
+            false,
+            attachments.Where(reward => reward.Quantity > 0).Select(CloneReward).ToList());
+
+        _mails.Add(mail);
+        SaveMail(mail);
+        return mail;
+    }
+
+    private static IEnumerable<MailMessage> SortInbox(IEnumerable<MailMessage> mails)
+        => mails
+            .OrderBy(mail => mail.Claimed)
+            .ThenBy(mail => mail.Read)
+            .ThenByDescending(mail => mail.SentAt);
 
     private void LoadMails()
     {
@@ -192,6 +328,12 @@ public sealed class MailStore
     {
         ILiteCollection<MailMessageDocument> collection = _database.GetCollection<MailMessageDocument>("mail_messages");
         collection.Upsert(ToDocument(mail));
+    }
+
+    private void DeleteMailDocument(long id)
+    {
+        ILiteCollection<MailMessageDocument> collection = _database.GetCollection<MailMessageDocument>("mail_messages");
+        collection.Delete(id);
     }
 
     private static MailMessage CloneMail(MailMessage mail)

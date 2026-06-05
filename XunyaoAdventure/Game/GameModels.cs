@@ -266,7 +266,15 @@ public enum GuildMemberRole
 
 public sealed class Guild
 {
-    public Guild(int id, string name, string notice, string leaderUserName, List<GuildMember> members, DateTime createdAt)
+    public Guild(
+        int id,
+        string name,
+        string notice,
+        string leaderUserName,
+        List<GuildMember> members,
+        DateTime createdAt,
+        int totalContribution,
+        int level)
     {
         Id = id;
         Name = name;
@@ -274,6 +282,8 @@ public sealed class Guild
         LeaderUserName = leaderUserName;
         Members = members;
         CreatedAt = createdAt;
+        TotalContribution = totalContribution;
+        Level = level;
     }
 
     public int Id { get; set; }
@@ -282,25 +292,31 @@ public sealed class Guild
     public string LeaderUserName { get; set; }
     public List<GuildMember> Members { get; set; }
     public DateTime CreatedAt { get; set; }
+    public int TotalContribution { get; set; }
+    public int Level { get; set; }
 }
 
 public sealed class GuildMember
 {
-    public GuildMember(string userName, string roleName, GuildMemberRole role, DateTime joinedAt)
+    public GuildMember(string userName, string roleName, GuildMemberRole role, DateTime joinedAt, int contribution)
     {
         UserName = userName;
         RoleName = roleName;
         Role = role;
         JoinedAt = joinedAt;
+        Contribution = contribution;
     }
 
     public string UserName { get; set; }
     public string RoleName { get; set; }
     public GuildMemberRole Role { get; set; }
     public DateTime JoinedAt { get; set; }
+    public int Contribution { get; set; }
 }
 
 public sealed record GuildActionResult(bool Success, string Message, Guild? Guild);
+
+public sealed record GuildContributionResult(bool Success, string Message, Guild? Guild, PlayerAccount? Account);
 
 public sealed class MailMessage
 {
@@ -338,3 +354,10 @@ public sealed class MailMessage
 }
 
 public sealed record MailActionResult(bool Success, string Message, MailMessage? Mail, PlayerAccount? Account);
+
+public sealed record MailClaimAllResult(
+    bool Success,
+    string Message,
+    IReadOnlyList<MailMessage> Mails,
+    PlayerAccount? Account,
+    int ClaimedCount);

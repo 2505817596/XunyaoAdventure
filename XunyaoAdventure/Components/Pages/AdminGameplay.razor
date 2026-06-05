@@ -50,6 +50,26 @@
             </article>
 
             <article class="admin-card">
+                <div class="admin-section-title">公会等级</div>
+                <label>
+                    <span>等级上限</span>
+                    <input type="number" min="1" max="100" @bind="_guildConfig.MaxLevel" @bind:after="NormalizeGuildLevels" />
+                </label>
+                <div class="admin-index-meta">
+                    填写达到目标等级所需的公会总贡献。1级固定为0，不需要配置。
+                </div>
+                <div class="admin-grid-2">
+                    @foreach (GuildLevelRequirementConfig requirement in _guildConfig.LevelRequirements.OrderBy(requirement => requirement.Level))
+                    {
+                        <label>
+                            <span>@requirement.Level 级总贡献</span>
+                            <input type="number" min="1" @bind="requirement.RequiredTotalContribution" />
+                        </label>
+                    }
+                </div>
+            </article>
+
+            <article class="admin-card">
                 <div class="admin-section-title">创建角色赠送妖怪</div>
                 <label>
                     <span>赠送妖怪</span>
@@ -79,6 +99,7 @@
     private List<CampaignStageConfig> _stages = new();
     private InitialRoleConfig _initialRole = new();
     private InitialAccountConfig _initialAccount = new();
+    private GuildConfig _guildConfig = new();
     private string _message = string.Empty;
     private bool _success;
 
@@ -101,6 +122,34 @@
             .ToList();
         _initialRole = Configs.GetInitialRoleConfig();
         _initialAccount = Configs.GetInitialAccountConfig();
+        _guildConfig = Configs.GetGuildConfig();
+    }
+
+    private void NormalizeGuildLevels()
+    {
+        _guildConfig.MaxLevel = Math.Clamp(_guildConfig.MaxLevel, 1, 100);
+        Dictionary<int, int> existing = _guildConfig.LevelRequirements
+            .Where(requirement => requirement.Level >= 2 && requirement.Level <= _guildConfig.MaxLevel)
+            .GroupBy(requirement => requirement.Level)
+            .ToDictionary(group => group.Key, group => Math.Max(1, group.Last().RequiredTotalContribution));
+
+        List<GuildLevelRequirementConfig> requirements = new();
+        int previousRequirement = 0;
+        for (int level = 2; level <= _guildConfig.MaxLevel; level++)
+        {
+            int required = existing.TryGetValue(level, out int configured)
+                ? configured
+                : (level - 1) * 1000;
+            required = Math.Max(previousRequirement + 1, required);
+            requirements.Add(new GuildLevelRequirementConfig
+            {
+                Level = level,
+                RequiredTotalContribution = required,
+            });
+            previousRequirement = required;
+        }
+
+        _guildConfig.LevelRequirements = requirements;
     }
 
     private bool IsSelected(string templateId)
@@ -125,7 +174,8 @@
 
     private void Save()
     {
-        ConfigSaveResult result = Configs.SaveGameplayConfig(_initialRole, _initialAccount);
+        NormalizeGuildLevels();
+        ConfigSaveResult result = Configs.SaveGameplayConfig(_initialRole, _initialAccount, _guildConfig);
         _success = result.Success;
         _message = result.Message;
         if (result.Success)

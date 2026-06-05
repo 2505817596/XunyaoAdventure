@@ -92,6 +92,16 @@ public sealed class GameAccountStore
         }
     }
 
+    public IReadOnlyList<PlayerAccount> GetAccounts()
+    {
+        lock (_gate)
+        {
+            return _accounts.Values
+                .OrderBy(account => account.UserName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+    }
+
     public OwnedMonster? GetMonster(string? userName, int monsterId)
         => GetAccount(userName)?.Monsters.FirstOrDefault(monster => monster.Id == monsterId);
 
@@ -597,6 +607,43 @@ public sealed class GameAccountStore
             ApplyRewards(account, rewards);
             SaveAccount(account);
             return account;
+        }
+    }
+
+    public bool TrySpendCopper(string? userName, int amount, out PlayerAccount? account, out string message)
+    {
+        account = null;
+        amount = Math.Max(0, amount);
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            message = "请先登录";
+            return false;
+        }
+
+        if (amount <= 0)
+        {
+            message = "消耗数量必须大于0";
+            return false;
+        }
+
+        lock (_gate)
+        {
+            if (!_accounts.TryGetValue(Normalize(userName), out account))
+            {
+                message = "账号不存在";
+                return false;
+            }
+
+            if (account.Copper < amount)
+            {
+                message = $"铜钱不足，需要{amount}";
+                return false;
+            }
+
+            account.Copper -= amount;
+            SaveAccount(account);
+            message = "扣除成功";
+            return true;
         }
     }
 

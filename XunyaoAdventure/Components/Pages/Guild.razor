@@ -38,7 +38,7 @@
         {
             <div class="guild-header">
                 <b>@_guild.Name</b>
-                <span>@_guild.Members.Count 人</span>
+                <span>@_guild.Level 级 / @_guild.Members.Count 人</span>
             </div>
 
             @if (IsLeader)
@@ -60,13 +60,27 @@
                 <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
             }
 
+            <section class="guild-contribution">
+                <header>
+                    <b>公会贡献</b>
+                    <span>总贡献 @_guild.TotalContribution</span>
+                </header>
+                <div class="guild-meta">@NextLevelText</div>
+                <div class="guild-meta">当前铜钱：@(_account?.Copper ?? 0)</div>
+                <div class="guild-meta">我的贡献：@MyContribution</div>
+                <div class="guild-contribution-form">
+                    <input type="number" min="1" max="@MaxContributionAmount" @bind="_contributionAmount" />
+                    <button disabled="@(!CanContribute)" @onclick="Contribute">贡献</button>
+                </div>
+            </section>
+
             <div class="guild-member-list">
-                @foreach (GuildMember member in _guild.Members.OrderBy(member => member.Role).ThenBy(member => member.JoinedAt))
+                @foreach (GuildMember member in _guild.Members.OrderBy(member => member.Role).ThenByDescending(member => member.Contribution).ThenBy(member => member.JoinedAt))
                 {
                     <article class="guild-member">
                         <div>
                             <b>@member.RoleName</b>
-                            <small>@member.UserName</small>
+                            <small>@member.UserName / 贡献 @member.Contribution</small>
                         </div>
                         <span>@ResolveRoleName(member.Role)</span>
                     </article>
@@ -87,12 +101,41 @@
     private XunyaoAdventure.Game.Guild? _guild;
     private string _guildName = string.Empty;
     private string _notice = string.Empty;
+    private int _contributionAmount = 1000;
     private string _message = string.Empty;
     private bool _success;
+    private const int MaxContributionAmount = 1000000;
 
     private bool IsLeader
         => _guild is not null
             && string.Equals(_guild.LeaderUserName, Session.UserName, StringComparison.OrdinalIgnoreCase);
+    private int MyContribution
+        => _guild?.Members.FirstOrDefault(member =>
+            string.Equals(member.UserName, Session.UserName, StringComparison.OrdinalIgnoreCase))?.Contribution ?? 0;
+    private string NextLevelText
+    {
+        get
+        {
+            if (_guild is null)
+            {
+                return string.Empty;
+            }
+
+            int nextRequired = GuildService.GetConfiguredRequiredTotalContributionForNextLevel(_guild.Level);
+            if (nextRequired <= 0)
+            {
+                return "公会已达到最高等级";
+            }
+
+            int remaining = Math.Max(0, nextRequired - _guild.TotalContribution);
+            return $"下一级需要总贡献 {nextRequired}，还差 {remaining}";
+        }
+    }
+    private bool CanContribute
+        => _guild is not null
+            && _contributionAmount > 0
+            && _account is not null
+            && _account.Copper >= _contributionAmount;
 
     protected override void OnInitialized()
     {
@@ -125,6 +168,16 @@
         _success = result.Success;
         _message = result.Message;
         Reload();
+    }
+
+    private void Contribute()
+    {
+        GuildContributionResult result = GuildService.ContributeCopper(Session.UserName, _contributionAmount);
+        _success = result.Success;
+        _message = result.Message;
+        _account = result.Account ?? Accounts.GetAccount(Session.UserName);
+        _guild = result.Guild ?? GuildService.GetGuildByMember(Session.UserName);
+        _notice = _guild?.Notice ?? string.Empty;
     }
 
     private void LeaveGuild()

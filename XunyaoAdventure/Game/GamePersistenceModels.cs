@@ -97,6 +97,8 @@ public sealed class GuildDocument
     public string LeaderUserName { get; set; } = string.Empty;
     public List<GuildMemberDocument> Members { get; set; } = new();
     public DateTime CreatedAt { get; set; }
+    public int TotalContribution { get; set; }
+    public int Level { get; set; }
 }
 
 public sealed class GuildMemberDocument
@@ -105,6 +107,7 @@ public sealed class GuildMemberDocument
     public string RoleName { get; set; } = string.Empty;
     public GuildMemberRole Role { get; set; }
     public DateTime JoinedAt { get; set; }
+    public int Contribution { get; set; }
 }
 
 public sealed class ChatMessageDocument

@@ -138,16 +138,31 @@ public sealed class GameConfigStore
         }
     }
 
+    public GuildConfig GetGuildConfig()
+    {
+        lock (_gate)
+        {
+            return CloneGuildConfig(_gameplayConfig.Guild);
+        }
+    }
+
     public ConfigSaveResult SaveInitialRoleConfig(InitialRoleConfig initialRole)
-        => SaveGameplayConfig(initialRole, GetInitialAccountConfig());
+        => SaveGameplayConfig(initialRole, GetInitialAccountConfig(), GetGuildConfig());
 
     public ConfigSaveResult SaveGameplayConfig(InitialRoleConfig initialRole, InitialAccountConfig initialAccount)
+        => SaveGameplayConfig(initialRole, initialAccount, GetGuildConfig());
+
+    public ConfigSaveResult SaveGameplayConfig(
+        InitialRoleConfig initialRole,
+        InitialAccountConfig initialAccount,
+        GuildConfig guild)
     {
         GameplayConfigFile config = new()
         {
             Version = 1,
             InitialRole = CloneInitialRole(initialRole),
             InitialAccount = CloneInitialAccount(initialAccount),
+            Guild = CloneGuildConfig(guild),
         };
 
         string? error = ValidateGameplayConfig(config);
@@ -428,6 +443,7 @@ public sealed class GameConfigStore
             Version = config.Version <= 0 ? 1 : config.Version,
             InitialRole = CloneInitialRole(config.InitialRole),
             InitialAccount = CloneInitialAccount(config.InitialAccount),
+            Guild = CloneGuildConfig(config.Guild),
         };
 
     private static QuestConfigFile NormalizeQuestConfig(QuestConfigFile config)
@@ -497,6 +513,41 @@ public sealed class GameConfigStore
             Copper = Math.Max(0, config.Copper),
             DefaultStageId = config.DefaultStageId.Trim(),
             FormationSize = Math.Max(1, config.FormationSize),
+        };
+    }
+
+    private static GuildConfig CloneGuildConfig(GuildConfig? config)
+    {
+        config ??= new GuildConfig();
+        int maxLevel = Math.Clamp(config.MaxLevel, 1, 100);
+        Dictionary<int, int> configuredRequirements = config.LevelRequirements
+            .Where(requirement => requirement.Level >= 2 && requirement.Level <= maxLevel)
+            .GroupBy(requirement => requirement.Level)
+            .ToDictionary(
+                group => group.Key,
+                group => Math.Max(1, group.Last().RequiredTotalContribution));
+
+        List<GuildLevelRequirementConfig> requirements = new();
+        int previousRequirement = 0;
+        for (int level = 2; level <= maxLevel; level++)
+        {
+            int fallback = (level - 1) * 1000;
+            int required = configuredRequirements.TryGetValue(level, out int configured)
+                ? configured
+                : fallback;
+            required = Math.Max(previousRequirement + 1, required);
+            requirements.Add(new GuildLevelRequirementConfig
+            {
+                Level = level,
+                RequiredTotalContribution = required,
+            });
+            previousRequirement = required;
+        }
+
+        return new GuildConfig
+        {
+            MaxLevel = maxLevel,
+            LevelRequirements = requirements,
         };
     }
 
@@ -719,6 +770,32 @@ public sealed class GameConfigStore
         if (config.InitialAccount.FormationSize <= 0)
         {
             return "默认阵容数量必须大于0";
+        }
+
+        if (config.Guild.MaxLevel <= 0)
+        {
+            return "公会等级上限必须大于0";
+        }
+
+        int previousRequirement = 0;
+        foreach (GuildLevelRequirementConfig requirement in config.Guild.LevelRequirements.OrderBy(requirement => requirement.Level))
+        {
+            if (requirement.Level < 2 || requirement.Level > config.Guild.MaxLevel)
+            {
+                return "公会等级贡献配置超出等级上限";
+            }
+
+            if (requirement.RequiredTotalContribution <= 0)
+            {
+                return $"{requirement.Level}级所需贡献必须大于0";
+            }
+
+            if (requirement.RequiredTotalContribution <= previousRequirement)
+            {
+                return "公会等级所需贡献必须逐级递增";
+            }
+
+            previousRequirement = requirement.RequiredTotalContribution;
         }
 
         if (!string.IsNullOrWhiteSpace(config.InitialAccount.DefaultStageId)

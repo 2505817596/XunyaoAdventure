@@ -6,16 +6,19 @@ public sealed class GuildStore
 {
     private const int MaxGuildNameLength = 12;
     private const int MaxNoticeLength = 80;
+    private const int MaxContributionAmount = 1000000;
 
     private readonly object _gate = new();
     private readonly GameAccountStore _accounts;
+    private readonly GameConfigStore _configs;
     private readonly GameDatabase _database;
     private readonly List<Guild> _guilds = new();
     private int _nextGuildId = 1;
 
-    public GuildStore(GameAccountStore accounts, GameDatabase database)
+    public GuildStore(GameAccountStore accounts, GameConfigStore configs, GameDatabase database)
     {
         _accounts = accounts;
+        _configs = configs;
         _database = database;
         LoadGuilds();
     }
@@ -89,9 +92,11 @@ public sealed class GuildStore
                 account.UserName,
                 new List<GuildMember>
                 {
-                    new(account.UserName, account.Profile.Name, GuildMemberRole.Leader, DateTime.UtcNow),
+                    new(account.UserName, account.Profile.Name, GuildMemberRole.Leader, DateTime.UtcNow, 0),
                 },
-                DateTime.UtcNow);
+                DateTime.UtcNow,
+                0,
+                1);
 
             _guilds.Add(guild);
             SaveGuild(guild);
@@ -120,7 +125,7 @@ public sealed class GuildStore
                 return new GuildActionResult(false, "公会不存在", null);
             }
 
-            guild.Members.Add(new GuildMember(account.UserName, account.Profile.Name, GuildMemberRole.Member, DateTime.UtcNow));
+            guild.Members.Add(new GuildMember(account.UserName, account.Profile.Name, GuildMemberRole.Member, DateTime.UtcNow, 0));
             SaveGuild(guild);
             return new GuildActionResult(true, "加入成功", CloneGuild(guild));
         }
@@ -204,6 +209,126 @@ public sealed class GuildStore
         }
     }
 
+    public GuildContributionResult ContributeCopper(string? userName, int amount)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return new GuildContributionResult(false, "请先登录", null, null);
+        }
+
+        amount = Math.Clamp(amount, 0, MaxContributionAmount);
+        if (amount <= 0)
+        {
+            return new GuildContributionResult(false, "贡献数量必须大于0", GetGuildByMember(userName), _accounts.GetAccount(userName));
+        }
+
+        Guild? guildSnapshot;
+        lock (_gate)
+        {
+            guildSnapshot = FindGuildByMember(userName);
+            if (guildSnapshot is null)
+            {
+                return new GuildContributionResult(false, "你还没有加入公会", null, _accounts.GetAccount(userName));
+            }
+        }
+
+        if (!_accounts.TrySpendCopper(userName, amount, out PlayerAccount? account, out string message))
+        {
+            return new GuildContributionResult(false, message, guildSnapshot is null ? null : CloneGuild(guildSnapshot), account);
+        }
+
+        lock (_gate)
+        {
+            Guild? guild = FindGuildByMember(userName);
+            if (guild is null)
+            {
+                _accounts.GrantRewards(userName, new[] { new QuestReward(QuestRewardType.Copper, "铜钱", amount) });
+                return new GuildContributionResult(false, "你还没有加入公会", null, _accounts.GetAccount(userName));
+            }
+
+            int memberIndex = guild.Members.FindIndex(member =>
+                string.Equals(member.UserName, userName, StringComparison.OrdinalIgnoreCase));
+            if (memberIndex < 0)
+            {
+                _accounts.GrantRewards(userName, new[] { new QuestReward(QuestRewardType.Copper, "铜钱", amount) });
+                return new GuildContributionResult(false, "成员不存在", CloneGuild(guild), _accounts.GetAccount(userName));
+            }
+
+            int oldLevel = guild.Level;
+            guild.TotalContribution += amount;
+            guild.Members[memberIndex].Contribution += amount;
+            guild.Level = ResolveGuildLevel(guild.TotalContribution, _configs.GetGuildConfig());
+            SaveGuild(guild);
+            string resultMessage = guild.Level > oldLevel
+                ? $"贡献成功，公会升至{guild.Level}级"
+                : $"贡献成功，增加{amount}贡献";
+            return new GuildContributionResult(true, resultMessage, CloneGuild(guild), account);
+        }
+    }
+
+    public static int ResolveGuildLevel(int totalContribution)
+        => ResolveGuildLevel(totalContribution, new GuildConfig());
+
+    private static int ResolveGuildLevel(int totalContribution, GuildConfig config)
+    {
+        int maxLevel = Math.Max(1, config.MaxLevel);
+        int level = 1;
+        if (config.LevelRequirements.Count == 0)
+        {
+            while (level < maxLevel && totalContribution >= GetRequiredTotalContributionForLevel(level + 1, config))
+            {
+                level++;
+            }
+
+            return level;
+        }
+
+        foreach (GuildLevelRequirementConfig requirement in config.LevelRequirements.OrderBy(requirement => requirement.Level))
+        {
+            if (requirement.Level > maxLevel)
+            {
+                break;
+            }
+
+            if (totalContribution < requirement.RequiredTotalContribution)
+            {
+                break;
+            }
+
+            level = Math.Max(level, requirement.Level);
+        }
+
+        return Math.Min(level, maxLevel);
+    }
+
+    public static int GetRequiredTotalContributionForLevel(int level)
+        => GetRequiredTotalContributionForLevel(level, new GuildConfig());
+
+    private static int GetRequiredTotalContributionForLevel(int level, GuildConfig config)
+    {
+        if (level <= 1)
+        {
+            return 0;
+        }
+
+        GuildLevelRequirementConfig? requirement = config.LevelRequirements.FirstOrDefault(item => item.Level == level);
+        return requirement?.RequiredTotalContribution ?? Math.Max(1, (level - 1) * 1000);
+    }
+
+    public static int GetRequiredTotalContributionForNextLevel(int level)
+        => GetRequiredTotalContributionForNextLevel(level, new GuildConfig());
+
+    public int GetConfiguredRequiredTotalContributionForNextLevel(int level)
+    {
+        GuildConfig config = _configs.GetGuildConfig();
+        return GetRequiredTotalContributionForNextLevel(level, config);
+    }
+
+    private static int GetRequiredTotalContributionForNextLevel(int level, GuildConfig config)
+        => level >= Math.Max(1, config.MaxLevel)
+            ? 0
+            : GetRequiredTotalContributionForLevel(level + 1, config);
+
     private Guild? FindGuildByMember(string userName)
         => _guilds.FirstOrDefault(guild =>
             guild.Members.Any(member => string.Equals(member.UserName, userName, StringComparison.OrdinalIgnoreCase)));
@@ -223,6 +348,8 @@ public sealed class GuildStore
 
     private void SaveGuild(Guild guild)
     {
+        GuildConfig config = _configs.GetGuildConfig();
+        guild.Level = ResolveGuildLevel(guild.TotalContribution, config);
         ILiteCollection<GuildDocument> collection = _database.GetCollection<GuildDocument>("guilds");
         collection.Upsert(new GuildDocument
         {
@@ -230,6 +357,7 @@ public sealed class GuildStore
             Name = guild.Name,
             Notice = guild.Notice,
             LeaderUserName = guild.LeaderUserName,
+            Level = guild.Level,
             Members = guild.Members
                 .Select(member => new GuildMemberDocument
                 {
@@ -237,9 +365,11 @@ public sealed class GuildStore
                     RoleName = member.RoleName,
                     Role = member.Role,
                     JoinedAt = member.JoinedAt,
-                })
+                    Contribution = member.Contribution,
+            })
                 .ToList(),
             CreatedAt = guild.CreatedAt,
+            TotalContribution = guild.TotalContribution,
         });
     }
 
@@ -249,25 +379,32 @@ public sealed class GuildStore
         collection.Delete(guildId);
     }
 
-    private static Guild CloneGuild(Guild guild)
+    private Guild CloneGuild(Guild guild)
         => new(
             guild.Id,
             guild.Name,
             guild.Notice,
             guild.LeaderUserName,
             guild.Members
-                .Select(member => new GuildMember(member.UserName, member.RoleName, member.Role, member.JoinedAt))
+                .Select(member => new GuildMember(member.UserName, member.RoleName, member.Role, member.JoinedAt, member.Contribution))
                 .ToList(),
-            guild.CreatedAt);
+            guild.CreatedAt,
+            guild.TotalContribution,
+            ResolveGuildLevel(guild.TotalContribution, _configs.GetGuildConfig()));
 
-    private static Guild ToGuild(GuildDocument document)
-        => new(
+    private Guild ToGuild(GuildDocument document)
+    {
+        int totalContribution = Math.Max(0, document.TotalContribution);
+        return new Guild(
             document.Id,
             document.Name,
             document.Notice,
             document.LeaderUserName,
             document.Members
-                .Select(member => new GuildMember(member.UserName, member.RoleName, member.Role, member.JoinedAt))
+                .Select(member => new GuildMember(member.UserName, member.RoleName, member.Role, member.JoinedAt, member.Contribution))
                 .ToList(),
-            document.CreatedAt);
+            document.CreatedAt,
+            totalContribution,
+            ResolveGuildLevel(totalContribution, _configs.GetGuildConfig()));
+    }
 }

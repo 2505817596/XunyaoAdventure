@@ -27,6 +27,15 @@
         }
         else
         {
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+            }
+
+            <div class="mail-actions">
+                <button class="wap-button" disabled="@(!CanClaimAll)" @onclick="ClaimAll">一键领取</button>
+            </div>
+
             <div class="mail-list">
                 @foreach (MailMessage mail in _mails)
                 {
@@ -38,6 +47,13 @@
                             </header>
                             <small>@mail.SenderName / @mail.SentAt.LocalDateTime.ToString("MM-dd HH:mm")</small>
                             <small>@ResolveAttachmentHint(mail)</small>
+                        </button>
+                        <button
+                            class="mail-delete"
+                            disabled="@(!CanDelete(mail))"
+                            @onclick:stopPropagation="true"
+                            @onclick="() => Delete(mail.Id)">
+                            删除
                         </button>
                     </article>
                 }
@@ -51,6 +67,9 @@
 @code {
     private PlayerAccount? _account;
     private List<MailMessage> _mails = new();
+    private string _message = string.Empty;
+    private bool _success;
+    private bool CanClaimAll => _mails.Any(mail => mail.Attachments.Count > 0 && !mail.Claimed);
 
     protected override void OnInitialized()
     {
@@ -60,6 +79,27 @@
 
     private void GoDetail(long id)
         => Navigation.NavigateTo($"/mail/{id}");
+
+    private void ClaimAll()
+    {
+        MailClaimAllResult result = Mails.ClaimAllAttachments(Session.UserName);
+        _success = result.Success;
+        _message = result.Message;
+        _account = result.Account ?? _account;
+        _mails = result.Mails.ToList();
+    }
+
+    private void Delete(long id)
+    {
+        MailActionResult result = Mails.DeleteMail(Session.UserName, id);
+        _success = result.Success;
+        _message = result.Message;
+        _account = result.Account ?? _account;
+        _mails = Mails.GetInbox(Session.UserName).ToList();
+    }
+
+    private static bool CanDelete(MailMessage mail)
+        => mail.Attachments.Count == 0 || mail.Claimed;
 
     private static string ResolveStatus(MailMessage mail)
     {
