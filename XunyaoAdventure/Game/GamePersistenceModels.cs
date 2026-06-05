@@ -121,6 +121,34 @@ public sealed class ChatMessageDocument
     public DateTimeOffset SentAt { get; set; }
     public bool IsSystem { get; set; }
     public int? GuildId { get; set; }
+    public string? RecipientUserName { get; set; }
+}
+
+public sealed class FriendRelationDocument
+{
+    [BsonId]
+    public string Id { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string FriendUserName { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class FriendRequestDocument
+{
+    [BsonId]
+    public string Id { get; set; } = string.Empty;
+    public string FromUserName { get; set; } = string.Empty;
+    public string ToUserName { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class DirectChatReadStateDocument
+{
+    [BsonId]
+    public string Id { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string FriendUserName { get; set; } = string.Empty;
+    public long LastReadMessageId { get; set; }
 }
 
 public sealed class QuestStateDocument

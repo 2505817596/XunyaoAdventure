@@ -1,4 +1,5 @@
 @page "/chat"
+@page "/chat/{FriendUserName}"
 @implements IDisposable
 @inject NavigationManager Navigation
 @inject GameSession Session
@@ -6,6 +7,7 @@
 @inject ChatStore Chats
 @inject QuestStore Quests
 @inject GuildStore GuildService
+@inject FriendStore FriendService
 
 <PageTitle>聊天</PageTitle>
 
@@ -26,6 +28,7 @@
         else
         {
             <div class="chat-tabs">
+                <button class="@TabClass(ChatChannel.Direct)" @onclick="() => SelectChannel(ChatChannel.Direct)">私聊</button>
                 <button class="@TabClass(ChatChannel.World)" @onclick="() => SelectChannel(ChatChannel.World)">世界</button>
                 <button class="@TabClass(ChatChannel.Guild)" @onclick="() => SelectChannel(ChatChannel.Guild)">公会</button>
                 <button class="@TabClass(ChatChannel.System)" @onclick="() => SelectChannel(ChatChannel.System)">系统</button>
@@ -36,8 +39,22 @@
                 <div class="wap-line">你还没有加入公会</div>
                 <button class="wap-button" @onclick="GoGuilds">查找公会</button>
             }
+            else if (_channel == ChatChannel.Direct && _directFriend is null)
+            {
+                <div class="wap-line">请选择好友进行私聊</div>
+                <button class="wap-button" @onclick="GoFriends">好友列表</button>
+            }
             else
             {
+                @if (_channel == ChatChannel.Direct && _directFriend is not null)
+                {
+                    <div class="chat-direct-header">
+                        <span>正在私聊</span>
+                        <b>@_directFriend.DisplayName</b>
+                        <button @onclick="GoFriends">切换</button>
+                    </div>
+                }
+
                 <div class="chat-list">
                     @if (_messages.Count == 0)
                     {
@@ -103,33 +120,59 @@
 </main>
 
 @code {
+    [Parameter]
+    public string? FriendUserName { get; set; }
+
     private PlayerAccount? _account;
     private XunyaoAdventure.Game.Guild? _guild;
+    private FriendProfile? _directFriend;
     private ChatChannel _channel = ChatChannel.World;
     private List<ChatMessage> _messages = new();
     private string _draft = string.Empty;
     private string _message = string.Empty;
+
+    private string ComposePlaceholder
+        => _channel == ChatChannel.Direct && _directFriend is not null
+            ? $"发送给 {_directFriend.DisplayName}"
+            : "输入聊天内容";
 
     protected override void OnInitialized()
     {
         _account = Accounts.GetAccount(Session.UserName);
         _guild = GuildService.GetGuildByMember(Session.UserName);
         Chats.MessagesChanged += OnMessagesChanged;
-        RefreshMessages();
+        FriendService.FriendsChanged += OnFriendsChanged;
+        ResolveDirectFriend();
+        RefreshMessages(markDirectRead: true);
+    }
+
+    protected override void OnParametersSet()
+    {
+        ResolveDirectFriend();
+        if (!string.IsNullOrWhiteSpace(FriendUserName))
+        {
+            _channel = ChatChannel.Direct;
+        }
+
+        RefreshMessages(markDirectRead: true);
     }
 
     private void SelectChannel(ChatChannel channel)
     {
         _channel = channel;
         _message = string.Empty;
-        RefreshMessages();
+        ResolveDirectFriend();
+        RefreshMessages(markDirectRead: channel == ChatChannel.Direct);
     }
 
     private void SendMessage()
     {
-        ChatSendResult result = _channel == ChatChannel.Guild
-            ? Chats.SendGuildMessage(_account, _guild, _draft)
-            : Chats.SendWorldMessage(_account, _draft);
+        ChatSendResult result = _channel switch
+        {
+            ChatChannel.Guild => Chats.SendGuildMessage(_account, _guild, _draft),
+            ChatChannel.Direct => Chats.SendDirectMessage(_account, _directFriend?.UserName, _draft),
+            _ => Chats.SendWorldMessage(_account, _draft),
+        };
 
         _message = result.Success ? string.Empty : result.Message;
         if (result.Success)
@@ -140,7 +183,8 @@
 
         _account = Accounts.GetAccount(Session.UserName);
         _guild = GuildService.GetGuildByMember(Session.UserName);
-        RefreshMessages();
+        ResolveDirectFriend();
+        RefreshMessages(markDirectRead: result.Success);
     }
 
     private void HandleKeyDown(KeyboardEventArgs args)
@@ -151,17 +195,50 @@
         }
     }
 
-    private void RefreshMessages()
-        => _messages = Chats.GetMessages(_channel, _guild?.Id).ToList();
+    private void RefreshMessages(bool markDirectRead = false)
+    {
+        _messages = _channel == ChatChannel.Direct
+            ? Chats.GetDirectMessages(Session.UserName, _directFriend?.UserName).ToList()
+            : Chats.GetMessages(_channel, _guild?.Id).ToList();
+
+        if (markDirectRead && _channel == ChatChannel.Direct && _directFriend is not null)
+        {
+            Chats.MarkDirectChatRead(Session.UserName, _directFriend.UserName);
+        }
+    }
 
     private void OnMessagesChanged()
     {
         _ = InvokeAsync(() =>
         {
             _guild = GuildService.GetGuildByMember(Session.UserName);
-            RefreshMessages();
+            ResolveDirectFriend();
+            RefreshMessages(markDirectRead: _channel == ChatChannel.Direct);
             StateHasChanged();
         });
+    }
+
+    private void OnFriendsChanged()
+    {
+        _ = InvokeAsync(() =>
+        {
+            ResolveDirectFriend();
+            RefreshMessages(markDirectRead: _channel == ChatChannel.Direct);
+            StateHasChanged();
+        });
+    }
+
+    private void ResolveDirectFriend()
+    {
+        if (string.IsNullOrWhiteSpace(FriendUserName))
+        {
+            _directFriend = null;
+            return;
+        }
+
+        string decoded = Uri.UnescapeDataString(FriendUserName);
+        _directFriend = FriendService.GetFriends(Session.UserName)
+            .FirstOrDefault(friend => string.Equals(friend.UserName, decoded, StringComparison.OrdinalIgnoreCase));
     }
 
     private string TabClass(ChatChannel channel)
@@ -175,6 +252,9 @@
 
     private void GoGuilds()
         => Navigation.NavigateTo("/guilds");
+
+    private void GoFriends()
+        => Navigation.NavigateTo("/friends");
 
     private void GoHome()
         => Navigation.NavigateTo("/");
@@ -191,5 +271,6 @@
     public void Dispose()
     {
         Chats.MessagesChanged -= OnMessagesChanged;
+        FriendService.FriendsChanged -= OnFriendsChanged;
     }
 }

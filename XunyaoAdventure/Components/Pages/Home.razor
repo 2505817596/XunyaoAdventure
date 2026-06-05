@@ -31,7 +31,7 @@
             <div class="wap-line">角色：@_account.Profile.Name</div>
             <div class="wap-line">等级：@_account.Level</div>
             <div class="wap-line">铜钱：@_account.Copper</div>
-            <button class="home-chat-preview" @onclick="GoChat">
+            <button class="home-chat-preview" @onclick="GoLatestChat">
                 <span class="home-chat-title">@LatestChatTitle</span>
                 @if (_latestChatMessage is null)
                 {
@@ -45,6 +45,7 @@
                 }
             </button>
             <div class="wap-menu">
+                <button class="wap-button" @onclick="GoFriends">@FriendsButtonText</button>
                 <button class="wap-button" @onclick="GoMonsters">妖怪</button>
                 <button class="wap-button" @onclick="GoQuests">任务</button>
                 <button class="wap-button" @onclick="GoCampaign">副本</button>
@@ -68,10 +69,12 @@
     private XunyaoAdventure.Game.Guild? _guild;
     private ChatMessage? _latestChatMessage;
     private int _unreadMailCount;
+    private int _unreadDirectCount;
 
     private string LatestChatTitle
         => _latestChatMessage?.Channel switch
         {
+            ChatChannel.Direct => "好友私聊",
             ChatChannel.Guild => "公会聊天",
             ChatChannel.System => "系统消息",
             ChatChannel.World => "世界聊天",
@@ -81,11 +84,15 @@
     private string MailButtonText
         => _unreadMailCount > 0 ? $"邮箱（{_unreadMailCount}）" : "邮箱";
 
+    private string FriendsButtonText
+        => _unreadDirectCount > 0 ? $"好友（{_unreadDirectCount}）" : "好友";
+
     protected override void OnInitialized()
     {
         _account = Accounts.GetAccount(Session.UserName);
         _guild = GuildService.GetGuildByMember(Session.UserName);
         _unreadMailCount = Mails.GetUnreadCount(Session.UserName);
+        _unreadDirectCount = Chats.GetUnreadDirectCount(Session.UserName);
         Chats.MessagesChanged += OnMessagesChanged;
         Mails.MailsChanged += OnMailsChanged;
         RefreshLatestChatMessage();
@@ -120,6 +127,24 @@
 
     private void GoChat()
         => Navigation.NavigateTo("/chat");
+
+    private void GoLatestChat()
+    {
+        if (_latestChatMessage?.Channel == ChatChannel.Direct)
+        {
+            string? otherUserName = ResolveDirectChatOtherUserName(_latestChatMessage);
+            if (!string.IsNullOrWhiteSpace(otherUserName))
+            {
+                Navigation.NavigateTo($"/chat/{Uri.EscapeDataString(otherUserName)}");
+                return;
+            }
+        }
+
+        GoChat();
+    }
+
+    private void GoFriends()
+        => Navigation.NavigateTo("/friends");
 
     private void GoGuild()
         => Navigation.NavigateTo("/guild");
@@ -157,7 +182,18 @@
     private void RefreshLatestChatMessage()
     {
         _guild = GuildService.GetGuildByMember(Session.UserName);
-        _latestChatMessage = Chats.GetLatestVisibleMessage(_guild?.Id);
+        _latestChatMessage = Chats.GetLatestVisibleMessage(Session.UserName, _guild?.Id);
+        _unreadDirectCount = Chats.GetUnreadDirectCount(Session.UserName);
+    }
+
+    private string? ResolveDirectChatOtherUserName(ChatMessage message)
+    {
+        if (string.Equals(message.SenderUserName, Session.UserName, StringComparison.OrdinalIgnoreCase))
+        {
+            return message.RecipientUserName;
+        }
+
+        return message.SenderUserName;
     }
 
     private void OnMessagesChanged()

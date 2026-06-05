@@ -1,0 +1,278 @@
+@page "/friends"
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject FriendStore FriendService
+@inject ChatStore Chats
+
+<PageTitle>好友</PageTitle>
+
+<main class="wap-page friends-page">
+    <section class="wap-panel friends-panel">
+        <div class="wap-title">好友</div>
+
+        @if (_account is null)
+        {
+            <div class="wap-line">请先登录</div>
+            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="wap-line">请先创建角色</div>
+            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+        }
+        else
+        {
+            <section class="friend-search">
+                <div class="friend-section-title">查找玩家</div>
+                <div class="friend-search-row">
+                    <input maxlength="24" placeholder="输入账号或角色名" @bind="_keyword" @bind:event="oninput" @onkeydown="HandleSearchKeyDown" />
+                    <button disabled="@string.IsNullOrWhiteSpace(_keyword)" @onclick="Search">搜索</button>
+                </div>
+            </section>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
+            }
+
+            @if (_incomingRequests.Any())
+            {
+                <section class="friend-section">
+                    <div class="friend-section-title">好友申请</div>
+                    <div class="friend-list">
+                        @foreach (FriendRequestProfile request in _incomingRequests)
+                        {
+                            <article class="friend-card">
+                                <div class="friend-avatar">@GetAvatarText(request.FromDisplayName)</div>
+                                <div class="friend-main">
+                                    <b>@request.FromDisplayName</b>
+                                    <small>@request.FromUserName / @request.FromLevel 级 / 战力 @request.FromTotalPower</small>
+                                </div>
+                                <div class="friend-actions">
+                                    <button @onclick="() => Accept(request.FromUserName)">同意</button>
+                                    <button class="muted" @onclick="() => Reject(request.FromUserName)">拒绝</button>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </section>
+            }
+
+            @if (_searched)
+            {
+                <section class="friend-section">
+                    <div class="friend-section-title">搜索结果</div>
+                    @if (!_searchResults.Any())
+                    {
+                        <div class="friend-empty">没有找到玩家</div>
+                    }
+                    else
+                    {
+                        <div class="friend-list">
+                            @foreach (PlayerAccount player in _searchResults)
+                            {
+                                <article class="friend-card">
+                                    <div class="friend-avatar">@GetAvatarText(player.Profile?.Name ?? player.UserName)</div>
+                                    <div class="friend-main">
+                                        <b>@(player.Profile?.Name ?? player.UserName)</b>
+                                        <small>@player.UserName / @player.Level 级 / 战力 @player.Monsters.Sum(monster => monster.Power)</small>
+                                    </div>
+                                    <div class="friend-actions">
+                                        @if (FriendService.IsFriend(Session.UserName, player.UserName))
+                                        {
+                                            <button @onclick="() => GoDirectChat(player.UserName)">私聊</button>
+                                        }
+                                        else if (FriendService.HasOutgoingRequest(Session.UserName, player.UserName))
+                                        {
+                                            <button disabled>已申请</button>
+                                        }
+                                        else if (FriendService.HasIncomingRequest(Session.UserName, player.UserName))
+                                        {
+                                            <button @onclick="() => Accept(player.UserName)">同意</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => AddFriend(player.UserName)">加好友</button>
+                                        }
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+
+            <section class="friend-section">
+                <div class="friend-section-title">我的好友 @_friends.Count / @FriendStore.MaxFriends</div>
+                @if (!_friends.Any())
+                {
+                    <div class="friend-empty">还没有好友</div>
+                }
+                else
+                {
+                    <div class="friend-list">
+                        @foreach (FriendProfile friend in _friends)
+                        {
+                            DirectChatSummary summary = GetSummary(friend.UserName);
+                            <article class="friend-card">
+                                <div class="friend-avatar">@GetAvatarText(friend.DisplayName)</div>
+                                <div class="friend-main">
+                                    <div class="friend-name-line">
+                                        <b>@friend.DisplayName</b>
+                                        @if (summary.UnreadCount > 0)
+                                        {
+                                            <span class="friend-unread">@summary.UnreadCount</span>
+                                        }
+                                    </div>
+                                    <small>@friend.UserName / @friend.Level 级 / 战力 @friend.TotalPower</small>
+                                    <small class="friend-chat-preview">@FormatLatestMessage(summary)</small>
+                                </div>
+                                <div class="friend-actions">
+                                    <button @onclick="() => GoDirectChat(friend.UserName)">私聊</button>
+                                    <button class="muted" @onclick="() => Remove(friend.UserName)">删除</button>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+
+            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private List<FriendProfile> _friends = new();
+    private List<FriendRequestProfile> _incomingRequests = new();
+    private List<PlayerAccount> _searchResults = new();
+    private Dictionary<string, DirectChatSummary> _summaries = new(StringComparer.OrdinalIgnoreCase);
+    private string _keyword = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+    private bool _searched;
+
+    protected override void OnInitialized()
+    {
+        FriendService.FriendsChanged += OnFriendsChanged;
+        Chats.MessagesChanged += OnChatsChanged;
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        List<FriendProfile> friends = FriendService.GetFriends(Session.UserName).ToList();
+        _summaries = friends.ToDictionary(
+            friend => friend.UserName,
+            friend => Chats.GetDirectChatSummary(Session.UserName, friend.UserName),
+            StringComparer.OrdinalIgnoreCase);
+        _friends = friends
+            .OrderByDescending(friend => GetSummary(friend.UserName).UnreadCount > 0)
+            .ThenByDescending(friend => GetSummary(friend.UserName).LatestMessage?.Id ?? 0)
+            .ThenBy(friend => friend.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        _incomingRequests = FriendService.GetIncomingRequests(Session.UserName).ToList();
+        if (_searched)
+        {
+            _searchResults = FriendService.SearchPlayers(Session.UserName, _keyword).ToList();
+        }
+    }
+
+    private void Search()
+    {
+        _searched = true;
+        _message = string.Empty;
+        _searchResults = FriendService.SearchPlayers(Session.UserName, _keyword).ToList();
+    }
+
+    private void AddFriend(string userName)
+        => ApplyResult(FriendService.SendRequest(Session.UserName, userName));
+
+    private void Accept(string fromUserName)
+        => ApplyResult(FriendService.AcceptRequest(Session.UserName, fromUserName));
+
+    private void Reject(string fromUserName)
+        => ApplyResult(FriendService.RejectRequest(Session.UserName, fromUserName));
+
+    private void Remove(string friendUserName)
+        => ApplyResult(FriendService.RemoveFriend(Session.UserName, friendUserName));
+
+    private void ApplyResult(FriendActionResult result)
+    {
+        _success = result.Success;
+        _message = result.Message;
+        Reload();
+    }
+
+    private void HandleSearchKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !string.IsNullOrWhiteSpace(_keyword))
+        {
+            Search();
+        }
+    }
+
+    private void OnFriendsChanged()
+    {
+        _ = InvokeAsync(() =>
+        {
+            Reload();
+            StateHasChanged();
+        });
+    }
+
+    private void OnChatsChanged()
+    {
+        _ = InvokeAsync(() =>
+        {
+            Reload();
+            StateHasChanged();
+        });
+    }
+
+    private DirectChatSummary GetSummary(string friendUserName)
+        => _summaries.TryGetValue(friendUserName, out DirectChatSummary? summary)
+            ? summary
+            : new DirectChatSummary(friendUserName, null, 0);
+
+    private string FormatLatestMessage(DirectChatSummary summary)
+    {
+        if (summary.LatestMessage is null)
+        {
+            return "鏆傛棤绉佽亰";
+        }
+
+        string prefix = string.Equals(summary.LatestMessage.SenderUserName, Session.UserName, StringComparison.OrdinalIgnoreCase)
+            ? "鎴?"
+            : summary.LatestMessage.SenderDisplayName;
+        return $"{prefix}: {summary.LatestMessage.Content} · {summary.LatestMessage.SentAt.ToLocalTime():HH:mm}";
+    }
+
+    private void GoDirectChat(string friendUserName)
+        => Navigation.NavigateTo($"/chat/{Uri.EscapeDataString(friendUserName)}");
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+
+    private static string GetAvatarText(string displayName)
+    {
+        string text = string.IsNullOrWhiteSpace(displayName) ? "友" : displayName.Trim();
+        return text[..1];
+    }
+
+    public void Dispose()
+    {
+        FriendService.FriendsChanged -= OnFriendsChanged;
+        Chats.MessagesChanged -= OnChatsChanged;
+    }
+}

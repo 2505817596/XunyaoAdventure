@@ -17,6 +17,7 @@ builder.Services.AddSingleton<GameDatabase>();
 builder.Services.AddSingleton<GameConfigStore>();
 builder.Services.AddSingleton<GameAccountStore>();
 builder.Services.AddSingleton<OperationLogStore>();
+builder.Services.AddSingleton<FriendStore>();
 builder.Services.AddSingleton<ChatStore>();
 builder.Services.AddSingleton<QuestStore>();
 builder.Services.AddSingleton<CampaignStore>();
