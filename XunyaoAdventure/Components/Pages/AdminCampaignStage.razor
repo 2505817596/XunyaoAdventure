@@ -176,6 +176,7 @@
     private List<CampaignStageConfig> _allStages = new();
     private List<MonsterTemplateConfig> _monsterTemplates = new();
     private List<ConsumableTemplateConfig> _consumables = new();
+    private List<EquipmentTemplateConfig> _equipment = new();
     private CampaignStageConfig? _stage;
     private string _originalStageId = string.Empty;
     private string _message = string.Empty;
@@ -193,6 +194,7 @@
         _allStages = Configs.GetCampaignStages().ToList();
         _monsterTemplates = Configs.GetMonsterTemplates().ToList();
         _consumables = Configs.GetConsumableTemplates().ToList();
+        _equipment = Configs.GetEquipmentTemplates().ToList();
         _stage = _allStages.FirstOrDefault(stage => string.Equals(stage.Id, _originalStageId, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -212,6 +214,7 @@
                         <select @bind="reward.Type">
                             <option value="Copper">铜钱</option>
                             <option value="Consumable">消耗品</option>
+                            <option value="Equipment">装备</option>
                         </select>
                     </label>
                     <label>
@@ -223,13 +226,13 @@
                         <input type="number" min="1" @bind="reward.Quantity" />
                     </label>
                 </div>
-                @if (reward.Type == "Consumable")
+                @if (RequiresTemplate(reward.Type))
                 {
                     <label>
-                        <span>道具模板</span>
+                        <span>模板</span>
                         <select @bind="reward.TemplateId">
-                            <option value="">请选择道具模板</option>
-                            @foreach (ConsumableTemplateConfig item in _consumables)
+                            <option value="">请选择模板</option>
+                            @foreach (RewardTemplateOption item in ResolveTemplateOptions(reward.Type))
                             {
                                 <option value="@item.TemplateId">@item.TemplateId / @item.Name</option>
                             }
@@ -329,6 +332,25 @@
         Navigation.NavigateTo($"/admin/campaign/{Uri.EscapeDataString(ChapterId)}");
     }
 
+    private static bool RequiresTemplate(string type)
+        => string.Equals(type, "Consumable", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(type, "Equipment", StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<RewardTemplateOption> ResolveTemplateOptions(string type)
+    {
+        if (string.Equals(type, "Consumable", StringComparison.OrdinalIgnoreCase))
+        {
+            return _consumables.Select(item => new RewardTemplateOption(item.TemplateId, item.Name));
+        }
+
+        if (string.Equals(type, "Equipment", StringComparison.OrdinalIgnoreCase))
+        {
+            return _equipment.Select(item => new RewardTemplateOption(item.TemplateId, item.Name));
+        }
+
+        return Enumerable.Empty<RewardTemplateOption>();
+    }
+
     private static CampaignEnemyConfig CreateDefaultEnemy(string name, string templateId)
         => new()
         {
@@ -340,4 +362,6 @@
             X = 5.72,
             Y = -0.28,
         };
+
+    private sealed record RewardTemplateOption(string TemplateId, string Name);
 }

@@ -79,10 +79,10 @@
                                 <input type="number" min="1" @bind="reward.Quantity" />
                             </label>
                             <label>
-                                <span>道具模板</span>
-                                <select disabled="@(reward.Type != QuestRewardType.Consumable.ToString())" @bind="reward.TemplateId">
+                                <span>模板</span>
+                                <select disabled="@(!RequiresTemplate(reward.Type))" @bind="reward.TemplateId">
                                     <option value="">无</option>
-                                    @foreach (ConsumableTemplateConfig item in _consumables)
+                                    @foreach (RewardTemplateOption item in ResolveTemplateOptions(reward.Type))
                                     {
                                         <option value="@item.TemplateId">@item.TemplateId / @item.Name</option>
                                     }
@@ -101,6 +101,7 @@
 
 @code {
     private List<ConsumableTemplateConfig> _consumables = new();
+    private List<EquipmentTemplateConfig> _equipment = new();
     private List<MailRewardEditor> _rewards = new();
     private string _sendScope = MailSendScope.Single;
     private string _targetUserName = string.Empty;
@@ -114,6 +115,7 @@
     protected override void OnInitialized()
     {
         _consumables = Configs.GetConsumableTemplates().ToList();
+        _equipment = Configs.GetEquipmentTemplates().ToList();
     }
 
     private void Send()
@@ -187,15 +189,35 @@
             type,
             editor.Name.Trim(),
             Math.Max(1, editor.Quantity),
-            type == QuestRewardType.Consumable ? editor.TemplateId : null);
+            RequiresTemplate(type.ToString()) ? editor.TemplateId : null);
     }
 
     private static string ResolveRewardTypeName(QuestRewardType type)
         => type switch
         {
             QuestRewardType.Consumable => "道具",
+            QuestRewardType.Equipment => "装备",
             _ => "铜钱",
         };
+
+    private static bool RequiresTemplate(string type)
+        => string.Equals(type, QuestRewardType.Consumable.ToString(), StringComparison.OrdinalIgnoreCase)
+            || string.Equals(type, QuestRewardType.Equipment.ToString(), StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<RewardTemplateOption> ResolveTemplateOptions(string type)
+    {
+        if (string.Equals(type, QuestRewardType.Consumable.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return _consumables.Select(item => new RewardTemplateOption(item.TemplateId, item.Name));
+        }
+
+        if (string.Equals(type, QuestRewardType.Equipment.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return _equipment.Select(item => new RewardTemplateOption(item.TemplateId, item.Name));
+        }
+
+        return Enumerable.Empty<RewardTemplateOption>();
+    }
 
     private void GoAdmin()
         => Navigation.NavigateTo("/admin");
@@ -213,4 +235,6 @@
         public int Quantity { get; set; } = 1;
         public string TemplateId { get; set; } = string.Empty;
     }
+
+    private sealed record RewardTemplateOption(string TemplateId, string Name);
 }

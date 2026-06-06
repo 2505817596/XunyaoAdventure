@@ -7,9 +7,8 @@
 
 <PageTitle>妖怪详情</PageTitle>
 
-<main class="wap-page monster-page">
-    <section class="wap-panel monster-panel">
-        <div class="wap-title">妖怪详情</div>
+<main class="monster-page">
+    <section class="monster-panel">
 
         @if (_account is null)
         {
@@ -23,91 +22,53 @@
         }
         else
         {
+            <header class="monster-topbar">
+                <div class="monster-top-level">等级:@_account.Level</div>
+                <div class="monster-top-resource power"><span>战</span><b>@_monster.Power</b></div>
+                <div class="monster-top-resource coin"><span>金</span><b>@_account.Copper</b></div>
+                <div class="monster-top-resource gem"><span>晶</span><b>@DemonEssenceCount</b></div>
+                <button class="monster-settings" aria-label="设置">⚙</button>
+            </header>
+
             <div class="monster-detail-stage">
-                <div class="monster-detail-header">
-                    <span class="monster-attribute"><span>@_monster.Attribute</span></span>
-                    <span class="monster-detail-name">@_monster.Name</span>
-                </div>
-
-                <div class="monster-detail-orbit">
-                    <div class="monster-detail-avatar-wrap">
-                        <span class="monster-portrait monster-detail-avatar @ResolveStageFrameClass(_monster.Stage)">
-                            <img src="@_monster.PortraitUrl" alt="@_monster.Name" />
-                            <span class="monster-stars">@BuildStars(_monster.Star)</span>
-                        </span>
+                <div class="monster-detail-main">
+                    <div class="monster-detail-header">
+                        <span class="monster-detail-name">@_monster.Name</span>
+                        <span class="monster-detail-power">战力 @_monster.Power</span>
+                        <button class="monster-detail-link" @onclick="OpenAttributePopup">查看属性</button>
                     </div>
 
-                    @foreach (MonsterEquipmentSlot slot in _monster.Equipment)
-                    {
-                        BackpackEquipmentItem? slotItem = ResolveSlotItem(slot);
-                        <button class="monster-detail-equip @ResolveSlotOrbitClass(slot.SlotKey) @ResolveEquipmentQualityClass(slotItem?.Quality) @(slot.Equipped ? "equipped" : "")" @onclick="() => OpenEquipmentPopup(slot.SlotKey)">
-                            <span>
-                                @(slot.Equipped ? slot.IconText : "空")
+                    <div class="monster-detail-orbit">
+                        <div class="monster-detail-avatar-wrap">
+                            <span class="monster-portrait monster-detail-avatar @ResolveStageFrameClass(_monster.Stage)">
+                                <img src="@_monster.PortraitUrl" alt="@_monster.Name" />
+                                <span class="monster-stars">@BuildStars(_monster.Star)</span>
                             </span>
-                            @if (slotItem is not null)
-                            {
-                                <em class="equipment-level-badge">+@slotItem.UpgradeLevel</em>
-                            }
-                            <small>@slot.Name</small>
-                        </button>
-                    }
+                        </div>
+
+                        @foreach (MonsterEquipmentSlot slot in _monster.Equipment)
+                        {
+                            BackpackEquipmentItem? slotItem = ResolveSlotItem(slot);
+                            <button class="monster-detail-equip @ResolveSlotOrbitClass(slot.SlotKey) @ResolveEquipmentQualityClass(slotItem?.Quality) @(slot.Equipped ? "equipped" : "")" @onclick="() => OpenEquipmentPopup(slot.SlotKey)">
+                                <span>@(slot.Equipped ? slot.IconText : string.Empty)</span>
+                                @if (slotItem is not null)
+                                {
+                                    <em class="equipment-level-badge">+@slotItem.UpgradeLevel</em>
+                                }
+                                @if (slotItem is not null)
+                                {
+                                    <small>Lv.@Math.Max(1, slotItem.UpgradeLevel)</small>
+                                }
+                            </button>
+                        }
+                    </div>
+
+                    <div class="monster-exp">
+                        <span style="width:@ExperiencePercent%"></span>
+                        <b>经验:@_monster.Experience/@NextLevelExperience (@ExperiencePercentText)</b>
+                    </div>
                 </div>
 
-                <div class="monster-detail-tabs">
-                    <button class="@(_detailTab == MonsterDetailTab.Basic ? "active" : "")" @onclick="() => _detailTab = MonsterDetailTab.Basic">基础</button>
-                    <button class="@(_detailTab == MonsterDetailTab.Attributes ? "active" : "")" @onclick="() => _detailTab = MonsterDetailTab.Attributes">属性</button>
-                </div>
-
-                @if (_detailTab == MonsterDetailTab.Basic)
-                {
-                    <div class="monster-detail-basic">
-                        <div><span>定位</span><b>@_monster.Attribute 系 / @_monster.Element / @_monster.Position</b></div>
-                        <div class="monster-level-row">
-                            <span>等级</span>
-                            <b>@_monster.Level</b>
-                            <button @onclick="OpenLevelUpPopup">升级</button>
-                        </div>
-                        <div class="@ResolveStarRowClass()">
-                            <span>星级</span>
-                            <b>@_monster.Star / @GameAccountStore.MaxMonsterStar 星</b>
-                            @if (_monster.Star < GameAccountStore.MaxMonsterStar)
-                            {
-                                <button @onclick="OpenStarUpPopup">升星</button>
-                            }
-                        </div>
-                        <div><span>战力</span><b>@_monster.Power</b></div>
-                        <div><span>阶级</span><b>@_monster.Stage / @GameAccountStore.MaxMonsterStage 阶</b></div>
-                        <div class="@ResolveDemonEssenceRowClass()">
-                            <span>妖元</span>
-                            <b>@_monster.DemonEssence / @RequiredDemonEssenceText</b>
-                            @if (_monster.Stage < GameAccountStore.MaxMonsterStage && _monster.DemonEssence < GameAccountStore.MaxDemonEssence)
-                            {
-                                <button disabled="@(DemonEssenceCount <= 0)" @onclick="OpenDemonEssencePopup">吸收</button>
-                            }
-                            @if (CanBreakthrough)
-                            {
-                                <button @onclick="ConfirmBreakthrough">突破</button>
-                            }
-                        </div>
-                    </div>
-                }
-                else if (CurrentStats is HeroFinalStats stats)
-                {
-                    <div class="monster-detail-attributes">
-                        <div><span>力量</span><b>@FormatStat(stats.Strength)</b></div>
-                        <div><span>智力</span><b>@FormatStat(stats.Intelligence)</b></div>
-                        <div><span>敏捷</span><b>@FormatStat(stats.Agility)</b></div>
-                        <div><span>最大生命值</span><b>@FormatStat(stats.MaxHp)</b></div>
-                        <div><span>物理攻击力</span><b>@FormatStat(stats.PhysicalAttack)</b></div>
-                        <div><span>魔法强度</span><b>@FormatStat(stats.MagicPower)</b></div>
-                        <div><span>物理护甲</span><b>@FormatStat(stats.PhysicalArmor)</b></div>
-                        <div><span>魔法抗性</span><b>@FormatStat(stats.MagicResist)</b></div>
-                        <div><span>物理暴击</span><b>@FormatStat(stats.PhysicalCrit)</b></div>
-                        <div><span>生命回复</span><b>@FormatStat(stats.HpRegen)</b></div>
-                        <div><span>能量回复</span><b>@FormatDecimal(stats.EnergyRegen)</b></div>
-                        <div><span>打断阈值</span><b>@FormatStat(stats.InterruptThreshold)</b></div>
-                    </div>
-                }
             </div>
 
             @if (!string.IsNullOrWhiteSpace(_message))
@@ -115,76 +76,198 @@
                 <div class="wap-message">@_message</div>
             }
 
-            <button class="wap-button muted" @onclick="GoMonsters">返回妖怪</button>
+            <footer class="monster-bottom-tabs">
+                <button class="monster-back" @onclick="GoMonsters">‹</button>
+                <button class="@(_detailTab == MonsterDetailTab.Basic ? "active" : "")" @onclick="() => _detailTab = MonsterDetailTab.Basic">装备</button>
+                <button @onclick="OpenAttributePopup">属性</button>
+                <button>饰品</button>
+            </footer>
         }
     </section>
 
+    @if (_showAttributePopup && _monster is not null && CurrentStats is HeroFinalStats attributeStats)
+    {
+        <div class="attribute-popup-backdrop" @onclick="CloseAttributePopup">
+            <section class="attribute-popup" @onclick:stopPropagation="true">
+                <button class="attribute-popup-close" aria-label="关闭属性" @onclick="CloseAttributePopup">!</button>
+
+                <div class="attribute-section">
+                    <h2>基础信息</h2>
+                    <div class="profile-grid">
+                        <div><span>定位:</span><b>@_monster.Attribute 系 / @_monster.Element / @_monster.Position</b></div>
+                        <div>
+                            <span>等级:</span>
+                            <b>@_monster.Level</b>
+                            <button @onclick="OpenLevelUpFromAttributePopup">升级</button>
+                        </div>
+                        <div>
+                            <span>星级:</span>
+                            <b>@_monster.Star / @GameAccountStore.MaxMonsterStar 星</b>
+                            @if (_monster.Star < GameAccountStore.MaxMonsterStar)
+                            {
+                                <button @onclick="OpenStarUpFromAttributePopup">升星</button>
+                            }
+                        </div>
+                        <div><span>战力:</span><b>@_monster.Power</b></div>
+                        <div><span>阶级:</span><b>@_monster.Stage / @GameAccountStore.MaxMonsterStage 阶</b></div>
+                        <div>
+                            <span>妖元:</span>
+                            <b>@_monster.DemonEssence / @RequiredDemonEssenceText</b>
+                            @if (_monster.Stage < GameAccountStore.MaxMonsterStage && _monster.DemonEssence < GameAccountStore.MaxDemonEssence)
+                            {
+                                <button disabled="@(DemonEssenceCount <= 0)" @onclick="OpenDemonEssenceFromAttributePopup">吸收</button>
+                            }
+                            @if (CanBreakthrough)
+                            {
+                                <button @onclick="ConfirmBreakthrough">突破</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="attribute-section">
+                    <h2>战斗属性</h2>
+                    <div class="attribute-grid">
+                        <div><span>力量:</span><b>@FormatStat(attributeStats.Strength)</b></div>
+                        <div><span>智力:</span><b>@FormatStat(attributeStats.Intelligence)</b></div>
+                        <div><span>敏捷:</span><b>@FormatStat(attributeStats.Agility)</b></div>
+                        <div><span>最大生命值:</span><b>@FormatStat(attributeStats.MaxHp)</b></div>
+                        <div><span>物理攻击力:</span><b>@FormatStat(attributeStats.PhysicalAttack)</b></div>
+                        <div><span>魔法强度:</span><b>@FormatStat(attributeStats.MagicPower)</b></div>
+                        <div><span>物理护甲:</span><b>@FormatStat(attributeStats.PhysicalArmor)</b></div>
+                        <div><span>魔法抗性:</span><b>@FormatStat(attributeStats.MagicResist)</b></div>
+                        <div><span>物理暴击:</span><b>@FormatStat(attributeStats.PhysicalCrit)</b></div>
+                        <div><span>生命回复:</span><b>@FormatStat(attributeStats.HpRegen)</b></div>
+                        <div><span>能量回复:</span><b>@FormatDecimal(attributeStats.EnergyRegen)</b></div>
+                        <div><span>打断阈值:</span><b>@FormatStat(attributeStats.InterruptThreshold)</b></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    }
+
     @if (_showEquipmentPopup)
     {
-        <div class="equipment-popup-backdrop" @onclick="CloseEquipmentPopup">
-            <section class="equipment-popup" @onclick:stopPropagation="true">
-                <header class="equipment-popup-title">
-                    <span>@ResolveSlotName(_selectedSlotKey)</span>
-                    <button @onclick="CloseEquipmentPopup">x</button>
-                </header>
-
-                <div class="backpack-detail equipment-popup-detail">
-                    @if (PopupDetailItem is null)
+        <div class="equipment-popup-backdrop equipment-inspect-backdrop" @onclick="CloseEquipmentPopup">
+            <section class="equipment-popup equipment-inspect-popup" @onclick:stopPropagation="true">
+                <div class="equipment-inspect-scroll">
+                    @if (_selectedSlot?.Equipped == true)
                     {
-                        <div class="equipment-empty-detail">
-                            <b>@ResolveSlotName(_selectedSlotKey)</b>
-                            <small>当前没有可显示的装备</small>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="backpack-detail-icon @ResolveEquipmentQualityClass(PopupDetailItem.Quality)">@PopupDetailItem.IconText</div>
-                        <div class="backpack-detail-main">
-                            <div class="backpack-detail-name">@PopupDetailItem.Name</div>
-                            <div class="backpack-detail-line">@ResolveSlotName(PopupDetailItem.SlotKey) / @PopupDetailItem.Quality / 强化 +@PopupDetailItem.UpgradeLevel / 战力 +@PopupDetailItem.Power</div>
-                            <div class="backpack-detail-line">@PopupDetailItem.AttributeText</div>
-                            <div class="backpack-detail-line">铜钱：@(_account?.Copper ?? 0) / 强化费用：@ResolveUpgradeCost(PopupDetailItem)</div>
-                            @if (PopupDetailItem.EquippedMonsterId is int monsterId)
+                        <section class="equipment-inspect-card current">
+                            @if (EquippedSlotItem is null)
                             {
-                                <div class="backpack-detail-line">已穿戴：@ResolveMonsterName(monsterId)</div>
+                                <div class="equipment-empty-detail">
+                                    <b>@ResolveSlotName(_selectedSlotKey)</b>
+                                    <small>当前槽位没有装备</small>
+                                </div>
                             }
                             else
                             {
-                                <div class="backpack-detail-line">未穿戴</div>
+                                <h3 class="@ResolveEquipmentTextQualityClass(EquippedSlotItem.Quality)">@EquippedSlotItem.Name</h3>
+                                <div class="equipment-equipped-stamp">已装备</div>
+                                <div class="equipment-card-main">
+                                    <div class="backpack-detail-icon @ResolveEquipmentQualityClass(EquippedSlotItem.Quality)">@EquippedSlotItem.IconText</div>
+                                    <div class="equipment-card-summary @ResolveEquipmentTextQualityClass(EquippedSlotItem.Quality)">
+                                        <div>等级： @Math.Max(1, EquippedSlotItem.UpgradeLevel)</div>
+                                        <div>品质： @EquippedSlotItem.Quality</div>
+                                        <div>战力： @EquippedSlotItem.Power</div>
+                                    </div>
+                                </div>
+                                <div class="equipment-card-line">[基础属性]</div>
+                                <div class="equipment-card-stat">@FormatEquipmentAttributeText(EquippedSlotItem)</div>
+                                <div class="equipment-card-line">[词缀效果]</div>
+                                <div class="equipment-card-stat">@ResolveEquipmentAffixText(EquippedSlotItem)</div>
+                                <div class="equipment-card-muted">强化费用：@ResolveUpgradeCost(EquippedSlotItem) 铜钱</div>
                             }
-                        </div>
+                        </section>
                     }
+
+                    <section class="equipment-inspect-card candidate">
+                        @if (SelectedCandidateItem is null)
+                        {
+                            <div class="equipment-empty-detail">
+                                <b>@ResolveSlotName(_selectedSlotKey)</b>
+                                <small>点击下方未穿戴装备查看详情</small>
+                            </div>
+                        }
+                        else
+                        {
+                            <h3 class="@ResolveEquipmentTextQualityClass(SelectedCandidateItem.Quality)">@SelectedCandidateItem.Name</h3>
+                            <div class="equipment-card-main">
+                                <div class="backpack-detail-icon @ResolveEquipmentQualityClass(SelectedCandidateItem.Quality)">@SelectedCandidateItem.IconText</div>
+                                <div class="equipment-card-summary @ResolveEquipmentTextQualityClass(SelectedCandidateItem.Quality)">
+                                    <div>等级： @Math.Max(1, SelectedCandidateItem.UpgradeLevel)</div>
+                                    <div>品质： @SelectedCandidateItem.Quality</div>
+                                    <div>战力： @SelectedCandidateItem.Power</div>
+                                    </div>
+                                </div>
+                                <div class="equipment-card-line">[基础属性]</div>
+                                <div class="equipment-card-stat">@FormatEquipmentAttributeText(SelectedCandidateItem)</div>
+                                <div class="equipment-card-line">[词缀效果]</div>
+                                <div class="equipment-card-stat">@ResolveEquipmentAffixText(SelectedCandidateItem)</div>
+                                <div class="equipment-card-muted">强化费用：@ResolveUpgradeCost(SelectedCandidateItem) 铜钱</div>
+                        }
+                    </section>
+
                 </div>
 
-                @if (_selectedSlot?.Equipped == true)
-                {
-                    <div class="equipment-popup-actions">
-                        <button class="wap-button" disabled="@(!CanUpgradeEquipment(PopupDetailItem))" @onclick="UpgradePopupEquipment">强化</button>
-                        <button class="wap-button" @onclick="UnequipSelected">卸下装备</button>
-                    </div>
-                }
-                else
-                {
-                    <div class="equipment-popup-list">
-                        @foreach (BackpackEquipmentItem item in CandidateItems)
+                <div class="equipment-popup-actions">
+                    @if (_selectedSlot?.Equipped == true)
+                    {
+                        @if (SelectedCandidateItem is not null)
                         {
-                            <button class="backpack-item @ResolveEquipmentQualityClass(item.Quality) @(item.InstanceId == _selectedItemId ? "selected" : "")" @onclick="() => SelectCandidateItem(item.InstanceId)">
-                                <span class="backpack-icon">@item.IconText</span>
-                                <small class="equipment-level-badge">+@item.UpgradeLevel</small>
-                            </button>
+                            <button class="wap-button" @onclick="EquipSelectedCandidate">替换</button>
                         }
-
-                        @if (!CandidateItems.Any())
+                        else
                         {
-                            <div class="wap-line">背包里没有可穿戴的 @ResolveSlotName(_selectedSlotKey)</div>
+                            <button class="wap-button" @onclick="OpenReplacementPicker">替换</button>
                         }
-                    </div>
+                        <button class="wap-button muted" disabled="@(!CanUpgradeEquipment(EquippedSlotItem))" @onclick="UpgradeEquippedSlotItem">强化</button>
+                        <button class="wap-button muted" @onclick="UnequipSelected">卸下</button>
+                    }
+                    else
+                    {
+                        @if (SelectedCandidateItem is not null)
+                        {
+                            <button class="wap-button" @onclick="EquipSelectedCandidate">穿戴</button>
+                            <button class="wap-button muted" disabled="@(!CanUpgradeEquipment(SelectedCandidateItem))" @onclick="UpgradeSelectedCandidate">强化</button>
+                        }
+                    }
+                </div>
+                <div class="equipment-popup-hint">点击空白区域关闭窗口</div>
+            </section>
+        </div>
+    }
 
-                    <div class="equipment-popup-actions">
-                        <button class="wap-button" disabled="@(SelectedCandidateItem is null)" @onclick="EquipSelectedCandidate">穿戴</button>
-                        <button class="wap-button muted" disabled="@(!CanUpgradeEquipment(PopupDetailItem))" @onclick="UpgradePopupEquipment">强化</button>
-                    </div>
-                }
+    @if (_showEquipmentPicker)
+    {
+        <div class="equipment-popup-backdrop equipment-picker-backdrop" @onclick="CloseEquipmentPicker">
+            <section class="equipment-popup equipment-picker-popup" @onclick:stopPropagation="true">
+                <div class="equipment-picker-grid">
+                    @foreach (BackpackEquipmentItem item in CandidateItems)
+                    {
+                        <button class="monster-bag-item @ResolveEquipmentQualityClass(item.Quality)" @onclick="() => InspectCandidateItem(item.InstanceId)">
+                            <em></em>
+                            <span>@item.IconText</span>
+                            @if (item.UpgradeLevel > 0)
+                            {
+                                <strong>+@item.UpgradeLevel</strong>
+                            }
+                            <small>Lv.@Math.Max(1, item.UpgradeLevel)</small>
+                        </button>
+                    }
+                    @if (CandidateItems.Count == 0)
+                    {
+                        <div class="equipment-picker-empty">暂无可穿戴装备</div>
+                    }
+                    @if (CandidateItems.Count > 0)
+                    {
+                        @for (int i = CandidateItems.Count; i < 18; i++)
+                        {
+                            <span class="monster-bag-item empty"></span>
+                        }
+                    }
+                </div>
             </section>
         </div>
     }
@@ -297,6 +380,8 @@
     private int? _selectedItemId;
     private string _message = string.Empty;
     private bool _showEquipmentPopup;
+    private bool _showEquipmentPicker;
+    private bool _showAttributePopup;
     private bool _showLevelUpPopup;
     private bool _showStarUpPopup;
     private bool _showDemonEssencePopup;
@@ -315,18 +400,16 @@
     private List<BackpackEquipmentItem> CandidateItems
         => _account?.Backpack
             .Where(item => item.SlotKey == _selectedSlotKey)
-            .Where(item => item.EquippedMonsterId is null || item.EquippedMonsterId == MonsterId)
+            .Where(item => item.EquippedMonsterId is null)
             .OrderByDescending(item => item.Power)
             .ThenBy(item => item.Name)
             .ToList()
             ?? new List<BackpackEquipmentItem>();
 
     private BackpackEquipmentItem? SelectedCandidateItem
-        => CandidateItems.FirstOrDefault(item => item.InstanceId == _selectedItemId)
-            ?? CandidateItems.FirstOrDefault();
-
-    private BackpackEquipmentItem? PopupDetailItem
-        => _selectedSlot?.Equipped == true ? EquippedSlotItem : SelectedCandidateItem;
+        => _selectedItemId is int selectedItemId
+            ? CandidateItems.FirstOrDefault(item => item.InstanceId == selectedItemId)
+            : null;
 
     private HeroFinalStats? CurrentStats
         => _monster is null ? null : BattleDemoSetupFactory.CalculateMonsterStats(_monster);
@@ -383,6 +466,14 @@
     private int NextLevelExperience
         => _monster is null ? 0 : GameAccountStore.GetRequiredExperienceForNextLevel(_monster.Level);
 
+    private int ExperiencePercent
+        => _monster is null || NextLevelExperience <= 0
+            ? 0
+            : Math.Clamp((int)Math.Round(_monster.Experience * 100.0 / NextLevelExperience), 0, 100);
+
+    private string ExperiencePercentText
+        => $"{ExperiencePercent}%";
+
     private int PreviewLevel
         => PreviewLevelUp().Level;
 
@@ -403,19 +494,71 @@
         _monster = Accounts.GetMonster(Session.UserName, MonsterId);
     }
 
-    private void OpenEquipmentPopup(string slotKey)
+    private void OpenEquipmentPopup(string slotKey, int? selectedItemId = null)
     {
         _message = string.Empty;
         _selectedSlotKey = slotKey;
-        _selectedItemId = _selectedSlot?.Equipped == true
-            ? _selectedSlot.ItemInstanceId
-            : CandidateItems.FirstOrDefault()?.InstanceId;
-        _showEquipmentPopup = true;
+        _selectedItemId = selectedItemId;
+        if (_selectedSlot?.Equipped == true)
+        {
+            _showEquipmentPicker = false;
+            _showEquipmentPopup = true;
+            return;
+        }
+
+        _showEquipmentPopup = false;
+        _showEquipmentPicker = true;
     }
 
     private void CloseEquipmentPopup()
     {
         _showEquipmentPopup = false;
+    }
+
+    private void CloseEquipmentPicker()
+    {
+        _showEquipmentPicker = false;
+    }
+
+    private void OpenReplacementPicker()
+    {
+        _selectedItemId = null;
+        _showEquipmentPopup = false;
+        _showEquipmentPicker = true;
+    }
+
+    private void OpenAttributePopup()
+    {
+        if (_monster is null)
+        {
+            return;
+        }
+
+        _message = string.Empty;
+        _showAttributePopup = true;
+    }
+
+    private void CloseAttributePopup()
+    {
+        _showAttributePopup = false;
+    }
+
+    private void OpenLevelUpFromAttributePopup()
+    {
+        CloseAttributePopup();
+        OpenLevelUpPopup();
+    }
+
+    private void OpenStarUpFromAttributePopup()
+    {
+        CloseAttributePopup();
+        OpenStarUpPopup();
+    }
+
+    private void OpenDemonEssenceFromAttributePopup()
+    {
+        CloseAttributePopup();
+        OpenDemonEssencePopup();
     }
 
     private void SelectCandidateItem(int itemInstanceId)
@@ -438,6 +581,13 @@
         }
         ReloadAccount();
         CloseEquipmentPopup();
+        CloseEquipmentPicker();
+    }
+
+    private void InspectCandidateItem(int itemInstanceId)
+    {
+        _selectedItemId = itemInstanceId;
+        _showEquipmentPopup = true;
     }
 
     private void UnequipSelected()
@@ -453,14 +603,24 @@
         CloseEquipmentPopup();
     }
 
-    private void UpgradePopupEquipment()
+    private void UpgradeEquippedSlotItem()
     {
-        if (PopupDetailItem is null)
+        UpgradeEquipmentItem(EquippedSlotItem);
+    }
+
+    private void UpgradeSelectedCandidate()
+    {
+        UpgradeEquipmentItem(SelectedCandidateItem);
+    }
+
+    private void UpgradeEquipmentItem(BackpackEquipmentItem? item)
+    {
+        if (item is null)
         {
             return;
         }
 
-        GameEquipResult result = Accounts.UpgradeEquipment(Session.UserName, PopupDetailItem.InstanceId);
+        GameEquipResult result = Accounts.UpgradeEquipment(Session.UserName, item.InstanceId);
         _message = result.Message;
         if (result.Success)
         {
@@ -615,6 +775,14 @@
             && item.UpgradeLevel < _account.Level
             && _account.Copper >= ResolveUpgradeCost(item);
 
+    private static string FormatEquipmentAttributeText(BackpackEquipmentItem item)
+        => string.Join("   ", item.AttributeText.Split('\n', StringSplitOptions.RemoveEmptyEntries).Take(2));
+
+    private static string ResolveEquipmentAffixText(BackpackEquipmentItem item)
+        => item.UpgradeLevel <= 0
+            ? "无"
+            : $"【强化Lv.{item.UpgradeLevel}】  战力 +{Math.Max(1, item.UpgradeLevel * 8)}";
+
     private static string BuildStars(int star)
         => new('★', Math.Clamp(star, 1, GameAccountStore.MaxMonsterStar));
 
@@ -716,6 +884,17 @@
             "蓝" => "quality-3",
             "紫" => "quality-4",
             "红" => "quality-5",
+            _ => string.Empty,
+        };
+
+    private static string ResolveEquipmentTextQualityClass(string? quality)
+        => quality switch
+        {
+            "白" => "quality-text-1",
+            "绿" => "quality-text-2",
+            "蓝" => "quality-text-3",
+            "紫" => "quality-text-4",
+            "红" => "quality-text-5",
             _ => string.Empty,
         };
 

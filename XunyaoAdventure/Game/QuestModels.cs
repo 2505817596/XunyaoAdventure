@@ -26,6 +26,7 @@ public enum QuestRewardType
 {
     Copper,
     Consumable,
+    Equipment,
 }
 
 public sealed record QuestDefinition(

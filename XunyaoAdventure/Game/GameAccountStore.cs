@@ -1313,8 +1313,27 @@ public sealed class GameAccountStore
                     account.Consumables.Add(newItem);
                 }
             }
+
+            if (reward.Type == QuestRewardType.Equipment && !string.IsNullOrWhiteSpace(reward.TemplateId))
+            {
+                int nextInstanceId = GetNextEquipmentInstanceId(account);
+                for (int i = 0; i < reward.Quantity; i++)
+                {
+                    BackpackEquipmentItem? newItem = CreateEquipmentFromTemplate(nextInstanceId + i, reward.TemplateId);
+                    if (newItem is not null)
+                    {
+                        account.Backpack.Add(newItem);
+                    }
+                }
+            }
         }
     }
+
+    private static int GetNextEquipmentInstanceId(PlayerAccount account)
+        => account.Backpack
+            .Select(item => item.InstanceId)
+            .DefaultIfEmpty(0)
+            .Max() + 1;
 
     private static PlayerAccount ToAccount(PlayerAccountDocument document)
         => new(

@@ -118,10 +118,10 @@
                                     <input type="number" min="1" @bind="reward.Quantity" />
                                 </label>
                                 <label>
-                                    <span>道具模板</span>
-                                    <select disabled="@(reward.Type != QuestRewardType.Consumable.ToString())" @bind="reward.TemplateId">
+                                    <span>模板</span>
+                                    <select disabled="@(!RequiresTemplate(reward.Type))" @bind="reward.TemplateId">
                                         <option value="">无</option>
-                                        @foreach (ConsumableTemplateConfig item in _consumables)
+                                        @foreach (RewardTemplateOption item in ResolveTemplateOptions(reward.Type))
                                         {
                                             <option value="@item.TemplateId">@item.TemplateId / @item.Name</option>
                                         }
@@ -142,6 +142,7 @@
 @code {
     private List<QuestDefinitionConfig> _quests = new();
     private List<ConsumableTemplateConfig> _consumables = new();
+    private List<EquipmentTemplateConfig> _equipment = new();
     private QuestCategory _category = QuestCategory.Main;
     private string _message = string.Empty;
     private bool _success;
@@ -160,6 +161,7 @@
     {
         _quests = Configs.GetQuestDefinitions().ToList();
         _consumables = Configs.GetConsumableTemplates().ToList();
+        _equipment = Configs.GetEquipmentTemplates().ToList();
     }
 
     private void SelectCategory(QuestCategory category)
@@ -221,7 +223,7 @@
     {
         foreach (QuestRewardConfig reward in _quests.SelectMany(quest => quest.Rewards))
         {
-            if (reward.Type == QuestRewardType.Copper.ToString())
+            if (!RequiresTemplate(reward.Type))
             {
                 reward.TemplateId = string.Empty;
             }
@@ -238,6 +240,25 @@
 
     private void GoAdmin()
         => Navigation.NavigateTo("/admin");
+
+    private static bool RequiresTemplate(string type)
+        => string.Equals(type, QuestRewardType.Consumable.ToString(), StringComparison.OrdinalIgnoreCase)
+            || string.Equals(type, QuestRewardType.Equipment.ToString(), StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<RewardTemplateOption> ResolveTemplateOptions(string type)
+    {
+        if (string.Equals(type, QuestRewardType.Consumable.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return _consumables.Select(item => new RewardTemplateOption(item.TemplateId, item.Name));
+        }
+
+        if (string.Equals(type, QuestRewardType.Equipment.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return _equipment.Select(item => new RewardTemplateOption(item.TemplateId, item.Name));
+        }
+
+        return Enumerable.Empty<RewardTemplateOption>();
+    }
 
     private string NextId(string prefix)
     {
@@ -259,4 +280,6 @@
             QuestCategory.Daily => "每日",
             _ => "主线",
         };
+
+    private sealed record RewardTemplateOption(string TemplateId, string Name);
 }

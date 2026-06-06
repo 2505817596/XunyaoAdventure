@@ -6,10 +6,8 @@
 
 <PageTitle>妖怪</PageTitle>
 
-<main class="wap-page monster-page">
-    <section class="wap-panel monster-panel">
-        <div class="wap-title">我的妖怪</div>
-
+<main class="monster-page">
+    <section class="monster-panel">
         @if (_account is null)
         {
             <div class="wap-line">请先登录</div>
@@ -22,28 +20,63 @@
         }
         else
         {
-            <div class="wap-line">主人：@_account.Profile.Name</div>
-            <div class="monster-list">
-                @foreach (OwnedMonster monster in _account.Monsters)
-                {
-                    <button class="monster-card" @onclick="() => GoMonsterDetail(monster.Id)">
-                        <span class="monster-name">@monster.Name</span>
-                        <span class="monster-portrait @ResolveStageFrameClass(monster.Stage)">
-                            <img src="@monster.PortraitUrl" alt="@monster.Name" />
-                            <span class="monster-level">@monster.Level</span>
-                            <span class="monster-stars">@BuildStars(monster.Star)</span>
-                        </span>
-                    </button>
-                }
+            <header class="monster-topbar">
+                <div class="monster-top-level">等级:@_account.Level</div>
+                <div class="monster-top-resource power"><span>妖</span><b>@_account.Monsters.Count</b></div>
+                <div class="monster-top-resource coin"><span>金</span><b>@_account.Copper</b></div>
+                <div class="monster-top-resource gem"><span>战</span><b>@TotalPower</b></div>
+                <button class="monster-settings" aria-label="设置">⚙</button>
+            </header>
+
+            <div class="monster-stage">
+                <div class="monster-heading">
+                    <h1>我的妖怪</h1>
+                </div>
+
+                <div class="monster-position-tabs">
+                    @foreach (string position in PositionTabs)
+                    {
+                        <button class="@(_selectedPosition == position ? "active" : "")" @onclick="() => SelectPosition(position)">@position</button>
+                    }
+                </div>
+
+                <div class="monster-list">
+                    @foreach (OwnedMonster monster in FilteredMonsters)
+                    {
+                        <button class="monster-card @ResolveStageFrameClass(monster.Stage)" @onclick="() => GoMonsterDetail(monster.Id)">
+                            <span class="monster-portrait">
+                                <img src="@monster.PortraitUrl" alt="@monster.Name" />
+                                <span class="monster-level">Lv.@monster.Level</span>
+                                <span class="monster-stars">@BuildStars(monster.Star)</span>
+                            </span>
+                        </button>
+                    }
+                </div>
             </div>
 
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="monster-bottom-bar">
+                <button class="monster-back" @onclick="GoHome">‹</button>
+                <button class="active">妖怪</button>
+                <button disabled>阵容</button>
+                <button disabled>图鉴</button>
+            </footer>
         }
     </section>
 </main>
 
 @code {
+    private static readonly string[] PositionTabs = ["前排", "中排", "后排"];
     private PlayerAccount? _account;
+    private string _selectedPosition = "前排";
+
+    private int TotalPower
+        => _account?.Monsters.Sum(monster => monster.Power) ?? 0;
+
+    private IEnumerable<OwnedMonster> FilteredMonsters
+        => _account?.Monsters
+            .Where(monster => string.Equals(monster.Position, _selectedPosition, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(monster => monster.Power)
+            ?? Enumerable.Empty<OwnedMonster>();
 
     protected override void OnInitialized()
     {
@@ -65,6 +98,9 @@
 
     private void GoHome()
         => Navigation.NavigateTo("/");
+
+    private void SelectPosition(string position)
+        => _selectedPosition = position;
 
     private static string BuildStars(int star)
         => new('★', Math.Clamp(star, 1, 5));

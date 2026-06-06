@@ -1,75 +1,220 @@
 .monster-page {
-    background: #252733;
+    min-height: 100dvh;
+    box-sizing: border-box;
+    padding: 0;
+    background: #050608;
+    color: #f4fbff;
 }
 
 .monster-panel {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     width: min(100%, 430px);
-    background: #d9d0bb;
-    border-color: #1b1b22;
+    height: 100dvh;
+    min-height: 0;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #5fc5e8;
+    background: #4c91aa;
+    box-shadow: 0 0 0 1px #1d5a72 inset;
+}
+
+.monster-topbar {
+    display: grid;
+    grid-template-columns: 82px 1fr 1fr 1fr 48px;
+    align-items: center;
+    gap: 7px;
+    min-height: 46px;
+    padding: 8px 8px 7px;
+    border-bottom: 2px solid #275d73;
+    background: linear-gradient(180deg, #74c9e8, #4aa7ca);
+    box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.25);
+}
+
+.monster-top-level {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px #1e5268;
+    white-space: nowrap;
+}
+
+.monster-top-resource {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: center;
+    min-height: 30px;
+    border-radius: 6px;
+    background: rgba(35, 76, 91, 0.85);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    overflow: hidden;
+}
+
+.monster-top-resource span {
+    display: grid;
+    place-items: center;
+    color: #fff171;
+    font-weight: 600;
+    text-shadow: 0 2px 2px #8c331d;
+}
+
+.monster-top-resource b {
+    min-width: 0;
+    padding-right: 6px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.monster-settings {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    color: #ffffff;
+    font-size: 30px;
+    line-height: 1;
+    text-shadow: 0 2px 2px #23617a;
+}
+
+.monster-stage {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    min-height: 0;
+    overflow: hidden;
+    padding: 12px 12px 16px;
+    background:
+        linear-gradient(rgba(82, 176, 204, 0.20), rgba(52, 116, 145, 0.12)),
+        radial-gradient(circle at 50% 8%, rgba(229, 255, 244, 0.82) 0 12%, transparent 13%),
+        radial-gradient(circle at 48% 32%, rgba(142, 219, 231, 0.45) 0 19%, transparent 20%),
+        linear-gradient(180deg, #287aa6 0%, #6bc3d2 42%, #4a95ad 43%, #356b82 100%);
+}
+
+.monster-stage::before {
+    content: "";
+    position: absolute;
+    inset: 72px 0 0;
+    pointer-events: none;
+    background:
+        linear-gradient(0deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)) 0 24% / 100% 2px no-repeat,
+        radial-gradient(ellipse at 50% 18%, rgba(31, 93, 120, 0.38) 0 24%, transparent 25%);
+}
+
+.monster-heading {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.monster-heading h1 {
+    width: min(100% - 90px, 250px);
+    margin: 0;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(51, 80, 90, 0.78);
+    color: #fff34c;
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.1;
+    text-align: center;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
+}
+
+.monster-position-tabs {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.monster-position-tabs button {
+    min-height: 34px;
+    border: 2px solid #2a6691;
+    background: linear-gradient(180deg, #86d3f1, #4292cc);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    text-shadow: 0 2px 2px #285a81;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.monster-position-tabs button.active {
+    border-color: #8e5433;
+    background: linear-gradient(180deg, #c86e4c, #91462f);
 }
 
 .monster-list {
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 9px;
-    padding: 10px;
+    grid-template-columns: repeat(4, 64px);
+    align-content: start;
+    justify-content: start;
+    gap: 10px 4px;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .monster-card {
+    position: relative;
     display: grid;
+    align-content: start;
     justify-items: center;
-    gap: 6px;
+    gap: 0;
     min-width: 0;
+    width: 64px;
+    height: 64px;
     padding: 0;
     border: 0;
     background: transparent;
-    color: #241b12;
+    color: #ffffff;
     cursor: pointer;
+    text-align: center;
+    box-shadow: none;
 }
 
-.monster-name {
-    max-width: 100%;
-    color: #4a2c14;
-    font-size: 15px;
-    font-weight: 800;
-    line-height: 1.15;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.monster-card.stage-1 {
+    --monster-frame-color: #f4e9d0;
+}
+
+.monster-card.stage-2 {
+    --monster-frame-color: #8ed24d;
+}
+
+.monster-card.stage-3 {
+    --monster-frame-color: #42bce8;
+}
+
+.monster-card.stage-4 {
+    --monster-frame-color: #a66cff;
+}
+
+.monster-card.stage-5 {
+    --monster-frame-color: #f25b4f;
 }
 
 .monster-portrait {
     position: relative;
     display: block;
-    width: 100%;
-    max-width: 92px;
-    aspect-ratio: 1;
-    border: 3px solid #f4e9d0;
+    width: 64px;
+    height: 64px;
+    border: 3px solid var(--monster-frame-color, rgba(255, 255, 255, 0.82));
     background: #141522;
     box-sizing: border-box;
     overflow: hidden;
-    box-shadow: inset 0 0 0 2px #191919;
-}
-
-.monster-portrait.stage-1 {
-    border-color: #f4e9d0;
-}
-
-.monster-portrait.stage-2 {
-    border-color: #8ed24d;
-}
-
-.monster-portrait.stage-3 {
-    border-color: #42bce8;
-}
-
-.monster-portrait.stage-4 {
-    border-color: #a66cff;
-}
-
-.monster-portrait.stage-5 {
-    border-color: #f25b4f;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
 }
 
 .monster-portrait img {
@@ -80,49 +225,148 @@
 
 .monster-level {
     position: absolute;
-    left: 4px;
-    bottom: 18px;
-    color: #fff;
-    font-weight: 900;
-    font-size: 22px;
-    line-height: 1;
-    text-shadow: 0 2px 2px #000;
+    left: 3px;
+    right: auto;
+    bottom: 15px;
+    max-width: calc(100% - 6px);
+    padding: 0 2px;
+    background: rgba(29, 53, 67, 0.72);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 1px 1px #000000;
+}
+
+.monster-name {
+    display: none;
+    min-width: 0;
+    max-width: 100%;
+    color: #ff4dff;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 1px rgba(72, 32, 90, 0.85);
 }
 
 .monster-stars {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 1px;
+    bottom: 2px;
     color: #ffd55b;
-    font-size: 16px;
+    max-width: 100%;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.1;
+    overflow: hidden;
     letter-spacing: 0;
-    text-align: center;
+    white-space: nowrap;
+    text-shadow: 0 1px 1px rgba(75, 38, 0, 0.75);
+}
+
+.monster-bottom-bar {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 62px repeat(3, 1fr);
+    gap: 14px;
+    align-items: center;
+    padding: 10px 10px 9px;
+    border-top: 2px solid rgba(174, 233, 246, 0.62);
+    background: #62b8d4;
+}
+
+.monster-bottom-bar .monster-back {
+    display: grid;
+    place-items: center;
+    justify-self: center;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    border: 3px solid #d9995e;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #b86533, #7a341e);
+    color: #ffe7a4;
+    font-size: 0;
+    font-weight: 500;
     line-height: 1;
-    text-shadow: 0 1px 2px #4b2600;
+}
+
+.monster-bottom-bar .monster-back::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 15px;
+    height: 15px;
+    border-left: 6px solid #ffe7a4;
+    border-bottom: 6px solid #ffe7a4;
+    filter: drop-shadow(0 2px 1px #3b160d);
+    transform: translate(-38%, -50%) rotate(45deg);
+}
+
+.monster-bottom-bar button:not(.monster-back) {
+    min-height: 38px;
+    border: 2px solid #2a6691;
+    background: linear-gradient(180deg, #86d3f1, #4292cc);
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 500;
+    text-shadow: 0 2px 2px #285a81;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.monster-bottom-bar button.active {
+    border-color: #8e5433;
+    background: linear-gradient(180deg, #c86e4c, #91462f);
+}
+
+.monster-bottom-bar button:disabled {
+    opacity: 0.55;
 }
 
 @media (max-width: 430px) {
+    .monster-topbar {
+        grid-template-columns: 72px 1fr 1fr 1fr 42px;
+        gap: 6px;
+        padding-inline: 6px;
+    }
+
+    .monster-top-level,
+    .monster-top-resource b {
+        font-size: 15px;
+    }
+
+    .monster-stage {
+        padding: 10px 10px 14px;
+    }
+
     .monster-list {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 7px;
-        padding: 8px;
+        grid-template-columns: repeat(4, 58px);
+        justify-content: start;
+        gap: 8px 4px;
+    }
+
+    .monster-card {
+        width: 58px;
+        height: 58px;
+        padding: 0;
     }
 
     .monster-portrait {
-        max-width: 82px;
-    }
-
-    .monster-name {
-        font-size: 13px;
-    }
-
-    .monster-level {
-        bottom: 16px;
-        font-size: 19px;
+        width: 58px;
+        height: 58px;
     }
 
     .monster-stars {
-        font-size: 14px;
+        left: 0;
+        right: 0;
     }
 }

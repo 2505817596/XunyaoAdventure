@@ -885,9 +885,9 @@ public sealed class GameConfigStore
             foreach (QuestRewardConfig reward in quest.Rewards)
             {
                 string type = NormalizeRewardType(reward.Type);
-                if (type is not ("Copper" or "Consumable"))
+                if (type is not ("Copper" or "Consumable" or "Equipment"))
                 {
-                    return $"{quest.Id} 奖励类型只支持 Copper/Consumable";
+                    return $"{quest.Id} 奖励类型只支持 Copper/Consumable/Equipment";
                 }
 
                 if (string.IsNullOrWhiteSpace(reward.Name))
@@ -905,6 +905,13 @@ public sealed class GameConfigStore
                         string.Equals(item.TemplateId, reward.TemplateId, StringComparison.OrdinalIgnoreCase)))
                 {
                     return $"{quest.Id} 奖励道具不存在：{reward.TemplateId}";
+                }
+
+                if (type == "Equipment"
+                    && !_itemConfig.Equipment.Any(item =>
+                        string.Equals(item.TemplateId, reward.TemplateId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return $"{quest.Id} 奖励装备不存在：{reward.TemplateId}";
                 }
             }
         }
@@ -989,9 +996,9 @@ public sealed class GameConfigStore
         foreach (CampaignRewardConfig reward in stage.Rewards.Concat(stage.FirstClearRewards))
         {
             string type = NormalizeRewardType(reward.Type);
-            if (type is not ("Copper" or "Consumable"))
+            if (type is not ("Copper" or "Consumable" or "Equipment"))
             {
-                return $"{stage.Code} 奖励类型只支持 Copper/Consumable";
+                return $"{stage.Code} 奖励类型只支持 Copper/Consumable/Equipment";
             }
 
             if (string.IsNullOrWhiteSpace(reward.Name))
@@ -1009,6 +1016,13 @@ public sealed class GameConfigStore
                     string.Equals(item.TemplateId, reward.TemplateId, StringComparison.OrdinalIgnoreCase)))
             {
                 return $"{stage.Code} 奖励道具不存在：{reward.TemplateId}";
+            }
+
+            if (type == "Equipment"
+                && !_itemConfig.Equipment.Any(item =>
+                    string.Equals(item.TemplateId, reward.TemplateId, StringComparison.OrdinalIgnoreCase)))
+            {
+                return $"{stage.Code} 奖励装备不存在：{reward.TemplateId}";
             }
         }
 
@@ -1118,6 +1132,11 @@ public sealed class GameConfigStore
         if (string.Equals(type, "Consumable", StringComparison.OrdinalIgnoreCase))
         {
             return "Consumable";
+        }
+
+        if (string.Equals(type, "Equipment", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Equipment";
         }
 
         return string.Empty;

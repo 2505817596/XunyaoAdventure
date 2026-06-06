@@ -287,9 +287,9 @@ public sealed class CampaignStore
 
     private static QuestReward ToQuestReward(CampaignRewardConfig reward)
     {
-        QuestRewardType type = string.Equals(reward.Type, "Copper", StringComparison.OrdinalIgnoreCase)
-            ? QuestRewardType.Copper
-            : QuestRewardType.Consumable;
+        QuestRewardType type = Enum.TryParse(reward.Type, ignoreCase: true, out QuestRewardType parsed)
+            ? parsed
+            : QuestRewardType.Copper;
         return new QuestReward(
             type,
             reward.Name,
