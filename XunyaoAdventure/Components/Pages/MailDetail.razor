@@ -6,59 +6,86 @@
 
 <PageTitle>邮件详情</PageTitle>
 
-<main class="wap-page mail-page">
-    <section class="wap-panel mail-panel">
-        <div class="wap-title">邮件详情</div>
-
+<main class="mail-detail-page">
+    <section class="mail-detail-panel">
         @if (_account is null)
         {
-            <div class="wap-line">请先登录</div>
-            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+            <div class="mail-detail-stage state-only">
+                <div class="mail-detail-heading">
+                    <h1>邮件详情</h1>
+                </div>
+                <div class="mail-detail-empty-state">请先登录</div>
+                <button class="mail-detail-primary-action" @onclick="GoLogin">返回登录</button>
+            </div>
         }
         else if (_account.Profile is null)
         {
-            <div class="wap-line">请先创建角色</div>
-            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+            <div class="mail-detail-stage state-only">
+                <div class="mail-detail-heading">
+                    <h1>邮件详情</h1>
+                </div>
+                <div class="mail-detail-empty-state">请先创建角色</div>
+                <button class="mail-detail-primary-action" @onclick="GoCreateCharacter">创建角色</button>
+            </div>
         }
         else if (_mail is null)
         {
-            <div class="wap-line">邮件不存在</div>
-            <button class="wap-button muted" @onclick="GoMail">返回邮箱</button>
+            <div class="mail-detail-stage state-only">
+                <div class="mail-detail-heading">
+                    <h1>邮件详情</h1>
+                </div>
+                <div class="mail-detail-empty-state">邮件不存在</div>
+                <button class="mail-detail-primary-action" @onclick="GoMail">返回邮箱</button>
+            </div>
         }
         else
         {
-            @if (!string.IsNullOrWhiteSpace(_message))
-            {
-                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
-            }
+            <header class="mail-detail-topbar">
+                <div class="mail-detail-top-level">等级:@_account.Level</div>
+                <div class="mail-detail-top-resource power"><span>附</span><b>@_mail.Attachments.Count</b></div>
+                <div class="mail-detail-top-resource coin"><span>钱</span><b>@_account.Copper</b></div>
+                <div class="mail-detail-top-resource gem"><span>战</span><b>@TotalPower</b></div>
+                <button class="mail-detail-settings" aria-label="设置" disabled>!</button>
+            </header>
 
-            <section class="mail-detail">
-                <header>
-                    <b>@_mail.Title</b>
-                    <span>@_mail.SenderName</span>
-                </header>
-                <small>@_mail.SentAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</small>
-                <p>@_mail.Content</p>
-            </section>
+            <div class="mail-detail-stage">
+                <div class="mail-detail-heading">
+                    <h1>邮件详情</h1>
+                </div>
 
-            <section class="mail-detail">
-                <header>
-                    <b>附件</b>
-                    <span>@ResolveAttachmentStatus()</span>
-                </header>
-                @if (_mail.Attachments.Any())
+                @if (!string.IsNullOrWhiteSpace(_message))
                 {
-                    <div class="mail-rewards">@RewardText(_mail.Attachments)</div>
-                    <button class="wap-button" disabled="@_mail.Claimed" @onclick="Claim">领取附件</button>
+                    <div class="@(_success ? "mail-detail-tip" : "mail-detail-message")">@_message</div>
                 }
-                else
-                {
-                    <div class="mail-rewards">无附件</div>
-                }
-            </section>
 
-            <button class="wap-button muted" disabled="@(!CanDelete())" @onclick="Delete">删除邮件</button>
-            <button class="wap-button muted" @onclick="GoMail">返回邮箱</button>
+                <div class="mail-detail-scroll">
+                    <section class="mail-detail-card">
+                        <header>
+                            <b>@_mail.Title</b>
+                            <span>@_mail.SenderName</span>
+                        </header>
+                        <small>@_mail.SentAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</small>
+                        <p>@_mail.Content</p>
+                    </section>
+
+                    <section class="mail-detail-card">
+                        <header>
+                            <b>附件</b>
+                            <span>@ResolveAttachmentStatus()</span>
+                        </header>
+                        <div class="mail-rewards">
+                            @(_mail.Attachments.Any() ? RewardText(_mail.Attachments) : "无附件")
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <footer class="mail-detail-bottom-bar">
+                <button class="mail-detail-back" @onclick="GoMail">返回</button>
+                <button class="active" disabled="@_mail.Claimed" @onclick="Claim">领取</button>
+                <button disabled="@(!CanDelete())" @onclick="Delete">删除</button>
+                <button @onclick="GoMail">邮箱</button>
+            </footer>
         }
     </section>
 </main>
@@ -71,6 +98,9 @@
     private MailMessage? _mail;
     private string _message = string.Empty;
     private bool _success;
+
+    private int TotalPower
+        => _account?.Monsters.Sum(monster => monster.Power) ?? 0;
 
     protected override void OnParametersSet()
     {

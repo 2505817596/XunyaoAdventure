@@ -86,10 +86,10 @@
 .monster-stage {
     position: relative;
     display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     min-height: 0;
     overflow: hidden;
-    padding: 12px 12px 16px;
+    padding: 8px 10px 10px;
     background:
         linear-gradient(rgba(82, 176, 204, 0.20), rgba(52, 116, 145, 0.12)),
         radial-gradient(circle at 50% 8%, rgba(229, 255, 244, 0.82) 0 12%, transparent 13%),
@@ -113,58 +113,80 @@
     display: grid;
     justify-items: center;
     gap: 4px;
-    margin-bottom: 12px;
+    margin-bottom: 7px;
 }
 
 .monster-heading h1 {
-    width: min(100% - 90px, 250px);
+    width: min(100% - 92px, 250px);
     margin: 0;
-    padding: 9px 12px;
-    border-radius: 10px;
-    background: rgba(51, 80, 90, 0.78);
-    color: #fff34c;
-    font-size: 21px;
-    font-weight: 600;
+    padding: 8px 16px;
+    border: 3px solid rgba(73, 179, 232, 0.86);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(14, 74, 130, 0.94), rgba(8, 49, 95, 0.96));
+    color: #ffe56b;
+    font-size: 30px;
+    font-weight: 900;
     line-height: 1.1;
     text-align: center;
     text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
 }
 
-.monster-position-tabs {
+.monster-roster-panel {
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr);
     gap: 8px;
-    margin-bottom: 10px;
+    min-height: 0;
+    padding: 9px;
+    border: 3px solid rgba(82, 218, 255, 0.84);
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(0, 159, 209, 0.22), rgba(0, 85, 145, 0.14)),
+        rgba(7, 125, 174, 0.82);
+    box-shadow:
+        inset 0 0 0 2px rgba(156, 238, 255, 0.24),
+        0 3px 0 rgba(0, 56, 94, 0.45);
+}
+
+.monster-position-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    margin-bottom: 0;
 }
 
 .monster-position-tabs button {
     min-height: 34px;
     border: 2px solid #2a6691;
-    background: linear-gradient(180deg, #86d3f1, #4292cc);
+    border-radius: 8px;
+    background: linear-gradient(180deg, #31ceff, #0878d7);
     color: #ffffff;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 900;
     text-shadow: 0 2px 2px #285a81;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .monster-position-tabs button.active {
-    border-color: #8e5433;
-    background: linear-gradient(180deg, #c86e4c, #91462f);
+    border-color: #d9995e;
+    background: linear-gradient(180deg, #ffcb52, #ca7317);
 }
 
 .monster-list {
-    position: relative;
-    z-index: 1;
     display: grid;
-    grid-template-columns: repeat(4, 64px);
+    grid-template-columns: repeat(auto-fit, minmax(64px, 64px));
     align-content: start;
     justify-content: start;
-    gap: 10px 4px;
+    gap: 8px 6px;
     min-height: 0;
+    padding: 2px;
     overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.monster-list::-webkit-scrollbar {
+    display: none;
 }
 
 .monster-card {
@@ -275,12 +297,12 @@
     position: relative;
     z-index: 2;
     display: grid;
-    grid-template-columns: 62px repeat(3, 1fr);
-    gap: 14px;
+    grid-template-columns: 64px repeat(3, 1fr);
+    gap: 8px;
     align-items: center;
-    padding: 10px 10px 9px;
+    padding: 8px 10px 7px;
     border-top: 2px solid rgba(174, 233, 246, 0.62);
-    background: #62b8d4;
+    background: linear-gradient(180deg, #096fac, #034c82);
 }
 
 .monster-bottom-bar .monster-back {
@@ -288,8 +310,8 @@
     place-items: center;
     justify-self: center;
     position: relative;
-    width: 54px;
-    height: 54px;
+    width: 48px;
+    height: 48px;
     border: 3px solid #d9995e;
     border-radius: 50%;
     background: linear-gradient(180deg, #b86533, #7a341e);
@@ -313,9 +335,10 @@
 }
 
 .monster-bottom-bar button:not(.monster-back) {
-    min-height: 38px;
-    border: 2px solid #2a6691;
-    background: linear-gradient(180deg, #86d3f1, #4292cc);
+    min-height: 42px;
+    border: 3px solid #2a8dcc;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #1abfff, #076bb9);
     color: #ffffff;
     font-size: 18px;
     font-weight: 500;
@@ -324,8 +347,8 @@
 }
 
 .monster-bottom-bar button.active {
-    border-color: #8e5433;
-    background: linear-gradient(180deg, #c86e4c, #91462f);
+    border-color: #d9995e;
+    background: linear-gradient(180deg, #ffcb52, #ca7317);
 }
 
 .monster-bottom-bar button:disabled {
@@ -345,13 +368,13 @@
     }
 
     .monster-stage {
-        padding: 10px 10px 14px;
+        padding: 8px 10px 10px;
     }
 
     .monster-list {
-        grid-template-columns: repeat(4, 58px);
+        grid-template-columns: repeat(auto-fit, minmax(58px, 58px));
         justify-content: start;
-        gap: 8px 4px;
+        gap: 8px 5px;
     }
 
     .monster-card {
@@ -368,5 +391,13 @@
     .monster-stars {
         left: 0;
         right: 0;
+    }
+
+    .monster-bottom-bar {
+        gap: 10px;
+    }
+
+    .monster-bottom-bar button:not(.monster-back) {
+        font-size: 16px;
     }
 }

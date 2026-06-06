@@ -33,25 +33,27 @@
                     <h1>我的妖怪</h1>
                 </div>
 
-                <div class="monster-position-tabs">
-                    @foreach (string position in PositionTabs)
-                    {
-                        <button class="@(_selectedPosition == position ? "active" : "")" @onclick="() => SelectPosition(position)">@position</button>
-                    }
-                </div>
+                <section class="monster-roster-panel">
+                    <div class="monster-position-tabs">
+                        @foreach (string position in PositionTabs)
+                        {
+                            <button class="@(_selectedPosition == position ? "active" : "")" @onclick="() => SelectPosition(position)">@position</button>
+                        }
+                    </div>
 
-                <div class="monster-list">
-                    @foreach (OwnedMonster monster in FilteredMonsters)
-                    {
-                        <button class="monster-card @ResolveStageFrameClass(monster.Stage)" @onclick="() => GoMonsterDetail(monster.Id)">
-                            <span class="monster-portrait">
-                                <img src="@monster.PortraitUrl" alt="@monster.Name" />
-                                <span class="monster-level">Lv.@monster.Level</span>
-                                <span class="monster-stars">@BuildStars(monster.Star)</span>
-                            </span>
-                        </button>
-                    }
-                </div>
+                    <div class="monster-list">
+                        @foreach (OwnedMonster monster in FilteredMonsters)
+                        {
+                            <button class="monster-card @ResolveStageFrameClass(monster.Stage)" @onclick="() => GoMonsterDetail(monster.Id)">
+                                <span class="monster-portrait">
+                                    <img src="@monster.PortraitUrl" alt="@monster.Name" />
+                                    <span class="monster-level">Lv.@monster.Level</span>
+                                    <span class="monster-stars">@BuildStars(monster.Star)</span>
+                                </span>
+                            </button>
+                        }
+                    </div>
+                </section>
             </div>
 
             <footer class="monster-bottom-bar">

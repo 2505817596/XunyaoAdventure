@@ -5,28 +5,35 @@
 
 <PageTitle>登录</PageTitle>
 
-<main class="wap-page">
-    <section class="wap-panel">
-        <div class="wap-title">账号登录</div>
+<main class="login-page">
+    <section class="login-panel">
+        <div class="login-stage">
+            <div class="login-heading">
+                <div class="login-game-title">寻妖录</div>
+                <h1>账号登录</h1>
+            </div>
 
-        <label class="wap-field">
-            <span>账号</span>
-            <InputText @bind-Value="_userName" />
-        </label>
+            <div class="login-form">
+                <label class="login-field">
+                    <span>账号</span>
+                    <InputText @bind-Value="_userName" />
+                </label>
 
-        <label class="wap-field">
-            <span>密码</span>
-            <InputText type="password" @bind-Value="_password" />
-        </label>
+                <label class="login-field">
+                    <span>密码</span>
+                    <InputText type="password" @bind-Value="_password" />
+                </label>
 
-        @if (!string.IsNullOrWhiteSpace(_message))
-        {
-            <div class="wap-message">@_message</div>
-        }
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <div class="login-message">@_message</div>
+                }
+            </div>
 
-        <div class="wap-menu">
-            <button class="wap-button" @onclick="LoginAccount">登录</button>
-            <button class="wap-button muted" @onclick="RegisterAccount">注册</button>
+            <div class="login-actions">
+                <button class="active" @onclick="LoginAccount">登录</button>
+                <button @onclick="RegisterAccount">注册</button>
+            </div>
         </div>
     </section>
 </main>

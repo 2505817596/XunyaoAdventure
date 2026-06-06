@@ -4,43 +4,78 @@
 @inject GameAccountStore Accounts
 @inject GameConfigStore Configs
 
-<PageTitle>寻妖池</PageTitle>
+<PageTitle>聚妖台</PageTitle>
 
-<main class="wap-page gacha-page">
-    <section class="wap-panel gacha-panel">
-        <div class="wap-title">寻妖池</div>
-
+<main class="gacha-page">
+    <section class="gacha-panel">
         @if (_account is null)
         {
-            <div class="wap-line">请先登录</div>
-            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+            <div class="gacha-stage state-only">
+                <div class="gacha-heading">
+                    <h1>聚妖台</h1>
+                </div>
+                <div class="gacha-empty-state">请先登录</div>
+                <button class="gacha-primary-action" @onclick="GoLogin">返回登录</button>
+            </div>
         }
         else if (_account.Profile is null)
         {
-            <div class="wap-line">请先创建角色</div>
-            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+            <div class="gacha-stage state-only">
+                <div class="gacha-heading">
+                    <h1>聚妖台</h1>
+                </div>
+                <div class="gacha-empty-state">请先创建角色</div>
+                <button class="gacha-primary-action" @onclick="GoCreateCharacter">创建角色</button>
+            </div>
         }
         else if (!_pools.Any())
         {
-            <div class="wap-line">后台还没有配置奖池</div>
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <div class="gacha-stage state-only">
+                <div class="gacha-heading">
+                    <h1>聚妖台</h1>
+                </div>
+                <div class="gacha-empty-state">后台还没有配置奖池</div>
+                <button class="gacha-primary-action" @onclick="GoHome">返回主页</button>
+            </div>
         }
         else
         {
-            <div class="gacha-currency">铜钱：@_account.Copper</div>
+            <header class="gacha-topbar">
+                <div class="gacha-top-level">等级:@_account.Level</div>
+                <div class="gacha-top-resource power"><span>池</span><b>@_pools.Count</b></div>
+                <div class="gacha-top-resource coin"><span>钱</span><b>@_account.Copper</b></div>
+                <div class="gacha-top-resource gem"><span>战</span><b>@TotalPower</b></div>
+                <button class="gacha-settings" aria-label="设置" disabled>!</button>
+            </header>
 
-            <div class="gacha-pools">
-                @foreach (GachaPoolConfig pool in _pools)
-                {
-                    <button class="gacha-pool" @onclick="() => GoPool(pool.Id)">
-                        <b>@pool.Name</b>
-                        <small>@pool.Description</small>
-                        <span>@ResolveCostText(pool)</span>
-                    </button>
-                }
+            <div class="gacha-stage">
+                <div class="gacha-heading">
+                    <h1>聚妖台</h1>
+                </div>
+
+                <div class="gacha-currency">
+                    <span>铜钱</span>
+                    <b>@_account.Copper</b>
+                </div>
+
+                <div class="gacha-pools">
+                    @foreach (GachaPoolConfig pool in _pools)
+                    {
+                        <button class="gacha-pool" @onclick="() => GoPool(pool.Id)">
+                            <b>@pool.Name</b>
+                            <small>@pool.Description</small>
+                            <span>@ResolveCostText(pool)</span>
+                        </button>
+                    }
+                </div>
             </div>
 
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="gacha-bottom-bar">
+                <button class="gacha-back" @onclick="GoHome">返回</button>
+                <button class="active">聚妖</button>
+                <button disabled>奖池</button>
+                <button disabled>召唤</button>
+            </footer>
         }
     </section>
 </main>
@@ -48,6 +83,9 @@
 @code {
     private PlayerAccount? _account;
     private List<GachaPoolConfig> _pools = new();
+
+    private int TotalPower
+        => _account?.Monsters.Sum(monster => monster.Power) ?? 0;
 
     protected override void OnInitialized()
     {

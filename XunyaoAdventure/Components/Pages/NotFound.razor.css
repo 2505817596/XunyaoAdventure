@@ -1,0 +1,63 @@
+.not-found-page {
+    min-height: 100dvh;
+    box-sizing: border-box;
+    padding: 0;
+    background: #050608;
+    color: #f4fbff;
+}
+
+.not-found-panel {
+    position: relative;
+    display: grid;
+    align-content: center;
+    gap: 12px;
+    width: min(100%, 430px);
+    min-height: 100dvh;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 20px 18px;
+    overflow: hidden;
+    border: 1px solid #5fc5e8;
+    background:
+        linear-gradient(rgba(82, 176, 204, 0.20), rgba(52, 116, 145, 0.12)),
+        radial-gradient(circle at 50% 20%, rgba(229, 255, 244, 0.78) 0 12%, transparent 13%),
+        radial-gradient(circle at 50% 44%, rgba(142, 219, 231, 0.44) 0 19%, transparent 20%),
+        linear-gradient(180deg, #287aa6 0%, #6bc3d2 42%, #4a95ad 43%, #356b82 100%);
+    box-shadow: 0 0 0 1px #1d5a72 inset;
+    text-align: center;
+}
+
+.not-found-panel h1 {
+    width: min(100%, 250px);
+    margin: 0 auto;
+    padding: 8px 16px;
+    border: 3px solid rgba(73, 179, 232, 0.86);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(14, 74, 130, 0.94), rgba(8, 49, 95, 0.96));
+    color: #ffe56b;
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1.1;
+}
+
+.not-found-panel p {
+    margin: 0;
+    padding: 12px;
+    border: 3px solid rgba(82, 218, 255, 0.84);
+    border-radius: 10px;
+    background: rgba(4, 18, 25, 0.42);
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.not-found-panel a {
+    display: grid;
+    place-items: center;
+    min-height: 40px;
+    border: 2px solid #2a6691;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #31ceff, #0878d7);
+    color: #ffffff;
+    font-weight: 900;
+    text-decoration: none;
+    text-shadow: 0 2px 2px #285a81;
+}

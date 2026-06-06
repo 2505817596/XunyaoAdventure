@@ -6,89 +6,121 @@
 
 <PageTitle>竞技场</PageTitle>
 
-<main class="wap-page arena-page">
-    <section class="wap-panel arena-panel">
-        <div class="wap-title">竞技场</div>
-
+<main class="arena-page">
+    <section class="arena-panel">
         @if (_account is null)
         {
-            <div class="wap-line">请先登录</div>
-            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+            <div class="arena-stage state-only">
+                <div class="arena-heading">
+                    <h1>竞技场</h1>
+                </div>
+                <div class="arena-empty-state">请先登录</div>
+                <button class="arena-primary-action" @onclick="GoLogin">返回登录</button>
+            </div>
         }
         else if (_account.Profile is null)
         {
-            <div class="wap-line">请先创建角色</div>
-            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+            <div class="arena-stage state-only">
+                <div class="arena-heading">
+                    <h1>竞技场</h1>
+                </div>
+                <div class="arena-empty-state">请先创建角色</div>
+                <button class="arena-primary-action" @onclick="GoCreateCharacter">创建角色</button>
+            </div>
         }
         else if (_profile is null)
         {
-            <div class="wap-line">竞技场数据暂不可用</div>
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <div class="arena-stage state-only">
+                <div class="arena-heading">
+                    <h1>竞技场</h1>
+                </div>
+                <div class="arena-empty-state">竞技场数据暂不可用</div>
+                <button class="arena-primary-action" @onclick="GoHome">返回主页</button>
+            </div>
         }
         else
         {
-            <div class="arena-summary">
-                <div>
-                    <span>排名</span>
-                    <b>@_selfRank</b>
-                </div>
-                <div>
-                    <span>积分</span>
-                    <b>@_profile.Score</b>
-                </div>
-                <div>
-                    <span>胜负</span>
-                    <b>@_profile.Wins / @_profile.Losses</b>
-                </div>
-            </div>
+            <header class="arena-topbar">
+                <div class="arena-top-level">等级:@_account.Level</div>
+                <div class="arena-top-resource power"><span>名</span><b>@ResolveRankDisplay()</b></div>
+                <div class="arena-top-resource coin"><span>分</span><b>@_profile.Score</b></div>
+                <div class="arena-top-resource gem"><span>战</span><b>@TotalPower</b></div>
+                <button class="arena-settings" aria-label="设置" disabled>!</button>
+            </header>
 
-            <div class="arena-actions">
-                <button class="wap-button" @onclick="Refresh">刷新对手</button>
-                <button class="wap-button muted" @onclick="GoRankings">竞技排行</button>
-            </div>
+            <div class="arena-stage">
+                <div class="arena-heading">
+                    <h1>竞技场</h1>
+                </div>
 
-            @if (!string.IsNullOrWhiteSpace(_message))
-            {
-                <div class="wap-message">@_message</div>
-            }
+                <div class="arena-summary">
+                    <div>
+                        <span>排名</span>
+                        <b>@ResolveRankDisplay()</b>
+                    </div>
+                    <div>
+                        <span>积分</span>
+                        <b>@_profile.Score</b>
+                    </div>
+                    <div>
+                        <span>胜负</span>
+                        <b>@_profile.Wins / @_profile.Losses</b>
+                    </div>
+                </div>
 
-            @if (_opponents.Count == 0)
-            {
-                <div class="wap-line">暂无可挑战对手</div>
-            }
-            else
-            {
-                <div class="arena-opponent-list">
-                    @foreach (ArenaOpponent opponent in _opponents)
-                    {
-                        <article class="arena-opponent">
-                            <header>
-                                <div>
-                                    <b>@opponent.RoleName</b>
-                                    <small>排名 @opponent.Rank / 积分 @opponent.Score</small>
-                                </div>
-                                <button @onclick="() => Challenge(opponent.UserName)">挑战</button>
-                            </header>
-                            <div class="arena-opponent-meta">
-                                <span>总战力 @opponent.TotalPower</span>
-                                <span>最强 @ResolveStrongestText(opponent)</span>
-                            </div>
-                            <div class="arena-formation">
-                                @foreach (OwnedMonster monster in opponent.Formation)
-                                {
-                                    <div class="arena-monster @ResolveStageFrameClass(monster.Stage)" title="@monster.Name">
-                                        <img src="@monster.PortraitUrl" alt="@monster.Name" />
-                                        <span>@monster.Level</span>
-                                        <b>@BuildStars(monster.Star)</b>
+                <div class="arena-actions">
+                    <button @onclick="Refresh">刷新对手</button>
+                    <button @onclick="GoRankings">竞技排行</button>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <div class="arena-message">@_message</div>
+                }
+
+                @if (_opponents.Count == 0)
+                {
+                    <div class="arena-empty">暂无可挑战对手</div>
+                }
+                else
+                {
+                    <div class="arena-opponent-list">
+                        @foreach (ArenaOpponent opponent in _opponents)
+                        {
+                            <article class="arena-opponent">
+                                <header>
+                                    <div>
+                                        <b>@opponent.RoleName</b>
+                                        <small>排名 @opponent.Rank / 积分 @opponent.Score</small>
                                     </div>
-                                }
-                            </div>
-                        </article>
-                    }
-                </div>
-            }
+                                    <button class="arena-challenge-action" @onclick="() => Challenge(opponent.UserName)">挑战</button>
+                                </header>
+                                <div class="arena-opponent-meta">
+                                    <span>总战力 @opponent.TotalPower</span>
+                                    <span>最强 @ResolveStrongestText(opponent)</span>
+                                </div>
+                                <div class="arena-formation">
+                                    @foreach (OwnedMonster monster in opponent.Formation)
+                                    {
+                                        <div class="arena-monster @ResolveStageFrameClass(monster.Stage)" title="@monster.Name">
+                                            <img src="@monster.PortraitUrl" alt="@monster.Name" />
+                                            <span>@monster.Level</span>
+                                            <b>@BuildStars(monster.Star)</b>
+                                        </div>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
 
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="arena-bottom-bar">
+                <button class="arena-back" @onclick="GoHome">返回</button>
+                <button class="active">竞技</button>
+                <button @onclick="Refresh">刷新</button>
+                <button @onclick="GoRankings">排行</button>
+            </footer>
         }
     </section>
 </main>
@@ -99,6 +131,9 @@
     private List<ArenaOpponent> _opponents = new();
     private int _selfRank;
     private string _message = string.Empty;
+
+    private int TotalPower
+        => _account?.Monsters.Sum(monster => monster.Power) ?? 0;
 
     protected override void OnInitialized()
     {
@@ -133,6 +168,9 @@
         => string.IsNullOrWhiteSpace(opponent.StrongestMonsterName)
             ? opponent.StrongestMonsterPower.ToString()
             : $"{opponent.StrongestMonsterName} {opponent.StrongestMonsterPower}";
+
+    private string ResolveRankDisplay()
+        => _selfRank > 0 ? _selfRank.ToString() : "-";
 
     private static string BuildStars(int star)
         => new('★', Math.Clamp(star, 1, GameAccountStore.MaxMonsterStar));

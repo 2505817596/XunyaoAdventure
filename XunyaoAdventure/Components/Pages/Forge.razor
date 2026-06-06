@@ -110,14 +110,41 @@
     private string _message = string.Empty;
 
     private List<BackpackEquipmentItem> CandidateItems
-        => _account?.Backpack
-            .OrderByDescending(item => item.InstanceId == _mainItemId)
-            .ThenBy(item => item.EquippedMonsterId is not null)
-            .ThenBy(item => item.Quality)
-            .ThenBy(item => item.SlotKey)
-            .ThenBy(item => item.Power)
-            .ToList()
-            ?? new List<BackpackEquipmentItem>();
+    {
+        get
+        {
+            if (_account is null)
+            {
+                return new List<BackpackEquipmentItem>();
+            }
+
+            BackpackEquipmentItem? mainItem = MainItem;
+            if (_mainItemId is not null && mainItem is not null)
+            {
+                if (_materialIds.Count >= RequiredMaterialCount)
+                {
+                    return new List<BackpackEquipmentItem>();
+                }
+
+                return _account.Backpack
+                    .Where(item => item.InstanceId != _mainItemId)
+                    .Where(item => !_materialIds.Contains(item.InstanceId))
+                    .Where(item => item.EquippedMonsterId is null)
+                    .Where(item => item.Quality == mainItem.Quality)
+                    .OrderBy(item => item.SlotKey)
+                    .ThenBy(item => item.Power)
+                    .ToList();
+            }
+
+            return _account.Backpack
+                .Where(item => ResolveNextQuality(item.Quality) is not null)
+                .OrderBy(item => item.EquippedMonsterId is not null)
+                .ThenBy(item => item.Quality)
+                .ThenBy(item => item.SlotKey)
+                .ThenBy(item => item.Power)
+                .ToList();
+        }
+    }
 
     private BackpackEquipmentItem? MainItem
         => _mainItemId is int id ? _account?.Backpack.FirstOrDefault(item => item.InstanceId == id) : null;

@@ -1,4 +1,4 @@
-.mail-page {
+.arena-page {
     min-height: 100dvh;
     box-sizing: border-box;
     padding: 0;
@@ -6,7 +6,7 @@
     color: #f4fbff;
 }
 
-.mail-panel {
+.arena-panel {
     position: relative;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
@@ -20,11 +20,7 @@
     box-shadow: 0 0 0 1px #1d5a72 inset;
 }
 
-.mail-panel > .mail-stage.state-only {
-    grid-row: 1 / -1;
-}
-
-.mail-topbar {
+.arena-topbar {
     display: grid;
     grid-template-columns: 82px 1fr 1fr 1fr 48px;
     align-items: center;
@@ -36,7 +32,7 @@
     box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.25);
 }
 
-.mail-top-level {
+.arena-top-level {
     color: #ffffff;
     font-size: 16px;
     font-weight: 600;
@@ -44,7 +40,7 @@
     white-space: nowrap;
 }
 
-.mail-top-resource {
+.arena-top-resource {
     display: grid;
     grid-template-columns: 28px minmax(0, 1fr);
     align-items: center;
@@ -55,7 +51,7 @@
     overflow: hidden;
 }
 
-.mail-top-resource span {
+.arena-top-resource span {
     display: grid;
     place-items: center;
     color: #fff171;
@@ -63,15 +59,15 @@
     text-shadow: 0 2px 2px #8c331d;
 }
 
-.mail-top-resource.coin span {
+.arena-top-resource.coin span {
     color: #ffe15c;
 }
 
-.mail-top-resource.gem span {
+.arena-top-resource.gem span {
     color: #d7f6ff;
 }
 
-.mail-top-resource b {
+.arena-top-resource b {
     min-width: 0;
     padding-right: 6px;
     color: #ffffff;
@@ -82,7 +78,7 @@
     white-space: nowrap;
 }
 
-.mail-settings {
+.arena-settings {
     display: grid;
     place-items: center;
     width: 38px;
@@ -95,14 +91,14 @@
     text-shadow: 0 2px 2px #23617a;
 }
 
-.mail-settings:disabled {
+.arena-settings:disabled {
     opacity: 0.75;
 }
 
-.mail-stage {
+.arena-stage {
     position: relative;
     display: grid;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
     min-height: 0;
     overflow: hidden;
     padding: 12px 12px 14px;
@@ -113,12 +109,12 @@
         linear-gradient(180deg, #287aa6 0%, #6bc3d2 42%, #4a95ad 43%, #356b82 100%);
 }
 
-.mail-stage.state-only {
+.arena-stage.state-only {
     grid-template-rows: auto auto auto;
     align-content: center;
 }
 
-.mail-stage::before {
+.arena-stage::before {
     content: "";
     position: absolute;
     inset: 72px 0 0;
@@ -128,7 +124,7 @@
         radial-gradient(ellipse at 50% 18%, rgba(31, 93, 120, 0.38) 0 24%, transparent 25%);
 }
 
-.mail-heading {
+.arena-heading {
     position: relative;
     z-index: 1;
     display: grid;
@@ -136,7 +132,7 @@
     margin-bottom: 10px;
 }
 
-.mail-heading h1 {
+.arena-heading h1 {
     width: min(100% - 90px, 250px);
     margin: 0;
     padding: 9px 12px;
@@ -150,17 +146,58 @@
     text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
 }
 
-.mail-actions {
+.arena-summary {
     position: relative;
     z-index: 1;
     display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
     margin-bottom: 10px;
 }
 
-.mail-actions button,
-.mail-primary-action,
-.mail-bottom-bar button:not(.mail-back),
-.mail-delete {
+.arena-summary div,
+.arena-result-card {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    padding: 10px;
+    border: 2px solid rgba(195, 243, 255, 0.72);
+    border-radius: 4px;
+    background: rgba(35, 76, 96, 0.70);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.arena-summary span {
+    color: #d7f6ff;
+    font-size: 12px;
+    font-weight: 700;
+    text-shadow: 0 1px 1px #214d5f;
+}
+
+.arena-summary b {
+    min-width: 0;
+    overflow: hidden;
+    color: #fff34c;
+    font-size: 18px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
+}
+
+.arena-actions {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.arena-actions button,
+.arena-bottom-bar button:not(.arena-back),
+.arena-primary-action,
+.arena-challenge-action {
     min-height: 38px;
     border: 2px solid #2a6691;
     background: linear-gradient(180deg, #86d3f1, #4292cc);
@@ -171,22 +208,21 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
-.mail-primary-action,
-.mail-bottom-bar button.active,
-.mail-actions button {
+.arena-bottom-bar button.active,
+.arena-primary-action,
+.arena-challenge-action {
     border-color: #8e5433;
     background: linear-gradient(180deg, #c86e4c, #91462f);
 }
 
-.mail-primary-action {
+.arena-primary-action {
     position: relative;
     z-index: 1;
     width: min(100%, 220px);
     margin: 12px auto 0;
 }
 
-.mail-message,
-.mail-tip {
+.arena-message {
     position: relative;
     z-index: 1;
     min-height: 32px;
@@ -202,13 +238,7 @@
     text-shadow: 0 1px 1px #3b160d;
 }
 
-.mail-tip {
-    border-color: rgba(174, 240, 109, 0.72);
-    background: rgba(27, 77, 52, 0.78);
-    color: #d9ffc5;
-}
-
-.mail-list {
+.arena-opponent-list {
     position: relative;
     z-index: 1;
     display: grid;
@@ -218,11 +248,9 @@
     overflow-y: auto;
 }
 
-.mail-item {
+.arena-opponent {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 64px;
     gap: 8px;
-    align-items: stretch;
     padding: 10px;
     border: 2px solid rgba(195, 243, 255, 0.72);
     border-radius: 4px;
@@ -230,80 +258,125 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.mail-item.read {
-    opacity: 0.88;
-}
-
-.mail-item.claimed {
-    opacity: 0.68;
-}
-
-.mail-main {
+.arena-opponent header {
     display: grid;
-    gap: 5px;
-    width: 100%;
-    min-width: 0;
-    min-height: 62px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: #ffffff;
-    text-align: left;
-    cursor: pointer;
-}
-
-.mail-main header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    grid-template-columns: minmax(0, 1fr) 74px;
     gap: 8px;
+    align-items: center;
+}
+
+.arena-opponent header div {
     min-width: 0;
 }
 
-.mail-main b {
+.arena-opponent b {
+    display: block;
     min-width: 0;
     overflow: hidden;
     color: #fff34c;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
     text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
 }
 
-.mail-main span {
-    flex: 0 0 auto;
+.arena-opponent small {
+    display: block;
+    margin-top: 3px;
     color: #ffe7a4;
     font-size: 12px;
     font-weight: 700;
     text-shadow: 0 1px 1px #3b160d;
 }
 
-.mail-main small {
+.arena-opponent-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.arena-opponent-meta span {
     min-width: 0;
-    overflow: hidden;
-    color: rgba(255, 255, 255, 0.86);
+    padding: 4px 7px;
+    border-radius: 3px;
+    background: rgba(13, 48, 66, 0.56);
+    color: #d7f6ff;
     font-size: 12px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-weight: 700;
     text-shadow: 0 1px 1px #214d5f;
 }
 
-.mail-delete {
-    min-height: 0;
-    border-color: #8e5433;
-    background: linear-gradient(180deg, #c86e4c, #91462f);
-    font-size: 14px;
+.arena-formation {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
 }
 
-.mail-delete:disabled,
-.mail-actions button:disabled,
-.mail-bottom-bar button:disabled {
-    opacity: 0.55;
+.arena-monster {
+    position: relative;
+    aspect-ratio: 1 / 1.14;
+    min-width: 0;
+    border: 2px solid rgba(255, 255, 255, 0.82);
+    background: #141522;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
-.mail-empty,
-.mail-empty-state {
+.arena-monster.stage-1 {
+    border-color: #f4e9d0;
+}
+
+.arena-monster.stage-2 {
+    border-color: #8ed24d;
+}
+
+.arena-monster.stage-3 {
+    border-color: #55c6ff;
+}
+
+.arena-monster.stage-4 {
+    border-color: #d17cff;
+}
+
+.arena-monster.stage-5 {
+    border-color: #ffcf54;
+}
+
+.arena-monster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.arena-monster span {
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    background: rgba(4, 18, 25, 0.75);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.arena-monster b {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    bottom: 2px;
+    color: #fff34c;
+    font-size: 10px;
+    line-height: 1;
+    text-align: center;
+    text-shadow: 0 1px 1px #3b160d;
+    white-space: nowrap;
+}
+
+.arena-empty,
+.arena-empty-state {
     position: relative;
     z-index: 1;
     display: grid;
@@ -316,7 +389,7 @@
     text-shadow: 0 2px 2px #214d5f;
 }
 
-.mail-bottom-bar {
+.arena-bottom-bar {
     position: relative;
     z-index: 2;
     display: grid;
@@ -328,7 +401,7 @@
     background: #62b8d4;
 }
 
-.mail-bottom-bar .mail-back {
+.arena-bottom-bar .arena-back {
     display: grid;
     place-items: center;
     justify-self: center;
@@ -343,7 +416,7 @@
     line-height: 1;
 }
 
-.mail-bottom-bar .mail-back::before {
+.arena-bottom-bar .arena-back::before {
     content: "";
     position: absolute;
     left: 50%;
@@ -357,36 +430,36 @@
 }
 
 @media (max-width: 430px) {
-    .mail-topbar {
+    .arena-topbar {
         grid-template-columns: 72px 1fr 1fr 1fr 42px;
         gap: 6px;
         padding-inline: 6px;
     }
 
-    .mail-top-level,
-    .mail-top-resource b {
+    .arena-top-level,
+    .arena-top-resource b {
         font-size: 15px;
     }
 
-    .mail-stage {
+    .arena-stage {
         padding: 10px 10px 12px;
     }
 
-    .mail-bottom-bar {
+    .arena-bottom-bar {
         gap: 10px;
     }
 
-    .mail-bottom-bar button:not(.mail-back) {
+    .arena-bottom-bar button:not(.arena-back) {
         font-size: 16px;
     }
 }
 
 /* Friends-style final skin */
-.mail-stage {
+.arena-stage {
     padding: 8px 10px 10px;
 }
 
-.mail-heading h1 {
+.arena-heading h1 {
     width: min(100% - 92px, 250px);
     padding: 8px 16px;
     border: 3px solid rgba(73, 179, 232, 0.86);
@@ -397,10 +470,10 @@
     font-weight: 900;
 }
 
-.mail-actions,
-.mail-list,
-.mail-message,
-.mail-tip {
+.arena-summary div,
+.arena-actions,
+.arena-opponent-list,
+.arena-message {
     border: 3px solid rgba(82, 218, 255, 0.84);
     border-radius: 10px;
     background:
@@ -409,35 +482,34 @@
     box-shadow: inset 0 0 0 2px rgba(156, 238, 255, 0.28), 0 3px 0 rgba(0, 56, 94, 0.45);
 }
 
-.mail-list {
-    gap: 7px;
+.arena-actions,
+.arena-opponent-list {
     padding: 9px 10px;
 }
 
-.mail-item {
-    padding: 8px 9px;
+.arena-opponent {
     border: 2px solid rgba(82, 218, 255, 0.62);
     border-radius: 8px;
     background: rgba(4, 18, 25, 0.42);
 }
 
-.mail-actions button,
-.mail-primary-action,
-.mail-bottom-bar button:not(.mail-back),
-.mail-delete {
+.arena-actions button,
+.arena-bottom-bar button:not(.arena-back),
+.arena-primary-action,
+.arena-challenge-action {
     border-radius: 8px;
     background: linear-gradient(180deg, #31ceff, #0878d7);
     font-weight: 900;
 }
 
-.mail-primary-action,
-.mail-bottom-bar button.active,
-.mail-actions button {
+.arena-bottom-bar button.active,
+.arena-primary-action,
+.arena-challenge-action {
     border-color: #d9995e;
     background: linear-gradient(180deg, #ffcb52, #ca7317);
 }
 
-.mail-bottom-bar {
+.arena-bottom-bar {
     gap: 8px;
     padding: 8px 10px 7px;
     background: linear-gradient(180deg, #096fac, #034c82);

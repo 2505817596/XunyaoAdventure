@@ -1,26 +1,133 @@
+.home-page {
+    min-height: 100dvh;
+    padding: 0;
+    background: #050608;
+    color: #f4fbff;
+}
+
+.home-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(100%, 430px);
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid #5fc5e8;
+    background: #4c91aa;
+    box-shadow: 0 0 0 1px #1d5a72 inset;
+}
+
+.home-panel::before {
+    content: "";
+    position: absolute;
+    inset: 46px 0 0;
+    pointer-events: none;
+    background:
+        linear-gradient(rgba(82, 176, 204, 0.20), rgba(52, 116, 145, 0.12)),
+        radial-gradient(circle at 50% 8%, rgba(229, 255, 244, 0.82) 0 12%, transparent 13%),
+        radial-gradient(circle at 48% 32%, rgba(142, 219, 231, 0.45) 0 19%, transparent 20%),
+        linear-gradient(180deg, #287aa6 0%, #6bc3d2 42%, #4a95ad 43%, #356b82 100%);
+}
+
+.home-panel::after {
+    content: "";
+    position: absolute;
+    inset: 72px 0 0;
+    pointer-events: none;
+    background:
+        linear-gradient(0deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)) 0 24% / 100% 2px no-repeat,
+        radial-gradient(ellipse at 50% 18%, rgba(31, 93, 120, 0.38) 0 24%, transparent 25%);
+}
+
+.home-panel > .wap-title {
+    position: relative;
+    z-index: 1;
+    width: min(100% - 92px, 250px);
+    box-sizing: border-box;
+    margin: 8px auto 7px;
+    padding: 8px 16px;
+    border: 3px solid rgba(73, 179, 232, 0.86);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(14, 74, 130, 0.94), rgba(8, 49, 95, 0.96));
+    color: #ffe56b;
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-align: center;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
+}
+
+.home-panel > .wap-line,
+.home-panel > .wap-message,
+.home-panel > .wap-tip {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    min-height: 34px;
+    box-sizing: border-box;
+    margin: 0 10px 7px;
+    padding: 8px 10px;
+    border: 2px solid rgba(82, 218, 255, 0.62);
+    border-radius: 8px;
+    background: rgba(4, 18, 25, 0.42);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    text-shadow: 0 1px 1px #214d5f;
+}
+
+.home-panel > .wap-button {
+    position: relative;
+    z-index: 1;
+    width: calc(100% - 20px);
+    min-height: 40px;
+    margin: 0 10px 10px;
+    border: 2px solid #2a6691;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #31ceff, #0878d7);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 900;
+    text-shadow: 0 2px 2px #285a81;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
 .home-chat-preview {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
     display: grid;
     grid-template-columns: 76px minmax(0, 1fr);
     align-items: center;
     gap: 8px;
     width: calc(100% - 20px);
-    min-height: 42px;
+    min-height: 66px;
     box-sizing: border-box;
-    margin: 10px;
-    padding: 7px 9px;
-    border: 1px solid #806637;
-    background: #f4e9c9;
-    color: #302410;
+    margin: 2px 10px 8px;
+    padding: 9px 10px;
+    border: 3px solid rgba(82, 218, 255, 0.84);
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(0, 159, 209, 0.34), rgba(0, 85, 145, 0.22)),
+        rgba(7, 125, 174, 0.86);
+    color: #ffffff;
     cursor: pointer;
     text-align: left;
+    box-shadow:
+        inset 0 0 0 2px rgba(156, 238, 255, 0.28),
+        0 3px 0 rgba(0, 56, 94, 0.45);
 }
 
 .home-chat-title {
     display: grid;
     place-items: center;
     min-height: 26px;
-    background: #5c4320;
-    color: #fff2ba;
+    border-radius: 6px;
+    background: rgba(13, 48, 66, 0.72);
+    color: #fff34c;
     font-size: 13px;
     font-weight: 800;
 }
@@ -29,7 +136,7 @@
 .home-chat-empty {
     min-width: 0;
     overflow: hidden;
-    color: #4b3b1f;
+    color: rgba(255, 255, 255, 0.88);
     font-size: 14px;
     line-height: 1.25;
     text-overflow: ellipsis;
@@ -37,10 +144,97 @@
 }
 
 .home-chat-line b {
-    color: #7d3a20;
+    color: #ffe7a4;
 }
 
 .home-chat-empty {
-    color: #746344;
+    color: #d7f6ff;
 }
 
+.home-menu {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    align-content: start;
+    gap: 7px;
+    align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0 10px 10px;
+    padding: 9px 10px;
+    border: 3px solid rgba(82, 218, 255, 0.84);
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(0, 159, 209, 0.34), rgba(0, 85, 145, 0.22)),
+        rgba(7, 125, 174, 0.86);
+    box-shadow:
+        inset 0 0 0 2px rgba(156, 238, 255, 0.28),
+        0 3px 0 rgba(0, 56, 94, 0.45);
+}
+
+.home-panel > .wap-title,
+.home-panel > .wap-button {
+    flex: 0 0 auto;
+}
+
+.home-menu .wap-button {
+    width: auto;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 8px;
+    border: 2px solid #2a6691;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #31ceff, #0878d7);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-shadow: 0 2px 2px #285a81;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.home-menu .wap-button.muted {
+    border-color: #8e5433;
+    background: linear-gradient(180deg, #c86e4c, #91462f);
+}
+
+@media (max-width: 430px) {
+    .home-panel > .wap-title {
+        font-size: 28px;
+    }
+
+    .home-panel > .wap-line {
+        min-height: 32px;
+        padding-block: 7px;
+        font-size: 14px;
+    }
+
+    .home-chat-preview {
+        grid-template-columns: 68px minmax(0, 1fr);
+        min-height: 60px;
+    }
+
+    .home-menu {
+        grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+        gap: 7px;
+        padding: 8px;
+    }
+
+    .home-menu .wap-button {
+        min-height: 34px;
+        padding-inline: 6px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .home-menu {
+        grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+    }
+
+    .home-menu .wap-button {
+        font-size: 13px;
+    }
+}

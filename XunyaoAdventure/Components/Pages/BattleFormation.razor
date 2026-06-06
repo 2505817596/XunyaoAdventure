@@ -107,17 +107,14 @@
 
             <div class="formation-board">
                 <div class="formation-tabs">
-                    <span>全部</span>
-                    <span>前</span>
-                    <span>中</span>
-                    <span>后</span>
-                    <span>力</span>
-                    <span>智</span>
-                    <span>敏</span>
+                    @foreach (string filter in RosterFilters)
+                    {
+                        <button class="@(_rosterFilter == filter ? "active" : "")" @onclick="() => SelectRosterFilter(filter)">@filter</button>
+                    }
                 </div>
 
                 <div class="formation-roster">
-                    @foreach (OwnedMonster monster in _account.Monsters)
+                    @foreach (OwnedMonster monster in FilteredRoster)
                     {
                         bool selected = _selectedIds.Contains(monster.Id);
                         <button class="formation-hero @ResolveStageFrameClass(monster.Stage) @(selected ? "selected" : "")" @onclick="() => ToggleMonster(monster.Id)">
@@ -147,6 +144,7 @@
 </main>
 
 @code {
+    private static readonly string[] RosterFilters = ["全部", "前", "中", "后", "力", "智", "敏"];
     private PlayerAccount? _account;
     private readonly List<int> _selectedIds = new();
     private readonly List<OwnedMonster> _selectedMonsters = new();
@@ -154,7 +152,14 @@
     private InitialAccountConfig _initialAccount = new();
     private int _selectedPower;
     private int _selectedEnemyWaveIndex;
+    private string _rosterFilter = "全部";
     private string _message = string.Empty;
+
+    private IEnumerable<OwnedMonster> FilteredRoster
+        => (_account?.Monsters ?? Enumerable.Empty<OwnedMonster>())
+            .Where(MatchesRosterFilter)
+            .OrderBy(monster => ResolvePositionOrder(monster.Position))
+            .ThenByDescending(monster => monster.Power);
 
     protected override void OnInitialized()
     {
@@ -327,6 +332,21 @@
     private void SelectEnemyWave(int waveIndex)
         => _selectedEnemyWaveIndex = Math.Clamp(waveIndex, 0, Math.Max(0, _enemyWaves.Count - 1));
 
+    private void SelectRosterFilter(string filter)
+        => _rosterFilter = filter;
+
+    private bool MatchesRosterFilter(OwnedMonster monster)
+        => _rosterFilter switch
+        {
+            "前" => IsPosition(monster.Position, "前"),
+            "中" => IsPosition(monster.Position, "中"),
+            "后" => IsPosition(monster.Position, "后"),
+            "力" => IsAttribute(monster.Attribute, "力"),
+            "智" => IsAttribute(monster.Attribute, "智"),
+            "敏" => IsAttribute(monster.Attribute, "敏"),
+            _ => true,
+        };
+
     private EnemyUnitView ToEnemyUnitView(CampaignEnemyConfig enemy)
     {
         MonsterTemplateConfig? template = Configs.GetMonsterTemplate(enemy.TemplateId);
@@ -385,6 +405,12 @@
 
         return 0;
     }
+
+    private static bool IsPosition(string position, string key)
+        => !string.IsNullOrWhiteSpace(position) && position.Contains(key, StringComparison.Ordinal);
+
+    private static bool IsAttribute(string attribute, string key)
+        => !string.IsNullOrWhiteSpace(attribute) && attribute.Contains(key, StringComparison.Ordinal);
 
     private sealed record EnemyWaveView(int Index, IReadOnlyList<EnemyUnitView> Enemies);
 

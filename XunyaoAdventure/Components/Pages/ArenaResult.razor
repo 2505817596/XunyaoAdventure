@@ -4,45 +4,64 @@
 
 <PageTitle>竞技结算</PageTitle>
 
-<main class="wap-page battle-result-page">
-    <section class="wap-panel battle-result-panel">
-        <div class="wap-title">竞技结算</div>
-
+<main class="arena-result-page">
+    <section class="arena-result-panel">
         @if (_result is null)
         {
-            <div class="wap-line">没有可显示的竞技场结果</div>
-            <button class="wap-button" @onclick="GoArena">返回竞技场</button>
+            <div class="arena-result-stage state-only">
+                <div class="arena-result-heading">
+                    <h1>竞技结算</h1>
+                </div>
+                <div class="arena-result-empty-state">没有可显示的竞技场结果</div>
+                <button class="arena-result-primary-action" @onclick="GoArena">返回竞技场</button>
+            </div>
         }
         else
         {
-            <div class="battle-result-banner @(_result.Victory ? "victory" : "defeat")">
-                <b>@(_result.Victory ? "胜利" : "失败")</b>
-                <span>对手 @_result.OpponentRoleName</span>
+            <header class="arena-result-topbar">
+                <div class="arena-result-top-level">@(_result.Victory ? "胜利" : "失败")</div>
+                <div class="arena-result-top-resource power"><span>分</span><b>@FormatSigned(_result.ScoreDelta)</b></div>
+                <div class="arena-result-top-resource coin"><span>现</span><b>@_result.NewScore</b></div>
+                <div class="arena-result-top-resource gem"><span>名</span><b>@ResolveRankText()</b></div>
+                <button class="arena-result-settings" aria-label="设置" disabled>!</button>
+            </header>
+
+            <div class="arena-result-stage">
+                <div class="arena-result-heading">
+                    <h1>竞技结算</h1>
+                </div>
+
+                <div class="arena-result-banner @(_result.Victory ? "victory" : "defeat")">
+                    <b>@(_result.Victory ? "胜利" : "失败")</b>
+                    <span>对手 @_result.OpponentRoleName</span>
+                </div>
+
+                <div class="arena-result-grid">
+                    <div>
+                        <span>积分变化</span>
+                        <b class="@(_result.ScoreDelta >= 0 ? "positive" : "negative")">@FormatSigned(_result.ScoreDelta)</b>
+                    </div>
+                    <div>
+                        <span>当前积分</span>
+                        <b>@_result.NewScore</b>
+                    </div>
+                    <div>
+                        <span>排名变化</span>
+                        <b>@ResolveRankText()</b>
+                    </div>
+                    <div>
+                        <span>胜负</span>
+                        <b>@_result.Wins / @_result.Losses</b>
+                    </div>
+                </div>
             </div>
 
-            <div class="arena-result-grid">
-                <div>
-                    <span>积分变化</span>
-                    <b class="@(_result.ScoreDelta >= 0 ? "positive" : "negative")">@FormatSigned(_result.ScoreDelta)</b>
-                </div>
-                <div>
-                    <span>当前积分</span>
-                    <b>@_result.NewScore</b>
-                </div>
-                <div>
-                    <span>排名变化</span>
-                    <b>@ResolveRankText()</b>
-                </div>
-                <div>
-                    <span>胜负</span>
-                    <b>@_result.Wins / @_result.Losses</b>
-                </div>
-            </div>
-
-            <div class="battle-result-actions">
-                <button class="wap-button" @onclick="GoArena">继续挑战</button>
-                <button class="wap-button muted" @onclick="GoHome">返回主页</button>
-            </div>
+            <footer class="arena-result-bottom-bar">
+                <button class="arena-result-back" @onclick="GoHome">返回</button>
+                <button class="active" @onclick="GoArena">继续</button>
+                <button @onclick="GoArena">竞技</button>
+                <button @onclick="GoHome">主页</button>
+            </footer>
         }
     </section>
 </main>

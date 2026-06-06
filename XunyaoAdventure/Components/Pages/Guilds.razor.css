@@ -1,0 +1,184 @@
+.guild-page {
+    min-height: 100dvh;
+    padding: 0;
+    background: #050608;
+    color: #f4fbff;
+}
+
+.guild-panel {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    width: min(100%, 430px);
+    height: 100dvh;
+    min-height: 0;
+    border: 1px solid #5fc5e8;
+    background: #4c91aa;
+    box-shadow: 0 0 0 1px #1d5a72 inset;
+}
+
+.guild-panel::before {
+    content: "";
+    position: absolute;
+    inset: 47px 0 0;
+    pointer-events: none;
+    background:
+        linear-gradient(rgba(82, 176, 204, 0.20), rgba(52, 116, 145, 0.12)),
+        radial-gradient(circle at 50% 9%, rgba(229, 255, 244, 0.78) 0 12%, transparent 13%),
+        radial-gradient(circle at 50% 32%, rgba(142, 219, 231, 0.44) 0 19%, transparent 20%),
+        linear-gradient(180deg, #287aa6 0%, #6bc3d2 42%, #4a95ad 43%, #356b82 100%);
+}
+
+.wap-title {
+    position: relative;
+    z-index: 1;
+    width: min(100% - 92px, 250px);
+    box-sizing: border-box;
+    margin: 8px auto 7px;
+    padding: 8px 16px;
+    border: 3px solid rgba(73, 179, 232, 0.86);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(14, 74, 130, 0.94), rgba(8, 49, 95, 0.96));
+    color: #ffe56b;
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-align: center;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
+}
+
+.guild-create {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 8px;
+    margin: 0 10px 8px;
+    padding: 9px 10px;
+    border: 3px solid rgba(82, 218, 255, 0.84);
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(0, 159, 209, 0.34), rgba(0, 85, 145, 0.22)),
+        rgba(7, 125, 174, 0.86);
+    box-shadow:
+        inset 0 0 0 2px rgba(156, 238, 255, 0.28),
+        0 3px 0 rgba(0, 56, 94, 0.45);
+}
+
+.guild-create input {
+    min-width: 0;
+    height: 38px;
+    box-sizing: border-box;
+    border: 3px solid #05507f;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #062844, #041d33);
+    color: #ffffff;
+    padding: 0 10px;
+    font-size: 14px;
+}
+
+.guild-create button,
+.guild-card button,
+.wap-button {
+    min-width: 0;
+    min-height: 34px;
+    border: 2px solid #2a6691;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #31ceff, #0878d7);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    text-shadow: 0 2px 2px #285a81;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.guild-create button:disabled {
+    opacity: 0.55;
+}
+
+.guild-list {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    align-content: start;
+    gap: 7px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 10px 10px;
+}
+
+.guild-card {
+    display: grid;
+    gap: 6px;
+    padding: 9px;
+    border: 2px solid rgba(82, 218, 255, 0.62);
+    border-radius: 8px;
+    background: rgba(4, 18, 25, 0.42);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.guild-card header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.guild-card b {
+    min-width: 0;
+    overflow: hidden;
+    color: #fff34c;
+    font-size: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.guild-card header span,
+.guild-meta,
+.guild-notice {
+    color: rgba(255, 255, 255, 0.84);
+    font-size: 13px;
+    line-height: 1.25;
+}
+
+.guild-notice {
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: rgba(4, 18, 25, 0.36);
+}
+
+.wap-line,
+.wap-message,
+.wap-tip {
+    position: relative;
+    z-index: 1;
+    margin: 0 10px 8px;
+    padding: 9px 10px;
+    border: 1px solid rgba(82, 218, 255, 0.44);
+    border-radius: 7px;
+    background: rgba(4, 18, 25, 0.42);
+    color: rgba(255, 255, 255, 0.86);
+    text-align: center;
+}
+
+.wap-message {
+    border-color: rgba(255, 196, 94, 0.72);
+    color: #ffe7a4;
+}
+
+.wap-tip {
+    border-color: rgba(142, 210, 77, 0.78);
+    color: #c8ffbf;
+}
+
+.guild-panel > .wap-button {
+    position: relative;
+    z-index: 1;
+    width: calc(100% - 20px);
+    margin: 0 10px 10px;
+}
+
+.wap-button.muted {
+    border-color: #8e5433;
+    background: linear-gradient(180deg, #c86e4c, #91462f);
+}

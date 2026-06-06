@@ -1,47 +1,47 @@
 .battle-result-page {
-    background: #252733;
+    background: #050608;
 }
 
 .battle-result-panel {
     width: min(100%, 430px);
-    background: #d9d0bb;
-    border-color: #1b1b22;
+    background: #4c91aa;
+    border-color: #5fc5e8;
 }
 
 .battle-result-banner {
     display: grid;
     gap: 5px;
     padding: 18px 10px;
-    border-bottom: 1px solid #806637;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
     text-align: center;
 }
 
 .battle-result-banner.victory {
-    background: #f3e1a5;
+    background: rgba(68, 72, 38, 0.78);
 }
 
 .battle-result-banner.defeat {
-    background: #d8b4a4;
+    background: rgba(68, 36, 18, 0.78);
 }
 
 .battle-result-banner b {
-    color: #5b3511;
+    color: #fff34c;
     font-size: 28px;
 }
 
 .battle-result-banner span {
-    color: #6f4d20;
+    color: #ffe7a4;
     font-weight: 800;
 }
 
 .battle-result-rewards {
     padding: 10px;
-    border-bottom: 1px solid #806637;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
 }
 
 .battle-result-section-title {
     margin-bottom: 8px;
-    color: #4a2c14;
+    color: #d7f6ff;
     font-weight: 800;
 }
 
@@ -50,8 +50,8 @@
     justify-content: space-between;
     gap: 8px;
     padding: 8px;
-    border: 1px solid #9b8758;
-    background: #fff8df;
+    border: 2px solid rgba(195, 243, 255, 0.72);
+    background: rgba(35, 76, 96, 0.70);
 }
 
 .battle-result-reward + .battle-result-reward {
@@ -59,11 +59,11 @@
 }
 
 .battle-result-reward span {
-    color: #4b3b1f;
+    color: #ffffff;
 }
 
 .battle-result-reward b {
-    color: #8a3b20;
+    color: #fff34c;
 }
 
 .battle-result-actions {
@@ -71,4 +71,3 @@
     gap: 8px;
     padding: 10px;
 }
-

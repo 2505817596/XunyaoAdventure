@@ -11,8 +11,8 @@
 
 <PageTitle>主页</PageTitle>
 
-<main class="wap-page">
-    <section class="wap-panel">
+<main class="wap-page home-page">
+    <section class="wap-panel home-panel">
         <div class="wap-title">寻妖录</div>
 
         @if (_account is null)
@@ -44,7 +44,7 @@
                     </span>
                 }
             </button>
-            <div class="wap-menu">
+            <div class="wap-menu home-menu">
                 <button class="wap-button" @onclick="GoFriends">@FriendsButtonText</button>
                 <button class="wap-button" @onclick="GoMonsters">妖怪</button>
                 <button class="wap-button" @onclick="GoQuests">任务</button>

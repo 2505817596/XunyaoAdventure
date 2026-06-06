@@ -6,8 +6,8 @@ html,
 body {
     margin: 0;
     min-height: 100%;
-    background: #e7e0c5;
-    color: #302410;
+    background: #050608;
+    color: #f4fbff;
     font-family: "Microsoft YaHei", Arial, sans-serif;
 }
 
@@ -19,42 +19,54 @@ input {
 .wap-page {
     min-height: 100dvh;
     box-sizing: border-box;
-    padding: 12px;
-    background: #e7e0c5;
+    padding: 0;
+    background: #050608;
+    color: #f4fbff;
 }
 
 .wap-panel {
+    position: relative;
     width: min(100%, 430px);
+    min-height: 100dvh;
+    box-sizing: border-box;
     margin: 0 auto;
-    border: 1px solid #806637;
-    background: #fff8df;
-    box-shadow: inset 0 0 0 1px #d1bc82;
+    border: 1px solid #5fc5e8;
+    background: #4c91aa;
+    box-shadow: 0 0 0 1px #1d5a72 inset;
+    overflow: hidden;
 }
 
 .wap-title {
-    padding: 9px 10px;
-    border-bottom: 1px solid #806637;
-    background: #5c4320;
-    color: #fff2ba;
+    padding: 12px 10px;
+    border-bottom: 2px solid #275d73;
+    background: linear-gradient(180deg, #74c9e8, #4aa7ca);
+    color: #fff34c;
+    font-size: 21px;
     font-weight: 700;
     text-align: center;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
 }
 
 .wap-line,
 .wap-message,
 .wap-tip {
-    padding: 9px 10px;
-    border-bottom: 1px solid #dbc995;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
     line-height: 1.45;
+    color: rgba(255, 255, 255, 0.88);
+    text-shadow: 0 1px 1px #214d5f;
 }
 
 .wap-message {
-    color: #a01818;
+    border-color: rgba(255, 196, 94, 0.72);
+    background: rgba(68, 36, 18, 0.78);
+    color: #ffe7a4;
 }
 
 .wap-tip {
-    color: #6d5a34;
+    color: #d9ffc5;
     font-size: 13px;
+    background: rgba(27, 77, 52, 0.58);
 }
 
 .wap-menu {
@@ -66,15 +78,21 @@ input {
 .wap-button {
     width: 100%;
     min-height: 38px;
-    border: 1px solid #624719;
-    background: #8d6a27;
-    color: #fff7d8;
+    border: 2px solid #2a6691;
+    background: linear-gradient(180deg, #86d3f1, #4292cc);
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 500;
     cursor: pointer;
+    text-shadow: 0 2px 2px #285a81;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .wap-button.muted {
-    background: #efe2b9;
-    color: #3d2e13;
+    border-color: #8e5433;
+    background: linear-gradient(180deg, #c86e4c, #91462f);
+    color: #ffffff;
+    text-shadow: 0 2px 2px #5c2d1d;
 }
 
 .wap-button:disabled {
@@ -376,16 +394,19 @@ input {
     align-items: center;
     gap: 8px;
     padding: 10px;
-    border-bottom: 1px solid #dbc995;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
+    color: #d7f6ff;
+    font-weight: 700;
+    text-shadow: 0 1px 1px #214d5f;
 }
 
 .wap-field input {
     min-width: 0;
     height: 34px;
     box-sizing: border-box;
-    border: 1px solid #9f854d;
-    background: #fffdf3;
-    color: #302410;
+    border: 2px solid rgba(195, 243, 255, 0.72);
+    background: rgba(4, 18, 25, 0.72);
+    color: #ffffff;
     padding: 0 8px;
 }
 
@@ -405,20 +426,22 @@ input {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     padding: 10px;
-    border-bottom: 1px solid #dbc995;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
 }
 
 .ranking-tabs button {
     min-height: 34px;
-    border: 1px solid #9f854d;
-    background: #fffdf3;
-    color: #3d2e13;
+    border: 2px solid #2a6691;
+    background: linear-gradient(180deg, #86d3f1, #4292cc);
+    color: #ffffff;
     font-weight: 700;
+    text-shadow: 0 2px 2px #285a81;
 }
 
 .ranking-tabs button.active {
-    background: #5c4320;
-    color: #fff2ba;
+    border-color: #8e5433;
+    background: linear-gradient(180deg, #c86e4c, #91462f);
+    color: #ffffff;
 }
 
 .ranking-list {
@@ -432,12 +455,13 @@ input {
     gap: 10px;
     min-height: 58px;
     padding: 9px 10px;
-    border-bottom: 1px solid #dbc995;
-    background: #fff8df;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
+    background: rgba(35, 76, 96, 0.70);
 }
 
 .ranking-item.self {
-    background: #fff0bf;
+    border-color: #f3d06c;
+    background: rgba(68, 72, 38, 0.70);
 }
 
 .ranking-rank {
@@ -445,9 +469,9 @@ input {
     place-items: center;
     width: 34px;
     height: 34px;
-    border: 1px solid #806637;
-    background: #efe2b9;
-    color: #5b3511;
+    border: 2px solid rgba(195, 243, 255, 0.72);
+    background: rgba(13, 48, 66, 0.72);
+    color: #fff34c;
     font-weight: 900;
 }
 
@@ -465,26 +489,27 @@ input {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: #fff34c;
 }
 
 .ranking-main span {
     flex: 0 0 auto;
     padding: 1px 5px;
-    border: 1px solid #806637;
-    color: #5b3511;
+    border: 1px solid rgba(255, 196, 94, 0.72);
+    color: #ffe7a4;
     font-size: 12px;
 }
 
 .ranking-main small {
     display: block;
     overflow: hidden;
-    color: #6d5a34;
+    color: rgba(255, 255, 255, 0.86);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .ranking-score {
-    color: #5b3511;
+    color: #fff34c;
     font-size: 18px;
     font-weight: 900;
 }
@@ -831,6 +856,273 @@ input {
 
 .guild-member small {
     color: #6d5a34;
+}
+
+/* Unified RPG skin for legacy pages that still use global classes. */
+.ranking-page .ranking-panel,
+.guild-page .guild-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100dvh;
+}
+
+.ranking-page .ranking-list,
+.guild-page .guild-list,
+.guild-page .guild-member-list {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.guild-create {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 76px;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
+    background: rgba(35, 76, 96, 0.70);
+}
+
+.guild-create input,
+.guild-notice-editor textarea,
+.guild-contribution-form input {
+    min-width: 0;
+    box-sizing: border-box;
+    border: 2px solid rgba(195, 243, 255, 0.72);
+    background: rgba(4, 18, 25, 0.72);
+    color: #ffffff;
+    padding: 0 9px;
+}
+
+.guild-create input,
+.guild-contribution-form input {
+    height: 38px;
+}
+
+.guild-notice-editor textarea {
+    min-height: 74px;
+    padding-block: 8px;
+    resize: vertical;
+}
+
+.guild-create button,
+.guild-card button,
+.guild-notice-editor button,
+.guild-contribution-form button {
+    min-height: 38px;
+    border: 2px solid #8e5433;
+    background: linear-gradient(180deg, #c86e4c, #91462f);
+    color: #ffffff;
+    font-weight: 700;
+    text-shadow: 0 2px 2px #5c2d1d;
+}
+
+.guild-create button:disabled,
+.guild-contribution-form button:disabled {
+    opacity: 0.55;
+}
+
+.guild-card,
+.guild-header,
+.guild-notice-block,
+.guild-notice-editor,
+.guild-contribution,
+.guild-member {
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
+    background: rgba(35, 76, 96, 0.70);
+}
+
+.guild-card,
+.guild-contribution,
+.guild-member {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+}
+
+.guild-header,
+.guild-notice-block,
+.guild-notice-editor {
+    padding: 10px;
+}
+
+.guild-card header,
+.guild-header,
+.guild-contribution header,
+.guild-member {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.guild-card header b,
+.guild-header b,
+.guild-contribution header b,
+.guild-member b {
+    min-width: 0;
+    overflow: hidden;
+    color: #fff34c;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
+}
+
+.guild-card header span,
+.guild-header span,
+.guild-contribution header span,
+.guild-member span {
+    flex: 0 0 auto;
+    color: #ffe7a4;
+    font-size: 12px;
+    font-weight: 700;
+    text-shadow: 0 1px 1px #3b160d;
+}
+
+.guild-meta,
+.guild-notice,
+.guild-notice-block,
+.guild-member small {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 13px;
+    line-height: 1.35;
+    text-shadow: 0 1px 1px #214d5f;
+}
+
+.guild-notice-editor,
+.guild-contribution-form {
+    display: grid;
+    gap: 8px;
+}
+
+.guild-member div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.wap-list-item {
+    border-bottom-color: rgba(174, 233, 246, 0.42);
+}
+
+.wap-list-title {
+    color: #fff34c;
+}
+
+.admin-page {
+    background: #050608;
+    color: #f4fbff;
+}
+
+.admin-page .admin-panel {
+    border-color: #5fc5e8;
+    background: #4c91aa;
+    box-shadow: 0 0 0 1px #1d5a72 inset;
+}
+
+.admin-page .wap-title {
+    border-bottom: 2px solid #275d73;
+    background: linear-gradient(180deg, #74c9e8, #4aa7ca);
+    color: #fff34c;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
+}
+
+.admin-page .admin-actions,
+.admin-page .admin-tabs,
+.admin-page .admin-menu,
+.admin-page .admin-list,
+.admin-page .admin-detail {
+    border-bottom-color: rgba(174, 233, 246, 0.42);
+    background: rgba(4, 18, 25, 0.22);
+}
+
+.admin-page .admin-card,
+.admin-page .admin-wave,
+.admin-page .admin-enemy,
+.admin-page .admin-check-line,
+.admin-page .admin-meta {
+    border-color: rgba(195, 243, 255, 0.72);
+    background: rgba(35, 76, 96, 0.70);
+    color: #ffffff;
+}
+
+.admin-page .admin-card header b,
+.admin-page .admin-wave header b,
+.admin-page .admin-enemy header b,
+.admin-page .admin-index-title,
+.admin-page .admin-section-title {
+    color: #fff34c;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
+}
+
+.admin-page .admin-card label,
+.admin-page .admin-enemy label,
+.admin-page .admin-index-meta,
+.admin-page .admin-meta {
+    color: #d7f6ff;
+    text-shadow: 0 1px 1px #214d5f;
+}
+
+.admin-page .admin-card input,
+.admin-page .admin-card select,
+.admin-page .admin-enemy input,
+.admin-page .admin-enemy select {
+    border-color: rgba(195, 243, 255, 0.72);
+    background: rgba(4, 18, 25, 0.72);
+    color: #ffffff;
+}
+
+.admin-page .admin-card select option,
+.admin-page .admin-enemy select option {
+    background: #123040;
+    color: #ffffff;
+}
+
+.admin-page .admin-actions .wap-button,
+.admin-page .admin-menu .wap-button,
+.admin-page > .wap-button,
+.admin-page .admin-panel > .wap-button,
+.admin-page .admin-card button,
+.admin-page .admin-wave button,
+.admin-page .admin-enemy button,
+.admin-page .admin-tabs button {
+    border-color: #2a6691;
+    background: linear-gradient(180deg, #86d3f1, #4292cc);
+    color: #ffffff;
+    text-shadow: 0 2px 2px #285a81;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.admin-page .wap-button.muted,
+.admin-page .admin-actions .wap-button.muted,
+.admin-page .admin-menu .wap-button.muted {
+    border-color: #8e5433;
+    background: linear-gradient(180deg, #c86e4c, #91462f);
+    color: #ffffff;
+    text-shadow: 0 2px 2px #5c2d1d;
+}
+
+.admin-page .admin-tabs button.active,
+.admin-page .admin-fold {
+    border-color: #8e5433 !important;
+    background: linear-gradient(180deg, #c86e4c, #91462f) !important;
+    color: #ffffff !important;
+}
+
+.admin-page .admin-clickable:hover {
+    border-color: #fff34c;
+    box-shadow: 0 8px 22px rgba(255, 243, 76, 0.16);
+}
+
+.admin-page .admin-card button:disabled,
+.admin-page .admin-wave button:disabled,
+.admin-page .admin-enemy button:disabled {
+    opacity: 0.55;
+}
+
+.admin-page .wap-message,
+.admin-page .wap-tip,
+.admin-page .wap-line {
+    border-bottom-color: rgba(174, 233, 246, 0.42);
 }
 
 .valid.modified:not([type=checkbox]) {

@@ -4,85 +4,127 @@
 @inject GameAccountStore Accounts
 @inject GameConfigStore Configs
 
-<PageTitle>寻妖池</PageTitle>
+<PageTitle>聚妖台</PageTitle>
 
-<main class="wap-page gacha-page">
-    <section class="wap-panel gacha-panel">
-        <div class="wap-title">@(_pool?.Name ?? "寻妖池")</div>
-
+<main class="gacha-pool-page">
+    <section class="gacha-pool-panel">
         @if (_account is null)
         {
-            <div class="wap-line">请先登录</div>
-            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+            <div class="gacha-pool-stage state-only">
+                <div class="gacha-pool-heading">
+                    <h1>聚妖台</h1>
+                </div>
+                <div class="gacha-pool-empty-state">请先登录</div>
+                <button class="gacha-pool-primary-action" @onclick="GoLogin">返回登录</button>
+            </div>
         }
         else if (_account.Profile is null)
         {
-            <div class="wap-line">请先创建角色</div>
-            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+            <div class="gacha-pool-stage state-only">
+                <div class="gacha-pool-heading">
+                    <h1>聚妖台</h1>
+                </div>
+                <div class="gacha-pool-empty-state">请先创建角色</div>
+                <button class="gacha-pool-primary-action" @onclick="GoCreateCharacter">创建角色</button>
+            </div>
         }
         else if (_pool is null)
         {
-            <div class="wap-line">奖池不存在</div>
-            <button class="wap-button muted" @onclick="GoGacha">返回奖池</button>
+            <div class="gacha-pool-stage state-only">
+                <div class="gacha-pool-heading">
+                    <h1>聚妖台</h1>
+                </div>
+                <div class="gacha-pool-empty-state">奖池不存在</div>
+                <button class="gacha-pool-primary-action" @onclick="GoGacha">返回奖池</button>
+            </div>
         }
         else
         {
-            <div class="gacha-currency">@CostItemName：@OwnedCostItemCount</div>
-            <div class="gacha-pool-detail">
-                <b>@_pool.Name</b>
-                <span>@_pool.Description</span>
-                <small>单抽：1 @CostItemName / 十连：10 @CostItemName</small>
-            </div>
+            <header class="gacha-pool-topbar">
+                <div class="gacha-pool-top-level">等级:@_account.Level</div>
+                <div class="gacha-pool-top-resource power"><span>券</span><b>@OwnedCostItemCount</b></div>
+                <div class="gacha-pool-top-resource coin"><span>钱</span><b>@_account.Copper</b></div>
+                <div class="gacha-pool-top-resource gem"><span>战</span><b>@TotalPower</b></div>
+                <button class="gacha-pool-settings" aria-label="设置" disabled>!</button>
+            </header>
 
-            <div class="gacha-preview">
-                @foreach (GachaEntryConfig entry in _pool.Entries.OrderByDescending(entry => entry.Weight))
-                {
-                    <article>
-                        @if (IsImageIcon(entry.IconText))
-                        {
-                            <img src="@entry.IconText" alt="@entry.Name" />
-                        }
-                        else
-                        {
-                            <span>@ResolveEntryIcon(entry)</span>
-                        }
-                        <b>@entry.Name</b>
-                        <small>@ResolveTypeName(entry.Type) x@(entry.Quantity) / 权重 @entry.Weight</small>
-                    </article>
-                }
-            </div>
+            <div class="gacha-pool-stage">
+                <div class="gacha-pool-heading">
+                    <h1>@_pool.Name</h1>
+                </div>
 
-            @if (!string.IsNullOrWhiteSpace(_message))
-            {
-                <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
-            }
+                <div class="gacha-pool-detail">
+                    <b>@CostItemName：@OwnedCostItemCount</b>
+                    <span>@_pool.Description</span>
+                    <small>单抽：1 @CostItemName / 十连：10 @CostItemName</small>
+                </div>
 
-            @if (_lastItems.Any())
-            {
-                <div class="gacha-results">
-                    @foreach (GachaDrawItem item in _lastItems)
-                    {
-                        <article class="gacha-result-item">
-                            @if (IsImageIcon(item.IconText))
-                            {
-                                <img src="@item.IconText" alt="@item.Name" />
-                            }
-                            else
-                            {
-                                <span>@item.IconText</span>
-                            }
-                            <b>@item.Name</b>
-                            <small>@ResolveTypeName(item.Type) x@(item.Quantity)</small>
-                        </article>
+                <div class="gacha-pool-scroll">
+                    @{
+                        List<GachaEntryConfig> previewEntries = _pool.Entries.OrderByDescending(entry => entry.Weight).ToList();
                     }
+                    <div class="gacha-preview @ResolvePreviewSizeClass(previewEntries.Count)" style="@BuildPreviewStyle(previewEntries.Count)">
+                        <div class="gacha-preview-scene">
+                        </div>
+                        @for (int index = 0; index < previewEntries.Count; index++)
+                        {
+                            GachaEntryConfig entry = previewEntries[index];
+                            <article class="@ResolveEntryQualityClass(entry)" style="@BuildEntryOrbitStyle(index, previewEntries.Count)">
+                                @if (IsImageIcon(entry.IconText))
+                                {
+                                    <img src="@entry.IconText" alt="@entry.Name" />
+                                }
+                                else
+                                {
+                                    <span>@ResolveEntryIcon(entry)</span>
+                                }
+                                <b>@entry.Name</b>
+                                <small>@ResolveTypeName(entry.Type) x@(entry.Quantity) / 权重 @entry.Weight</small>
+                            </article>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_message))
+                    {
+                        <div class="@(_success ? "gacha-pool-tip" : "gacha-pool-message")">@_message</div>
+                    }
+
+                </div>
+            </div>
+
+            <footer class="gacha-pool-bottom-bar">
+                <button class="gacha-pool-back" @onclick="GoGacha">返回</button>
+                <button class="active" disabled="@(!CanDraw(1))" @onclick="() => Draw(1)">抽 1</button>
+                <button disabled="@(!CanDraw(10))" @onclick="() => Draw(10)">十连</button>
+                <button @onclick="GoGacha">奖池</button>
+            </footer>
+
+            @if (_showResultPopup && _lastItems.Any())
+            {
+                <div class="gacha-result-backdrop" @onclick="CloseResultPopup">
+                    <section class="gacha-result-popup" @onclick:stopPropagation="true" role="dialog" aria-modal="true" aria-label="获得物品">
+                        <header>获得物品</header>
+                        <div class="gacha-results">
+                            @foreach (GachaDrawItem item in _lastItems)
+                            {
+                                <article class="gacha-result-item @ResolveDrawItemQualityClass(item)">
+                                    @if (IsImageIcon(item.IconText))
+                                    {
+                                        <img src="@item.IconText" alt="@item.Name" />
+                                    }
+                                    else
+                                    {
+                                        <span>@item.IconText</span>
+                                    }
+                                    <b>@item.Name</b>
+                                    <small>x@(item.Quantity)</small>
+                                </article>
+                            }
+                        </div>
+                        <button class="gacha-result-close" @onclick="CloseResultPopup">关闭</button>
+                    </section>
                 </div>
             }
-
-            <div class="gacha-actions">
-                <button class="wap-button" disabled="@(!CanDraw(1))" @onclick="() => Draw(1)">抽 1 次</button>
-                <button class="wap-button" disabled="@(!CanDraw(10))" @onclick="() => Draw(10)">抽 10 次</button>
-                <button class="wap-button muted" @onclick="GoGacha">返回奖池</button>
-            </div>
         }
     </section>
 </main>
@@ -96,6 +138,10 @@
     private List<GachaDrawItem> _lastItems = new();
     private string _message = string.Empty;
     private bool _success;
+    private bool _showResultPopup;
+
+    private int TotalPower
+        => _account?.Monsters.Sum(monster => monster.Power) ?? 0;
 
     private string CostItemName
         => Configs.GetConsumableTemplates()
@@ -130,7 +176,11 @@
         _message = result.Message;
         _account = result.Account ?? _account;
         _lastItems = result.Items.ToList();
+        _showResultPopup = result.Success && _lastItems.Count > 0;
     }
+
+    private void CloseResultPopup()
+        => _showResultPopup = false;
 
     private static string ResolveEntryIcon(GachaEntryConfig entry)
         => string.IsNullOrWhiteSpace(entry.IconText) ? ResolveTypeName(entry.Type)[0].ToString() : entry.IconText;
@@ -146,6 +196,77 @@
             "Fragment" => "碎片",
             "Copper" => "铜钱",
             _ => "奖励",
+        };
+
+    private static string BuildPreviewStyle(int count)
+    {
+        int radiusX = ResolveOrbitRadiusX(count);
+        int radiusY = ResolveOrbitRadiusY(count);
+        int itemSize = ResolveOrbitItemSize(count);
+        return FormattableString.Invariant($"--orbit-radius-x:{radiusX}px; --orbit-radius-y:{radiusY}px; --orbit-item-size:{itemSize}px;");
+    }
+
+    private static string BuildEntryOrbitStyle(int index, int count)
+    {
+        if (count <= 1)
+        {
+            return "--orbit-x:0px; --orbit-y:-92px;";
+        }
+
+        double angle = 2d * Math.PI * index / count - Math.PI / 2d;
+        double x = Math.Cos(angle) * ResolveOrbitRadiusX(count);
+        double y = Math.Sin(angle) * ResolveOrbitRadiusY(count);
+        return FormattableString.Invariant($"--orbit-x:{x:0.###}px; --orbit-y:{y:0.###}px;");
+    }
+
+    private static int ResolveOrbitRadiusX(int count)
+        => count switch
+        {
+            <= 1 => 0,
+            <= 4 => 104,
+            <= 8 => 148,
+            <= 12 => 162,
+            _ => 170,
+        };
+
+    private static int ResolveOrbitRadiusY(int count)
+        => count switch
+        {
+            <= 1 => 92,
+            <= 4 => 114,
+            <= 8 => 150,
+            <= 12 => 162,
+            _ => 172,
+        };
+
+    private static int ResolveOrbitItemSize(int count)
+        => count switch
+        {
+            <= 4 => 72,
+            <= 8 => 66,
+            <= 12 => 58,
+            _ => 54,
+        };
+
+    private static string ResolvePreviewSizeClass(int count)
+        => count > 12 ? "dense" : count <= 4 ? "compact" : string.Empty;
+
+    private static string ResolveEntryQualityClass(GachaEntryConfig entry)
+        => entry.Type switch
+        {
+            "Monster" => "rare",
+            "Fragment" => "fragment",
+            "Copper" => "currency",
+            _ => entry.Weight <= 5 ? "rare" : entry.Weight <= 20 ? "fragment" : "normal",
+        };
+
+    private static string ResolveDrawItemQualityClass(GachaDrawItem item)
+        => item.Type switch
+        {
+            "Monster" => "rare",
+            "Fragment" => "fragment",
+            "Copper" => "currency",
+            _ => "normal",
         };
 
     private void GoLogin()

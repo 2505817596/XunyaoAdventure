@@ -1,29 +1,35 @@
 .forge-page {
-    background: #252733;
+    background: #050608;
 }
 
 .forge-panel {
+    display: flex;
+    flex-direction: column;
     width: min(100%, 430px);
-    background: #d9d0bb;
-    border-color: #1b1b22;
+    height: 100dvh;
+    min-height: 0;
+    background: #4c91aa;
+    border-color: #5fc5e8;
 }
 
 .forge-tip {
+    flex: 0 0 auto;
     padding: 10px;
-    border-bottom: 1px solid #806637;
-    background: #f0e5c8;
-    color: #4a2c14;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
+    background: rgba(35, 76, 96, 0.70);
+    color: #d7f6ff;
     font-weight: 700;
 }
 
 .forge-grid {
+    flex: 0 0 auto;
     display: grid;
     grid-template-columns: repeat(3, 76px);
     justify-content: center;
     gap: 8px;
     padding: 14px;
-    background: #3b2e24;
-    border-bottom: 1px solid #806637;
+    background: rgba(4, 18, 25, 0.58);
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
 }
 
 .forge-cell {
@@ -81,47 +87,62 @@
 }
 
 .forge-result {
+    flex: 0 0 auto;
     display: grid;
     grid-template-columns: 64px minmax(0, 1fr);
     gap: 8px;
     padding: 10px;
-    border-bottom: 1px solid #806637;
-    background: #efe5cb;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
+    background: rgba(35, 76, 96, 0.70);
 }
 
 .forge-result span {
-    color: #5f5137;
+    color: #d7f6ff;
 }
 
 .forge-result b {
-    color: #3c2514;
+    color: #fff34c;
 }
 
 .forge-actions {
+    flex: 0 0 auto;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     padding: 10px;
-    border-bottom: 1px solid #806637;
+    border-bottom: 1px solid rgba(174, 233, 246, 0.42);
 }
 
 .forge-list {
+    flex: 1 1 auto;
     display: grid;
+    grid-template-columns: repeat(auto-fill, 58px);
+    justify-content: start;
+    align-content: start;
     gap: 8px;
+    min-height: 0;
     padding: 10px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.forge-list::-webkit-scrollbar {
+    display: none;
 }
 
 .forge-item {
     display: grid;
-    grid-template-columns: 42px minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    column-gap: 8px;
-    min-height: 58px;
-    padding: 8px;
-    border: 1px solid #9b8b6a;
-    background: #efe5c9;
-    color: #302410;
-    text-align: left;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 2px solid rgba(195, 243, 255, 0.72);
+    background: rgba(35, 76, 96, 0.70);
+    color: #ffffff;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .forge-item:disabled {
@@ -140,14 +161,14 @@
 
 .forge-item span {
     position: relative;
-    grid-row: 1 / 3;
     display: grid;
     place-items: center;
-    width: 36px;
-    height: 36px;
-    border: 2px solid #1d2027;
-    background: #233042;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: transparent;
     color: #f7f1dd;
+    font-size: 22px;
     font-weight: 800;
     box-shadow: none;
 }
@@ -189,6 +210,7 @@
 
 .forge-item b,
 .forge-item small {
+    display: none;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -196,5 +218,119 @@
 }
 
 .forge-item small {
-    color: #5f5137;
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.forge-panel > .wap-title,
+.forge-panel > .wap-message,
+.forge-panel > .wap-button {
+    flex: 0 0 auto;
+}
+
+/* Friends-style final skin */
+.forge-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #5fc5e8;
+    box-shadow: 0 0 0 1px #1d5a72 inset;
+}
+
+.forge-panel::before {
+    content: "";
+    position: absolute;
+    inset: 46px 0 0;
+    pointer-events: none;
+    background:
+        linear-gradient(rgba(82, 176, 204, 0.20), rgba(52, 116, 145, 0.12)),
+        radial-gradient(circle at 50% 8%, rgba(229, 255, 244, 0.82) 0 12%, transparent 13%),
+        radial-gradient(circle at 48% 32%, rgba(142, 219, 231, 0.45) 0 19%, transparent 20%),
+        linear-gradient(180deg, #287aa6 0%, #6bc3d2 42%, #4a95ad 43%, #356b82 100%);
+}
+
+.forge-panel > .wap-title {
+    position: relative;
+    z-index: 1;
+    width: min(100% - 92px, 250px);
+    box-sizing: border-box;
+    margin: 8px auto 7px;
+    padding: 8px 16px;
+    border: 3px solid rgba(73, 179, 232, 0.86);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(14, 74, 130, 0.94), rgba(8, 49, 95, 0.96));
+    color: #ffe56b;
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-align: center;
+    text-shadow: 0 2px 2px rgba(20, 42, 48, 0.8);
+}
+
+.forge-tip,
+.forge-grid,
+.forge-result,
+.forge-actions,
+.forge-list,
+.forge-panel > .wap-message {
+    position: relative;
+    z-index: 1;
+    margin-inline: 10px;
+    border: 3px solid rgba(82, 218, 255, 0.84);
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(0, 159, 209, 0.34), rgba(0, 85, 145, 0.22)),
+        rgba(7, 125, 174, 0.86);
+    box-shadow: inset 0 0 0 2px rgba(156, 238, 255, 0.28), 0 3px 0 rgba(0, 56, 94, 0.45);
+}
+
+.forge-tip,
+.forge-result,
+.forge-actions {
+    margin-bottom: 8px;
+}
+
+.forge-grid {
+    grid-template-columns: repeat(auto-fit, 68px);
+    gap: 7px;
+    padding: 9px 10px;
+    margin-bottom: 8px;
+}
+
+.forge-cell {
+    width: 68px;
+    height: 68px;
+    border-radius: 8px;
+    background: rgba(4, 18, 25, 0.42);
+}
+
+.forge-actions .wap-button,
+.forge-panel > .wap-button {
+    border-radius: 8px;
+    background: linear-gradient(180deg, #31ceff, #0878d7);
+    font-weight: 900;
+}
+
+.forge-actions .wap-button:first-child {
+    border-color: #d9995e;
+    background: linear-gradient(180deg, #ffcb52, #ca7317);
+}
+
+.forge-list {
+    grid-template-columns: repeat(auto-fill, 56px);
+    gap: 8px;
+    padding: 9px 10px;
+    margin-bottom: 8px;
+}
+
+.forge-item {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    background: rgba(4, 18, 25, 0.42);
+}
+
+.forge-panel > .wap-button {
+    position: relative;
+    z-index: 1;
+    width: calc(100% - 20px);
+    margin: 0 10px 10px;
 }
