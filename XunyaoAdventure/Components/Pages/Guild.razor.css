@@ -6,8 +6,8 @@
 }
 
 .guild-panel {
-    display: grid;
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
     width: min(100%, 430px);
     height: 100dvh;
     min-height: 0;
@@ -126,6 +126,7 @@
 .guild-member-list {
     position: relative;
     z-index: 1;
+    flex: 1 1 auto;
     display: grid;
     align-content: start;
     gap: 7px;
@@ -226,16 +227,98 @@ button:disabled {
 .wap-menu {
     position: relative;
     z-index: 1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 7px;
+    margin-top: auto;
     padding: 8px 10px 10px;
-    border-top: 2px solid rgba(174, 233, 246, 0.62);
-    background: linear-gradient(180deg, #096fac, #034c82);
+    background: transparent;
 }
 
 .wap-button.muted {
     border-color: #8e5433;
     background: linear-gradient(180deg, #c86e4c, #91462f);
+}
+
+.guild-bottom-bar {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 62px;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 10px 9px;
+    border-top: 2px solid rgba(174, 233, 246, 0.62);
+    background: #62b8d4;
+}
+
+.guild-bottom-bar button {
+    min-width: 0;
+    min-height: 38px;
+    border: 2px solid #2a6691;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #1abfff, #076bb9);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 900;
+    text-shadow: 0 2px 2px #285a81;
+}
+
+.guild-bottom-bar .guild-back,
+.guild-bottom-bar button.active {
+    border-color: #d9995e;
+    background: linear-gradient(180deg, #b86533, #7a341e);
+}
+
+.guild-bottom-bar .guild-back {
+    display: grid;
+    place-items: center;
+    justify-self: center;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    min-height: 54px;
+    padding: 0;
+    border-radius: 50%;
+    color: #ffe7a4;
+    font-size: 0;
+    line-height: 1;
+}
+
+.guild-bottom-bar .guild-back::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 15px;
+    height: 15px;
+    border-left: 6px solid #ffe7a4;
+    border-bottom: 6px solid #ffe7a4;
+    filter: drop-shadow(0 2px 1px #3b160d);
+    transform: translate(-38%, -50%) rotate(45deg);
+}
+
+.guild-bottom-bar button:disabled {
+    opacity: 0.55;
+}
+
+.guild-bottom-bar button:not(.guild-back) {
+    border-radius: 8px;
+    background: linear-gradient(180deg, #31ceff, #0878d7);
+    font-weight: 900;
+}
+
+.guild-bottom-bar button.active {
+    border-color: #d9995e;
+    background: linear-gradient(180deg, #ffcb52, #ca7317);
+}
+
+.guild-bottom-bar {
+    gap: 8px;
+    padding: 8px 10px 7px;
+    background: linear-gradient(180deg, #096fac, #034c82);
 }
 
 @media (max-width: 390px) {

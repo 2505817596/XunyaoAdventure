@@ -47,6 +47,59 @@
               "stage": 1,
               "x": 5.72,
               "y": -0.28
+            },
+            {
+              "templateId": "monster-1",
+              "name": "新敌人2",
+              "level": 1,
+              "star": 1,
+              "stage": 1,
+              "x": 5.72,
+              "y": -0.28
+            }
+          ]
+        },
+        {
+          "enemies": [
+            {
+              "templateId": "monster-1",
+              "name": "新敌人1",
+              "level": 1,
+              "star": 1,
+              "stage": 1,
+              "x": 5.72,
+              "y": -0.28
+            },
+            {
+              "templateId": "monster-1",
+              "name": "新敌人2",
+              "level": 1,
+              "star": 1,
+              "stage": 1,
+              "x": 5.72,
+              "y": -0.28
+            },
+            {
+              "templateId": "monster-1",
+              "name": "新敌人3",
+              "level": 1,
+              "star": 1,
+              "stage": 1,
+              "x": 5.72,
+              "y": -0.28
+            }
+          ]
+        },
+        {
+          "enemies": [
+            {
+              "templateId": "monster-1",
+              "name": "新敌人1",
+              "level": 2,
+              "star": 2,
+              "stage": 3,
+              "x": 5.72,
+              "y": -0.28
             }
           ]
         }

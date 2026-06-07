@@ -1,4 +1,4 @@
-@page "/forge"
+﻿@page "/forge"
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
@@ -25,7 +25,7 @@
             <div class="forge-tip">先指定1件主装备，再放入同阶材料装备。1升2消耗1件，2升3消耗2件，依次递增。</div>
 
             <div class="forge-grid">
-                <button class="forge-cell main @(MainItem is null ? "" : $"filled {ResolveEquipmentQualityClass(MainItem.Quality)}")" @onclick="ClearMain">
+                <button class="forge-cell main @(MainEquipment is null ? "" : $"filled {ResolveEquipmentQualityClass(MainEquipment.Quality)}")" @onclick="ClearMain">
                     @if (MainItem is null)
                     {
                         <span>主</span>
@@ -33,16 +33,17 @@
                     }
                     else
                     {
-                        <b>@MainItem.IconText</b>
-                        <em class="equipment-level-badge">+@MainItem.UpgradeLevel</em>
-                        <small>@MainItem.Quality</small>
+                        <ItemImage CssClass="forge-item-image" ImagePath="@MainEquipment!.ImagePath" Alt="@MainEquipment.Name" />
+                        <em class="equipment-level-badge">+@MainEquipment.UpgradeLevel</em>
+                        <small>@MainEquipment.Quality</small>
                     }
                 </button>
 
                 @for (int index = 0; index < 8; index++)
                 {
                     BackpackEquipmentItem? item = index < MaterialItems.Count ? MaterialItems[index] : null;
-                    <button class="forge-cell @(item is null ? "" : $"filled {ResolveEquipmentQualityClass(item.Quality)}")" @onclick="() => RemoveMaterialAt(index)">
+                    ResolvedEquipmentItem? equipment = item is null ? null : ResolveEquipment(item);
+                    <button class="forge-cell @(equipment is null ? "" : $"filled {ResolveEquipmentQualityClass(equipment.Quality)}")" @onclick="() => RemoveMaterialAt(index)">
                         @if (item is null)
                         {
                             <span>+</span>
@@ -50,9 +51,9 @@
                         }
                         else
                         {
-                            <b>@item.IconText</b>
-                            <em class="equipment-level-badge">+@item.UpgradeLevel</em>
-                            <small>@item.Quality</small>
+                            <ItemImage CssClass="forge-item-image" ImagePath="@equipment!.ImagePath" Alt="@equipment.Name" />
+                            <em class="equipment-level-badge">+@equipment.UpgradeLevel</em>
+                            <small>@equipment.Quality</small>
                         }
                     </button>
                 }
@@ -70,7 +71,7 @@
                 }
                 else
                 {
-                    <b>@MainItem.Name：@MainItem.Quality -> @PreviewQuality，需要 @RequiredMaterialCount 件材料</b>
+                    <b>@MainEquipment!.Name：@MainEquipment.Quality -> @PreviewQuality，需要 @RequiredMaterialCount 件材料</b>
                 }
             </div>
 
@@ -87,18 +88,24 @@
             <div class="forge-list">
                 @foreach (BackpackEquipmentItem item in CandidateItems)
                 {
-                    <button class="forge-item @ResolveEquipmentQualityClass(item.Quality) @ResolveItemClass(item)" disabled="@(!CanSelectItem(item))" @onclick="() => SelectItem(item.InstanceId)">
-                        <span class="@ResolveEquipmentQualityClass(item.Quality)">
-                            @item.IconText
-                            <em class="equipment-level-badge">+@item.UpgradeLevel</em>
+                    ResolvedEquipmentItem equipment = ResolveEquipment(item);
+                    <button class="forge-item @ResolveEquipmentQualityClass(equipment.Quality) @ResolveItemClass(item)" disabled="@(!CanSelectItem(item))" @onclick="() => SelectItem(item.InstanceId)">
+                        <span class="@ResolveEquipmentQualityClass(equipment.Quality)">
+                            <ItemImage CssClass="forge-list-image" ImagePath="@equipment.ImagePath" Alt="@equipment.Name" />
+                            <em class="equipment-level-badge">+@equipment.UpgradeLevel</em>
                         </span>
-                        <b>@item.Name</b>
-                        <small>@ResolveSlotName(item.SlotKey) / @item.Quality / +@item.UpgradeLevel / 战力 @item.Power</small>
+                        <b>@equipment.Name</b>
+                        <small>@ResolveSlotName(equipment.SlotKey) / @equipment.Quality / +@equipment.UpgradeLevel / 战力 @equipment.Power</small>
                     </button>
                 }
             </div>
 
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="forge-bottom-bar">
+                <button class="forge-back" @onclick="GoHome">返回</button>
+                <button class="active">熔炼</button>
+                <button disabled>材料</button>
+                <button disabled>预览</button>
+            </footer>
         }
     </section>
 </main>
@@ -119,7 +126,8 @@
             }
 
             BackpackEquipmentItem? mainItem = MainItem;
-            if (_mainItemId is not null && mainItem is not null)
+            ResolvedEquipmentItem? mainEquipment = MainEquipment;
+            if (_mainItemId is not null && mainItem is not null && mainEquipment is not null)
             {
                 if (_materialIds.Count >= RequiredMaterialCount)
                 {
@@ -130,24 +138,27 @@
                     .Where(item => item.InstanceId != _mainItemId)
                     .Where(item => !_materialIds.Contains(item.InstanceId))
                     .Where(item => item.EquippedMonsterId is null)
-                    .Where(item => item.Quality == mainItem.Quality)
-                    .OrderBy(item => item.SlotKey)
-                    .ThenBy(item => item.Power)
+                    .Where(item => ResolveEquipment(item).Quality == mainEquipment.Quality)
+                    .OrderBy(item => ResolveEquipment(item).SlotKey)
+                    .ThenBy(item => ResolveEquipment(item).Power)
                     .ToList();
             }
 
             return _account.Backpack
-                .Where(item => ResolveNextQuality(item.Quality) is not null)
+                .Where(item => ResolveNextQuality(ResolveEquipment(item).Quality) is not null)
                 .OrderBy(item => item.EquippedMonsterId is not null)
-                .ThenBy(item => item.Quality)
-                .ThenBy(item => item.SlotKey)
-                .ThenBy(item => item.Power)
+                .ThenBy(item => ResolveEquipment(item).Quality)
+                .ThenBy(item => ResolveEquipment(item).SlotKey)
+                .ThenBy(item => ResolveEquipment(item).Power)
                 .ToList();
         }
     }
 
     private BackpackEquipmentItem? MainItem
         => _mainItemId is int id ? _account?.Backpack.FirstOrDefault(item => item.InstanceId == id) : null;
+
+    private ResolvedEquipmentItem? MainEquipment
+        => MainItem is null ? null : ResolveEquipment(MainItem);
 
     private List<BackpackEquipmentItem> MaterialItems
         => _materialIds
@@ -157,16 +168,17 @@
             .ToList();
 
     private string? PreviewQuality
-        => MainItem is null ? null : ResolveNextQuality(MainItem.Quality);
+        => MainEquipment is null ? null : ResolveNextQuality(MainEquipment.Quality);
 
     private int RequiredMaterialCount
-        => MainItem is null ? 0 : GameAccountStore.GetRequiredFuseMaterialCount(MainItem.Quality);
+        => MainEquipment is null ? 0 : GameAccountStore.GetRequiredFuseMaterialCount(MainEquipment.Quality);
 
     private bool CanFuse
         => MainItem is not null
             && PreviewQuality is not null
             && MaterialItems.Count == RequiredMaterialCount
-            && MaterialItems.All(item => item.Quality == MainItem.Quality && item.EquippedMonsterId is null);
+            && MainEquipment is not null
+            && MaterialItems.All(item => ResolveEquipment(item).Quality == MainEquipment.Quality && item.EquippedMonsterId is null);
 
     protected override void OnInitialized()
     {
@@ -237,7 +249,7 @@
     {
         if (_mainItemId is null)
         {
-            return ResolveNextQuality(item.Quality) is not null;
+            return ResolveNextQuality(ResolveEquipment(item).Quality) is not null;
         }
 
         if (item.InstanceId == _mainItemId || _materialIds.Contains(item.InstanceId))
@@ -250,7 +262,9 @@
             return false;
         }
 
-        return item.EquippedMonsterId is null && item.Quality == MainItem.Quality;
+        return item.EquippedMonsterId is null
+            && MainEquipment is not null
+            && ResolveEquipment(item).Quality == MainEquipment.Quality;
     }
 
     private string ResolveItemClass(BackpackEquipmentItem item)
@@ -271,6 +285,9 @@
 
     private void GoHome()
         => Navigation.NavigateTo("/");
+
+    private ResolvedEquipmentItem ResolveEquipment(BackpackEquipmentItem item)
+        => Accounts.ResolveEquipmentItem(item);
 
     private static string? ResolveNextQuality(string quality)
         => quality switch

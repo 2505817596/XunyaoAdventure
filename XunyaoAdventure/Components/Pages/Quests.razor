@@ -6,58 +6,90 @@
 
 <PageTitle>任务</PageTitle>
 
-<main class="wap-page quest-page">
-    <section class="wap-panel quest-panel">
-        <div class="wap-title">任务</div>
-
+<main class="quest-page">
+    <section class="quest-panel">
         @if (_account is null)
         {
-            <div class="wap-line">请先登录</div>
-            <button class="wap-button" @onclick="GoLogin">返回登录</button>
+            <div class="quest-stage state-only">
+                <div class="quest-heading">
+                    <h1>任务</h1>
+                </div>
+                <div class="quest-empty-state">请先登录</div>
+                <button class="quest-primary-action" @onclick="GoLogin">返回登录</button>
+            </div>
         }
         else if (_account.Profile is null)
         {
-            <div class="wap-line">请先创建角色</div>
-            <button class="wap-button" @onclick="GoCreateCharacter">创建角色</button>
+            <div class="quest-stage state-only">
+                <div class="quest-heading">
+                    <h1>任务</h1>
+                </div>
+                <div class="quest-empty-state">请先创建角色</div>
+                <button class="quest-primary-action" @onclick="GoCreateCharacter">创建角色</button>
+            </div>
         }
         else
         {
-            <div class="quest-tabs">
-                <button class="@(_category == QuestCategory.Main ? "active" : "")" @onclick="() => SelectCategory(QuestCategory.Main)">主线</button>
-                <button class="@(_category == QuestCategory.Daily ? "active" : "")" @onclick="() => SelectCategory(QuestCategory.Daily)">日常</button>
-            </div>
+            <header class="quest-topbar">
+                <div class="quest-top-level">等级:@_account.Level</div>
+                <div class="quest-top-resource power"><span>任</span><b>@UnlockedQuestCount</b></div>
+                <div class="quest-top-resource coin"><span>奖</span><b>@ClaimableQuestCount</b></div>
+                <div class="quest-top-resource gem"><span>钱</span><b>@_account.Copper</b></div>
+                <button class="quest-settings" aria-label="设置" disabled>!</button>
+            </header>
 
-            @if (!string.IsNullOrWhiteSpace(_message))
-            {
-                <div class="wap-message">@_message</div>
-            }
+            <div class="quest-stage">
+                <div class="quest-heading">
+                    <h1>任务</h1>
+                </div>
 
-            <div class="quest-list">
-                @foreach (QuestViewItem quest in VisibleQuests)
+                <div class="quest-tabs">
+                    <button class="@(_category == QuestCategory.Main ? "active" : "")" @onclick="() => SelectCategory(QuestCategory.Main)">主线</button>
+                    <button class="@(_category == QuestCategory.Daily ? "active" : "")" @onclick="() => SelectCategory(QuestCategory.Daily)">日常</button>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_message))
                 {
-                    <article class="quest-item @(quest.Completed ? "completed" : "") @(quest.RewardClaimed ? "claimed" : "")">
-                        <div class="quest-main">
-                            <header>
-                                <b>@quest.Definition.Title</b>
-                                <span>@ResolveStateText(quest)</span>
-                            </header>
-                            <p>@quest.Definition.Description</p>
-                            <div class="quest-progress">
-                                <span style="width:@ResolveProgressPercent(quest)%"></span>
-                            </div>
-                            <small>@Math.Min(quest.Progress, quest.Definition.RequiredCount) / @quest.Definition.RequiredCount</small>
-                            <div class="quest-rewards">
-                                奖励：@FormatRewards(quest.Definition.Rewards)
-                            </div>
-                        </div>
-                        <button disabled="@(!CanClaim(quest))" @onclick="() => ClaimReward(quest.Definition.Id)">
-                            @(quest.RewardClaimed ? "已领" : "领取")
-                        </button>
-                    </article>
+                    <div class="quest-message">@_message</div>
                 }
+
+                <div class="quest-list">
+                    @foreach (QuestViewItem quest in VisibleQuests)
+                    {
+                        <article class="quest-item @(quest.Completed ? "completed" : "") @(quest.RewardClaimed ? "claimed" : "")">
+                            <div class="quest-main">
+                                <header>
+                                    <b>@quest.Definition.Title</b>
+                                    <span>@ResolveStateText(quest)</span>
+                                </header>
+                                <p>@quest.Definition.Description</p>
+                                <div class="quest-progress">
+                                    <span style="width:@ResolveProgressPercent(quest)%"></span>
+                                </div>
+                                <small>@Math.Min(quest.Progress, quest.Definition.RequiredCount) / @quest.Definition.RequiredCount</small>
+                                <div class="quest-rewards">
+                                    奖励：@FormatRewards(quest.Definition.Rewards)
+                                </div>
+                            </div>
+                            <button disabled="@(!CanClaim(quest))" @onclick="() => ClaimReward(quest.Definition.Id)">
+                                @(quest.RewardClaimed ? "已领" : "领取")
+                            </button>
+                        </article>
+                    }
+
+                    @if (!VisibleQuests.Any())
+                    {
+                        <div class="quest-empty">暂无任务</div>
+                    }
+                </div>
             </div>
 
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="quest-bottom-bar">
+                <button class="quest-back" @onclick="GoHome">返回</button>
+                <button class="active">任务</button>
+                <button @onclick="RefreshQuests">刷新</button>
+                <button disabled>成就</button>
+            </footer>
         }
     </section>
 </main>
@@ -72,6 +104,12 @@
         => _category == QuestCategory.Main
             ? GetVisibleMainQuests()
             : _quests.Where(quest => quest.Unlocked);
+
+    private int UnlockedQuestCount
+        => _quests.Count(quest => quest.Unlocked);
+
+    private int ClaimableQuestCount
+        => _quests.Count(CanClaim);
 
     protected override void OnInitialized()
     {
@@ -142,4 +180,5 @@
 
     private void GoHome()
         => Navigation.NavigateTo("/");
+
 }

@@ -1,4 +1,4 @@
-@page "/guild"
+﻿@page "/guild"
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
@@ -31,8 +31,9 @@
             {
                 <div class="@(_success ? "wap-tip" : "wap-message")">@_message</div>
             }
-            <button class="wap-button" @onclick="GoGuilds">查找公会</button>
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="guild-bottom-bar">
+                <button class="guild-back" @onclick="GoHome">返回</button>
+            </footer>
         }
         else
         {
@@ -74,24 +75,14 @@
                 </div>
             </section>
 
-            <div class="guild-member-list">
-                @foreach (GuildMember member in _guild.Members.OrderBy(member => member.Role).ThenByDescending(member => member.Contribution).ThenBy(member => member.JoinedAt))
-                {
-                    <article class="guild-member">
-                        <div>
-                            <b>@member.RoleName</b>
-                            <small>@member.UserName / 贡献 @member.Contribution</small>
-                        </div>
-                        <span>@ResolveRoleName(member.Role)</span>
-                    </article>
-                }
-            </div>
-
             <div class="wap-menu">
                 <button class="wap-button muted" @onclick="LeaveGuild">退出公会</button>
-                <button class="wap-button muted" @onclick="GoGuilds">公会列表</button>
-                <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+                <button class="wap-button" @onclick="GoGuildMembers">成员</button>
             </div>
+
+            <footer class="guild-bottom-bar">
+                <button class="guild-back" @onclick="GoHome">返回</button>
+            </footer>
         }
     </section>
 </main>
@@ -188,11 +179,8 @@
         Reload();
     }
 
-    private static string ResolveRoleName(GuildMemberRole role)
-        => role == GuildMemberRole.Leader ? "会长" : "成员";
-
-    private void GoGuilds()
-        => Navigation.NavigateTo("/guilds");
+    private void GoGuildMembers()
+        => Navigation.NavigateTo("/guild/members");
 
     private void GoLogin()
         => Navigation.NavigateTo("/login");

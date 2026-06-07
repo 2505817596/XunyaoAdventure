@@ -341,10 +341,8 @@
     box-shadow: none;
 }
 
-.gacha-preview span,
-.gacha-preview img,
-.gacha-result-item span,
-.gacha-result-item img {
+.gacha-preview .item-image,
+.gacha-result-item .item-image {
     display: grid;
     place-items: center;
     width: 46px;
@@ -357,8 +355,7 @@
     object-fit: cover;
 }
 
-.gacha-preview span,
-.gacha-preview img {
+.gacha-preview .item-image {
     width: calc(var(--orbit-item-size) - 20px);
     height: calc(var(--orbit-item-size) - 20px);
 }
@@ -540,8 +537,7 @@
     background: rgba(10, 10, 14, 0.88);
 }
 
-.gacha-result-popup .gacha-result-item span,
-.gacha-result-popup .gacha-result-item img {
+.gacha-result-popup .gacha-result-item > .item-image {
     width: 52px;
     height: 52px;
 }

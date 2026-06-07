@@ -4,15 +4,15 @@
     {
       "templateId": "small-exp-potion",
       "name": "经验药水",
-      "iconText": "药",
+      "imagePath": "",
       "effectType": "MonsterExp",
       "effectValue": 120,
-      "description": "妖怪经验 \u002B120"
+      "description": "妖怪经验 +120"
     },
     {
       "templateId": "demon-essence",
       "name": "妖元",
-      "iconText": "元",
+      "imagePath": "",
       "effectType": "DemonEssence",
       "effectValue": 1,
       "description": "吸收后永久增加妖怪属性，最多吸收20个"
@@ -20,7 +20,7 @@
     {
       "templateId": "breakthrough-pill",
       "name": "破境丹",
-      "iconText": "丹",
+      "imagePath": "",
       "effectType": "BreakthroughPill",
       "effectValue": 1,
       "description": "妖元满足后用于突破升阶"
@@ -28,7 +28,7 @@
     {
       "templateId": "soul-stone",
       "name": "灵魂石",
-      "iconText": "魂",
+      "imagePath": "",
       "effectType": "SoulStone",
       "effectValue": 1,
       "description": "通用升星材料"
@@ -39,8 +39,7 @@
       "templateId": "beast-glove",
       "name": "兽骨拳套",
       "slotKey": "weapon",
-      "iconText": "拳",
-      "quality": "白",
+      "imagePath": "",
       "stats": {
         "strength": 0,
         "intelligence": 0,
@@ -61,8 +60,7 @@
       "templateId": "vine-armor",
       "name": "藤甲",
       "slotKey": "armor",
-      "iconText": "甲",
-      "quality": "白",
+      "imagePath": "",
       "stats": {
         "strength": 0,
         "intelligence": 0,
@@ -83,8 +81,7 @@
       "templateId": "spirit-fang",
       "name": "灵牙坠",
       "slotKey": "necklace",
-      "iconText": "坠",
-      "quality": "白",
+      "imagePath": "",
       "stats": {
         "strength": 0,
         "intelligence": 0,
@@ -105,15 +102,14 @@
       "templateId": "wind-boots",
       "name": "疾风靴",
       "slotKey": "boots",
-      "iconText": "靴",
-      "quality": "白",
+      "imagePath": "/items/1001.webp",
       "stats": {
-        "strength": 0,
-        "intelligence": 0,
-        "agility": 6,
-        "maxHp": 0,
-        "physicalAttack": 0,
-        "magicPower": 0,
+        "strength": 5,
+        "intelligence": 5,
+        "agility": 5,
+        "maxHp": 5,
+        "physicalAttack": 5,
+        "magicPower": 5,
         "physicalArmor": 0,
         "magicResist": 0,
         "physicalCrit": 0,
@@ -127,8 +123,7 @@
       "templateId": "demon-blade",
       "name": "妖纹刃",
       "slotKey": "relic",
-      "iconText": "刃",
-      "quality": "白",
+      "imagePath": "",
       "stats": {
         "strength": 0,
         "intelligence": 0,
@@ -149,8 +144,7 @@
       "templateId": "life-star",
       "name": "命星",
       "slotKey": "soul",
-      "iconText": "星",
-      "quality": "绿",
+      "imagePath": "",
       "stats": {
         "strength": 0,
         "intelligence": 0,
@@ -171,8 +165,7 @@
       "templateId": "iron-claw",
       "name": "铁爪",
       "slotKey": "weapon",
-      "iconText": "爪",
-      "quality": "蓝",
+      "imagePath": "",
       "stats": {
         "strength": 0,
         "intelligence": 0,
@@ -193,8 +186,7 @@
       "templateId": "bone-mail",
       "name": "骨甲",
       "slotKey": "armor",
-      "iconText": "铠",
-      "quality": "蓝",
+      "imagePath": "",
       "stats": {
         "strength": 0,
         "intelligence": 0,
@@ -215,8 +207,7 @@
       "templateId": "waste-sword",
       "name": "残刃",
       "slotKey": "weapon",
-      "iconText": "刃",
-      "quality": "白",
+      "imagePath": "",
       "stats": {
         "strength": 0,
         "intelligence": 0,
@@ -238,7 +229,7 @@
     {
       "templateId": "qinglin-shard",
       "name": "青麟小妖碎片",
-      "iconText": "碎",
+      "imagePath": "",
       "quality": "白",
       "description": "用于合成青麟小妖"
     }

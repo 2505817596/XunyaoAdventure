@@ -1,7 +1,8 @@
-@page "/backpack"
+﻿@page "/backpack"
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
+@inject GameConfigStore Configs
 
 <PageTitle>背包</PageTitle>
 
@@ -54,7 +55,7 @@
                         @foreach (BackpackConsumableItem item in SortedConsumables)
                         {
                             <button class="backpack-item @(item.TemplateId == _selectedConsumableId ? "selected" : "")" @onclick="() => OpenConsumable(item.TemplateId)">
-                                <span class="backpack-icon">@item.IconText</span>
+                                <ItemImage CssClass="backpack-icon" ImagePath="@ResolveConsumableImagePath(item.TemplateId)" Alt="@item.Name" />
                                 <small>x@(item.Quantity)</small>
                             </button>
                         }
@@ -67,10 +68,11 @@
                     {
                         @foreach (BackpackEquipmentItem item in SortedEquipment)
                         {
-                            <button class="backpack-item @ResolveEquipmentQualityClass(item.Quality) @(item.EquippedMonsterId is null ? "" : "equipped") @(item.InstanceId == _selectedEquipmentId ? "selected" : "")" @onclick="() => OpenEquipment(item.InstanceId)">
-                                <span class="backpack-icon">@item.IconText</span>
+                            ResolvedEquipmentItem equipment = ResolveEquipment(item);
+                            <button class="backpack-item @ResolveEquipmentQualityClass(equipment.Quality) @(equipment.EquippedMonsterId is null ? "" : "equipped") @(item.InstanceId == _selectedEquipmentId ? "selected" : "")" @onclick="() => OpenEquipment(item.InstanceId)">
+                                <ItemImage CssClass="backpack-icon" ImagePath="@equipment.ImagePath" Alt="@equipment.Name" />
                                 <small class="equipment-level-badge">+@item.UpgradeLevel</small>
-                                @if (item.EquippedMonsterId is not null)
+                                @if (equipment.EquippedMonsterId is not null)
                                 {
                                     <small class="equipment-equipped-badge">穿</small>
                                 }
@@ -86,7 +88,7 @@
                         @foreach (BackpackFragmentItem item in SortedFragments)
                         {
                             <button class="backpack-item @(item.TemplateId == _selectedFragmentId ? "selected" : "")" @onclick="() => OpenFragment(item.TemplateId)">
-                                <span class="backpack-icon">@item.IconText</span>
+                                <ItemImage CssClass="backpack-icon" ImagePath="@ResolveFragmentImagePath(item.TemplateId)" Alt="@item.Name" />
                                 <small>x@(item.Quantity)</small>
                             </button>
                         }
@@ -112,7 +114,7 @@
                         <button class="backpack-popup-close" aria-label="关闭" @onclick="CloseDetailPopup">x</button>
                         @if (_tab == BackpackTab.Consumables && SelectedConsumable is not null)
                         {
-                            <div class="backpack-detail-icon">@SelectedConsumable.IconText</div>
+                            <ItemImage CssClass="backpack-detail-icon" ImagePath="@ResolveConsumableImagePath(SelectedConsumable.TemplateId)" Alt="@SelectedConsumable.Name" />
                             <div class="backpack-detail-main">
                                 <div class="backpack-detail-name">@SelectedConsumable.Name</div>
                                 <div class="backpack-detail-line">数量：@SelectedConsumable.Quantity</div>
@@ -121,12 +123,13 @@
                         }
                         else if (_tab == BackpackTab.Equipment && SelectedEquipment is not null)
                         {
-                            <div class="backpack-detail-icon @ResolveEquipmentQualityClass(SelectedEquipment.Quality)">@SelectedEquipment.IconText</div>
+                            ResolvedEquipmentItem equipment = ResolveEquipment(SelectedEquipment);
+                            <ItemImage CssClass="@($"backpack-detail-icon {ResolveEquipmentQualityClass(equipment.Quality)}")" ImagePath="@equipment.ImagePath" Alt="@equipment.Name" />
                             <div class="backpack-detail-main">
-                                <div class="backpack-detail-name">@SelectedEquipment.Name</div>
-                                <div class="backpack-detail-line">@ResolveSlotName(SelectedEquipment.SlotKey) / @SelectedEquipment.Quality / 强化 +@SelectedEquipment.UpgradeLevel / 战力 +@SelectedEquipment.Power</div>
-                                <div class="backpack-detail-line">@SelectedEquipment.AttributeText</div>
-                                @if (SelectedEquipment.EquippedMonsterId is int monsterId)
+                                <div class="backpack-detail-name">@equipment.Name</div>
+                                <div class="backpack-detail-line">@ResolveSlotName(equipment.SlotKey) / @equipment.Quality / 强化 +@equipment.UpgradeLevel / 战力 +@equipment.Power</div>
+                                <div class="backpack-detail-line">@equipment.AttributeText</div>
+                                @if (equipment.EquippedMonsterId is int monsterId)
                                 {
                                     <div class="backpack-detail-line">已穿戴：@ResolveMonsterName(monsterId)</div>
                                 }
@@ -138,7 +141,7 @@
                         }
                         else if (_tab == BackpackTab.Fragments && SelectedFragment is not null)
                         {
-                            <div class="backpack-detail-icon">@SelectedFragment.IconText</div>
+                            <ItemImage CssClass="backpack-detail-icon" ImagePath="@ResolveFragmentImagePath(SelectedFragment.TemplateId)" Alt="@SelectedFragment.Name" />
                             <div class="backpack-detail-main">
                                 <div class="backpack-detail-name">@SelectedFragment.Name</div>
                                 <div class="backpack-detail-line">@SelectedFragment.Quality / 数量：@SelectedFragment.Quantity</div>
@@ -177,8 +180,8 @@
     private IEnumerable<BackpackEquipmentItem> SortedEquipment
         => _account?.Backpack
             .OrderBy(item => item.EquippedMonsterId is null)
-            .ThenBy(item => item.SlotKey)
-            .ThenByDescending(item => item.Power)
+            .ThenBy(item => ResolveEquipment(item).SlotKey)
+            .ThenByDescending(item => ResolveEquipment(item).Power)
             ?? Enumerable.Empty<BackpackEquipmentItem>();
 
     private IEnumerable<BackpackFragmentItem> SortedFragments
@@ -262,6 +265,27 @@
 
     private string ResolveMonsterName(int monsterId)
         => _account?.Monsters.FirstOrDefault(monster => monster.Id == monsterId)?.Name ?? "未知";
+
+    private ResolvedEquipmentItem ResolveEquipment(BackpackEquipmentItem item)
+        => Accounts.ResolveEquipmentItem(item);
+
+    private string ResolveConsumableImagePath(string templateId)
+        => Configs.GetConsumableTemplates()
+            .FirstOrDefault(item => string.Equals(item.TemplateId, templateId, StringComparison.OrdinalIgnoreCase))
+            ?.ImagePath
+            ?? string.Empty;
+
+    private string ResolveEquipmentImagePath(string templateId)
+        => Configs.GetEquipmentTemplates()
+            .FirstOrDefault(item => string.Equals(item.TemplateId, templateId, StringComparison.OrdinalIgnoreCase))
+            ?.ImagePath
+            ?? string.Empty;
+
+    private string ResolveFragmentImagePath(string templateId)
+        => Configs.GetFragmentTemplates()
+            .FirstOrDefault(item => string.Equals(item.TemplateId, templateId, StringComparison.OrdinalIgnoreCase))
+            ?.ImagePath
+            ?? string.Empty;
 
     private void GoLogin()
         => Navigation.NavigateTo("/login");

@@ -1,4 +1,4 @@
-@page "/admin/gacha"
+﻿@page "/admin/gacha"
 @inject NavigationManager Navigation
 @inject GameConfigStore Configs
 
@@ -112,8 +112,8 @@
 
                             <div class="admin-grid-3">
                                 <label>
-                                    <span>图标</span>
-                                    <input @bind="entry.IconText" />
+                                    <span>图片路径</span>
+                                    <input @bind="entry.ImagePath" />
                                 </label>
                                 <label>
                                     <span>数量</span>
@@ -152,10 +152,10 @@
             .Select(item => new TemplateOption(item.TemplateId, item.Name, item.PortraitUrl))
             .ToList();
         _consumables = Configs.GetConsumableTemplates()
-            .Select(item => new TemplateOption(item.TemplateId, item.Name, item.IconText))
+            .Select(item => new TemplateOption(item.TemplateId, item.Name, item.ImagePath))
             .ToList();
         _fragments = Configs.GetFragmentTemplates()
-            .Select(item => new TemplateOption(item.TemplateId, item.Name, item.IconText))
+            .Select(item => new TemplateOption(item.TemplateId, item.Name, item.ImagePath))
             .ToList();
     }
 
@@ -199,7 +199,7 @@
             Type = monster is null ? "Copper" : "Monster",
             TemplateId = monster?.Id ?? string.Empty,
             Name = monster?.Name ?? "铜钱",
-            IconText = monster?.IconText ?? "钱",
+            ImagePath = monster?.ImagePath ?? string.Empty,
             Quantity = 1,
             Weight = 100,
         });
@@ -239,5 +239,5 @@
         return id;
     }
 
-    private sealed record TemplateOption(string Id, string Name, string IconText);
+    private sealed record TemplateOption(string Id, string Name, string ImagePath);
 }

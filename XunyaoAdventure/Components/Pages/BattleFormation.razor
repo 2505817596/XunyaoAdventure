@@ -29,7 +29,6 @@
     {
         <section class="formation-shell">
             <header class="formation-top">
-                <button class="formation-back" @onclick="GoBack">‹</button>
                 <div class="formation-title">@ResolveFormationTitle() @_selectedIds.Count/@_initialAccount.FormationSize</div>
                 <div class="formation-power">战力 @_selectedPower</div>
             </header>
@@ -135,9 +134,11 @@
                 <div class="formation-message">@_message</div>
             }
 
-            <footer class="formation-actions">
+            <footer class="formation-bottom-bar">
+                <button class="formation-back" @onclick="GoBack">返回</button>
                 <button class="formation-preset" @onclick="SelectDefault">预设阵容</button>
-                <button class="formation-fight" @onclick="StartBattle">战斗</button>
+                <button class="formation-fight active" @onclick="StartBattle">战斗</button>
+                <button disabled>阵容</button>
             </footer>
         </section>
     }

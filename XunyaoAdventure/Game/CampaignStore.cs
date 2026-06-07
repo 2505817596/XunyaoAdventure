@@ -4,7 +4,7 @@ namespace XunyaoAdventure.Game;
 
 public sealed class CampaignStore
 {
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly GameConfigStore _configs;
     private readonly GameDatabase _database;
     private readonly OperationLogStore _logs;

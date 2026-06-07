@@ -13,7 +13,7 @@ public sealed class GameConfigStore
         Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
     };
 
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly string _configDirectory;
     private readonly string _monstersPath;
     private readonly string _campaignPath;
@@ -643,7 +643,7 @@ public sealed class GameConfigStore
         {
             TemplateId = item.TemplateId.Trim(),
             Name = item.Name.Trim(),
-            IconText = item.IconText.Trim(),
+            ImagePath = item.ImagePath.Trim(),
             EffectType = item.EffectType.Trim(),
             EffectValue = Math.Max(0, item.EffectValue),
             Description = item.Description.Trim(),
@@ -655,8 +655,7 @@ public sealed class GameConfigStore
             TemplateId = item.TemplateId.Trim(),
             Name = item.Name.Trim(),
             SlotKey = item.SlotKey.Trim(),
-            IconText = item.IconText.Trim(),
-            Quality = item.Quality.Trim(),
+            ImagePath = item.ImagePath.Trim(),
             Stats = CloneAttributeConfig(item.Stats),
             UpgradeLevel = Math.Max(0, item.UpgradeLevel),
         };
@@ -666,7 +665,7 @@ public sealed class GameConfigStore
         {
             TemplateId = item.TemplateId.Trim(),
             Name = item.Name.Trim(),
-            IconText = item.IconText.Trim(),
+            ImagePath = item.ImagePath.Trim(),
             Quality = item.Quality.Trim(),
             Description = item.Description.Trim(),
         };
@@ -691,7 +690,7 @@ public sealed class GameConfigStore
             Type = type,
             TemplateId = type == "Copper" ? string.Empty : entry.TemplateId.Trim(),
             Name = entry.Name.Trim(),
-            IconText = entry.IconText.Trim(),
+            ImagePath = entry.ImagePath.Trim(),
             Quantity = Math.Max(1, entry.Quantity),
             Weight = Math.Max(1, entry.Weight),
         };

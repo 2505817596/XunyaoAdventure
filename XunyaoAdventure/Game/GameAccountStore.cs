@@ -19,7 +19,7 @@ public sealed class GameAccountStore
     private const string QualityPurple = "紫";
     private const string QualityRed = "红";
 
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly GameConfigStore _configs;
     private readonly GameDatabase _database;
     private readonly Dictionary<string, PlayerAccount> _accounts = new(StringComparer.OrdinalIgnoreCase);
@@ -88,7 +88,13 @@ public sealed class GameAccountStore
 
         lock (_gate)
         {
-            return _accounts.TryGetValue(Normalize(userName), out PlayerAccount? account) ? account : null;
+            if (!_accounts.TryGetValue(Normalize(userName), out PlayerAccount? account))
+            {
+                return null;
+            }
+
+            RecalculateAccountDerivedStats(account);
+            return account;
         }
     }
 
@@ -96,6 +102,11 @@ public sealed class GameAccountStore
     {
         lock (_gate)
         {
+            foreach (PlayerAccount account in _accounts.Values)
+            {
+                RecalculateAccountDerivedStats(account);
+            }
+
             return _accounts.Values
                 .OrderBy(account => account.UserName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -104,6 +115,33 @@ public sealed class GameAccountStore
 
     public OwnedMonster? GetMonster(string? userName, int monsterId)
         => GetAccount(userName)?.Monsters.FirstOrDefault(monster => monster.Id == monsterId);
+
+    public ResolvedEquipmentItem ResolveEquipmentItem(BackpackEquipmentItem item)
+    {
+        EquipmentTemplateConfig? template = _configs.GetEquipmentTemplates()
+            .FirstOrDefault(template => string.Equals(template.TemplateId, item.TemplateId, StringComparison.OrdinalIgnoreCase));
+
+        string quality = string.IsNullOrWhiteSpace(item.QualityOverride)
+            ? QualityWhite
+            : item.QualityOverride;
+        int upgradeLevel = Math.Max(0, item.UpgradeLevel);
+        HeroAttributeConfig stats = template is null
+            ? new HeroAttributeConfig()
+            : ResolveEquipmentStats(template.Stats, QualityWhite, quality);
+
+        return new ResolvedEquipmentItem(
+            item.InstanceId,
+            item.TemplateId,
+            template?.Name ?? "未知装备",
+            template?.SlotKey ?? "weapon",
+            template?.ImagePath ?? string.Empty,
+            CalculateEquipmentPower(stats, quality, upgradeLevel),
+            quality,
+            BuildEquipmentAttributeText(stats, quality, upgradeLevel),
+            stats,
+            item.EquippedMonsterId,
+            upgradeLevel);
+    }
 
     public IReadOnlyList<RankingEntry> GetRankings(RankingBoardType boardType, int limit = 50)
     {
@@ -190,7 +228,8 @@ public sealed class GameAccountStore
 
         OwnedMonster monster = account.Monsters[monsterIndex];
         BackpackEquipmentItem item = account.Backpack[itemIndex];
-        int slotIndex = monster.Equipment.ToList().FindIndex(slot => slot.SlotKey == item.SlotKey);
+        ResolvedEquipmentItem resolvedItem = ResolveEquipmentItem(item);
+        int slotIndex = monster.Equipment.ToList().FindIndex(slot => slot.SlotKey == resolvedItem.SlotKey);
         if (slotIndex < 0)
         {
             return new GameEquipResult(false, "这个妖怪不能穿戴该装备", account);
@@ -214,12 +253,11 @@ public sealed class GameAccountStore
         }
 
         item.EquippedMonsterId = monsterId;
-        currentSlot.Name = item.Name;
+        currentSlot.Name = resolvedItem.Name;
         currentSlot.Equipped = true;
-        currentSlot.IconText = item.IconText;
         currentSlot.ItemInstanceId = item.InstanceId;
 
-        monster.Power = CalculateMonsterPower(monster.Level, monster.Star, monster.Rank, monster.Stage, monster.DemonEssence, slots, backpack);
+        monster.Power = CalculateMonsterPower(monster.Level, monster.Star, monster.Rank, monster.Stage, monster.DemonEssence, slots, backpack, ResolveEquipmentItem);
 
         SaveAccount(account);
         return new GameEquipResult(true, "穿戴成功", account);
@@ -257,7 +295,7 @@ public sealed class GameAccountStore
         }
 
         slots[slotIndex] = CreateEmptySlot(slotKey);
-        monster.Power = CalculateMonsterPower(monster.Level, monster.Star, monster.Rank, monster.Stage, monster.DemonEssence, slots, backpack);
+        monster.Power = CalculateMonsterPower(monster.Level, monster.Star, monster.Rank, monster.Stage, monster.DemonEssence, slots, backpack, ResolveEquipmentItem);
 
         SaveAccount(account);
         return new GameEquipResult(true, "已卸下装备", account);
@@ -282,19 +320,17 @@ public sealed class GameAccountStore
             return new GameEquipResult(false, "强化等级不能超过账号等级", account);
         }
 
-        int cost = GetEquipmentUpgradeCost(item.UpgradeLevel + 1, item.Quality);
+        ResolvedEquipmentItem resolvedItem = ResolveEquipmentItem(item);
+        int cost = GetEquipmentUpgradeCost(item.UpgradeLevel + 1, resolvedItem.Quality);
         if (account.Copper < cost)
         {
             return new GameEquipResult(false, $"铜钱不足，需要{cost}", account);
         }
 
-        List<BackpackEquipmentItem> backpack = account.Backpack;
         int upgradeLevel = item.UpgradeLevel + 1;
         item.UpgradeLevel = upgradeLevel;
-        item.Power = CalculateEquipmentPower(item.Stats, item.Quality, upgradeLevel);
-        item.AttributeText = BuildEquipmentAttributeText(item.Stats, item.Quality, upgradeLevel);
 
-        RefreshMonstersUsingItems(account.Monsters, account.Backpack, itemInstanceId);
+        RefreshMonstersUsingItems(account.Monsters, account.Backpack, itemInstanceId, ResolveEquipmentItem);
         account.Copper -= cost;
         SaveAccount(account);
         return new GameEquipResult(true, $"强化成功，当前{upgradeLevel}", account);
@@ -313,13 +349,14 @@ public sealed class GameAccountStore
             return new GameEquipResult(false, "主装备不存在", account);
         }
 
-        string? nextQuality = GetNextQuality(mainItem.Quality);
+        ResolvedEquipmentItem resolvedMainItem = ResolveEquipmentItem(mainItem);
+        string? nextQuality = GetNextQuality(resolvedMainItem.Quality);
         if (nextQuality is null)
         {
             return new GameEquipResult(false, "主装备已经达到最高品质", account);
         }
 
-        int requiredMaterials = GetRequiredFuseMaterialCount(mainItem.Quality);
+        int requiredMaterials = GetRequiredFuseMaterialCount(resolvedMainItem.Quality);
         List<int> materialIds = materialItemIds.Distinct().ToList();
         if (materialIds.Count != requiredMaterials)
         {
@@ -346,22 +383,18 @@ public sealed class GameAccountStore
             return new GameEquipResult(false, "已穿戴装备不能作为材料", account);
         }
 
-        if (materials.Any(item => NormalizeQuality(item.Quality) != NormalizeQuality(mainItem.Quality)))
+        if (materials.Any(item => NormalizeQuality(ResolveEquipmentItem(item).Quality) != NormalizeQuality(resolvedMainItem.Quality)))
         {
             return new GameEquipResult(false, "只能消耗同阶装备作为材料", account);
         }
 
         account.Backpack.RemoveAll(item => materialIds.Contains(item.InstanceId));
-        HeroAttributeConfig upgradedStats = ScaleEquipmentStatsForNextQuality(mainItem.Stats, mainItem.Quality, nextQuality);
-        mainItem.Name = $"{nextQuality}{ResolveSlotName(mainItem.SlotKey)}";
-        mainItem.Quality = nextQuality;
-        mainItem.Stats = upgradedStats;
-        mainItem.Power = CalculateEquipmentPower(upgradedStats, nextQuality, mainItem.UpgradeLevel);
-        mainItem.AttributeText = BuildEquipmentAttributeText(upgradedStats, nextQuality, mainItem.UpgradeLevel);
+        mainItem.QualityOverride = nextQuality;
 
-        RefreshMonstersUsingItems(account.Monsters, account.Backpack, mainItemId);
+        ResolvedEquipmentItem upgradedItem = ResolveEquipmentItem(mainItem);
+        RefreshMonstersUsingItems(account.Monsters, account.Backpack, mainItemId, ResolveEquipmentItem);
         SaveAccount(account);
-        return new GameEquipResult(true, $"升阶成功，{mainItem.Name}提升为{nextQuality}", account);
+        return new GameEquipResult(true, $"升阶成功，{upgradedItem.Name}提升为{nextQuality}", account);
     }
 
     public GameLevelUpResult LevelUpMonster(string? userName, int monsterId, int potionCount)
@@ -433,7 +466,7 @@ public sealed class GameAccountStore
             List<BackpackEquipmentItem> backpack = account.Backpack;
             monster.Level = level;
             monster.Experience = experience;
-            monster.Power = CalculateMonsterPower(level, monster.Star, monster.Rank, monster.Stage, monster.DemonEssence, monster.Equipment, backpack);
+            monster.Power = CalculateMonsterPower(level, monster.Star, monster.Rank, monster.Stage, monster.DemonEssence, monster.Equipment, backpack, ResolveEquipmentItem);
             SaveAccount(account);
 
             string message = level > oldLevel ? $"升级成功，当前{level}级" : $"已获得经验，当前{level}级";
@@ -485,7 +518,7 @@ public sealed class GameAccountStore
             consumables[materialIndex].Quantity -= consumed;
             List<BackpackEquipmentItem> backpack = account.Backpack;
             monster.DemonEssence = demonEssence;
-            monster.Power = CalculateMonsterPower(monster.Level, monster.Star, monster.Rank, monster.Stage, demonEssence, monster.Equipment, backpack);
+            monster.Power = CalculateMonsterPower(monster.Level, monster.Star, monster.Rank, monster.Stage, demonEssence, monster.Equipment, backpack, ResolveEquipmentItem);
             SaveAccount(account);
 
             return new GameMaterialUseResult(true, $"已吸收妖元{consumed}", account, consumed);
@@ -538,7 +571,7 @@ public sealed class GameAccountStore
             List<BackpackEquipmentItem> backpack = account.Backpack;
             monster.Stage = stage;
             monster.Rank = rank;
-            monster.Power = CalculateMonsterPower(monster.Level, monster.Star, rank, stage, monster.DemonEssence, monster.Equipment, backpack);
+            monster.Power = CalculateMonsterPower(monster.Level, monster.Star, rank, stage, monster.DemonEssence, monster.Equipment, backpack, ResolveEquipmentItem);
             SaveAccount(account);
 
             return new GameMaterialUseResult(true, $"突破成功，当前{stage}阶", account, requiredPills);
@@ -583,7 +616,7 @@ public sealed class GameAccountStore
             List<BackpackEquipmentItem> backpack = account.Backpack;
             int star = monster.Star + 1;
             monster.Star = star;
-            monster.Power = CalculateMonsterPower(monster.Level, star, monster.Rank, monster.Stage, monster.DemonEssence, monster.Equipment, backpack);
+            monster.Power = CalculateMonsterPower(monster.Level, star, monster.Rank, monster.Stage, monster.DemonEssence, monster.Equipment, backpack, ResolveEquipmentItem);
             SaveAccount(account);
 
             return new GameMaterialUseResult(true, $"升星成功，当前{star}星", account, requiredSoulStones);
@@ -811,7 +844,6 @@ public sealed class GameAccountStore
             : new BackpackConsumableItem(
                 template.TemplateId,
                 template.Name,
-                template.IconText,
                 Math.Max(0, quantity),
                 template.EffectType,
                 template.EffectValue,
@@ -827,7 +859,6 @@ public sealed class GameAccountStore
             : new BackpackFragmentItem(
                 template.TemplateId,
                 template.Name,
-                template.IconText,
                 Math.Max(0, quantity),
                 template.Quality,
                 template.Description);
@@ -839,9 +870,21 @@ public sealed class GameAccountStore
             ?.Name
             ?? "抽卡道具";
 
+    private string ResolveConsumableImagePath(string templateId)
+        => _configs.GetConsumableTemplates()
+            .FirstOrDefault(item => string.Equals(item.TemplateId, templateId, StringComparison.OrdinalIgnoreCase))
+            ?.ImagePath
+            ?? string.Empty;
+
+    private string ResolveFragmentImagePath(string templateId)
+        => _configs.GetFragmentTemplates()
+            .FirstOrDefault(item => string.Equals(item.TemplateId, templateId, StringComparison.OrdinalIgnoreCase))
+            ?.ImagePath
+            ?? string.Empty;
+
     private bool ApplyGachaEntry(PlayerAccount account, GachaEntryConfig entry, out GachaDrawItem item, out string error)
     {
-        item = new GachaDrawItem(entry.Type, entry.TemplateId, entry.Name, entry.IconText, entry.Quantity, null);
+        item = new GachaDrawItem(entry.Type, entry.TemplateId, entry.Name, entry.ImagePath, entry.Quantity, null);
         error = string.Empty;
 
         if (entry.Type == "Copper")
@@ -873,7 +916,7 @@ public sealed class GameAccountStore
             {
                 account.Consumables[index].Quantity += entry.Quantity;
                 BackpackConsumableItem current = account.Consumables[index];
-                item = new GachaDrawItem(entry.Type, current.TemplateId, current.Name, current.IconText, entry.Quantity, null);
+                item = new GachaDrawItem(entry.Type, current.TemplateId, current.Name, ResolveConsumableImagePath(current.TemplateId), entry.Quantity, null);
                 return true;
             }
 
@@ -885,7 +928,7 @@ public sealed class GameAccountStore
             }
 
             account.Consumables.Add(newItem);
-            item = new GachaDrawItem(entry.Type, newItem.TemplateId, newItem.Name, newItem.IconText, entry.Quantity, null);
+            item = new GachaDrawItem(entry.Type, newItem.TemplateId, newItem.Name, ResolveConsumableImagePath(newItem.TemplateId), entry.Quantity, null);
             return true;
         }
 
@@ -897,7 +940,7 @@ public sealed class GameAccountStore
             {
                 account.Fragments[index].Quantity += entry.Quantity;
                 BackpackFragmentItem current = account.Fragments[index];
-                item = new GachaDrawItem(entry.Type, current.TemplateId, current.Name, current.IconText, entry.Quantity, null);
+                item = new GachaDrawItem(entry.Type, current.TemplateId, current.Name, ResolveFragmentImagePath(current.TemplateId), entry.Quantity, null);
                 return true;
             }
 
@@ -909,7 +952,7 @@ public sealed class GameAccountStore
             }
 
             account.Fragments.Add(newItem);
-            item = new GachaDrawItem(entry.Type, newItem.TemplateId, newItem.Name, newItem.IconText, entry.Quantity, null);
+            item = new GachaDrawItem(entry.Type, newItem.TemplateId, newItem.Name, ResolveFragmentImagePath(newItem.TemplateId), entry.Quantity, null);
             return true;
         }
 
@@ -996,23 +1039,16 @@ public sealed class GameAccountStore
             return null;
         }
 
-        HeroAttributeConfig stats = CloneAttributeConfig(template.Stats);
         return new BackpackEquipmentItem(
             instanceId,
             template.TemplateId,
-            template.Name,
-            template.SlotKey,
-            template.IconText,
-            CalculateEquipmentPower(stats, template.Quality, template.UpgradeLevel),
-            template.Quality,
-            BuildEquipmentAttributeText(stats, template.Quality, template.UpgradeLevel),
-            stats,
+            string.Empty,
             null,
             template.UpgradeLevel);
     }
 
     private static MonsterEquipmentSlot CreateEmptySlot(string slotKey)
-        => new(ResolveSlotName(slotKey), false, string.Empty, slotKey, null);
+        => new(ResolveSlotName(slotKey), false, slotKey, null);
 
     private static string ResolveSlotName(string slotKey)
         => slotKey switch
@@ -1076,11 +1112,11 @@ public sealed class GameAccountStore
 
         return lines.Count == 0 ? "无属性" : string.Join(" / ", lines);
     }
-    private static HeroAttributeConfig ScaleEquipmentStatsForNextQuality(HeroAttributeConfig stats, string currentQuality, string nextQuality)
+    private static HeroAttributeConfig ResolveEquipmentStats(HeroAttributeConfig stats, string templateQuality, string currentQuality)
     {
+        double templateMultiplier = GetEquipmentQualityStatMultiplier(templateQuality);
         double currentMultiplier = GetEquipmentQualityStatMultiplier(currentQuality);
-        double nextMultiplier = GetEquipmentQualityStatMultiplier(nextQuality);
-        double scale = currentMultiplier <= 0 ? nextMultiplier : nextMultiplier / currentMultiplier;
+        double scale = templateMultiplier <= 0 ? currentMultiplier : currentMultiplier / templateMultiplier;
 
         return new HeroAttributeConfig
         {
@@ -1169,7 +1205,11 @@ public sealed class GameAccountStore
         return QualityWhite;
     }
 
-    private static void RefreshMonstersUsingItems(List<OwnedMonster> monsters, IReadOnlyList<BackpackEquipmentItem> backpack, int itemInstanceId)
+    private static void RefreshMonstersUsingItems(
+        List<OwnedMonster> monsters,
+        IReadOnlyList<BackpackEquipmentItem> backpack,
+        int itemInstanceId,
+        Func<BackpackEquipmentItem, ResolvedEquipmentItem> resolveEquipment)
     {
         foreach (OwnedMonster monster in monsters)
         {
@@ -1181,9 +1221,8 @@ public sealed class GameAccountStore
             }
 
             BackpackEquipmentItem item = backpack.First(backpackItem => backpackItem.InstanceId == itemInstanceId);
-            slots[slotIndex].Name = item.Name;
-            slots[slotIndex].IconText = item.IconText;
-            monster.Power = CalculateMonsterPower(monster.Level, monster.Star, monster.Rank, monster.Stage, monster.DemonEssence, slots, backpack);
+            slots[slotIndex].Name = resolveEquipment(item).Name;
+            monster.Power = CalculateMonsterPower(monster.Level, monster.Star, monster.Rank, monster.Stage, monster.DemonEssence, slots, backpack, resolveEquipment);
         }
     }
 
@@ -1194,7 +1233,8 @@ public sealed class GameAccountStore
         int stage,
         int demonEssence,
         IReadOnlyList<MonsterEquipmentSlot> slots,
-        IReadOnlyList<BackpackEquipmentItem> backpack)
+        IReadOnlyList<BackpackEquipmentItem> backpack,
+        Func<BackpackEquipmentItem, ResolvedEquipmentItem> resolveEquipment)
     {
         int rankPower = rank switch
         {
@@ -1210,7 +1250,7 @@ public sealed class GameAccountStore
             .Where(itemId => itemId is not null)
             .Select(itemId => backpack.FirstOrDefault(item => item.InstanceId == itemId))
             .Where(item => item is not null)
-            .Sum(item => item!.Power);
+            .Sum(item => resolveEquipment(item!).Power);
         int stagePower = (Math.Clamp(stage, 1, MaxMonsterStage) - 1) * 45;
         int starPower = (Math.Clamp(star, 1, MaxMonsterStar) - 1) * 36;
         int essencePower = Math.Clamp(demonEssence, 0, MaxDemonEssence) * 8;
@@ -1263,8 +1303,25 @@ public sealed class GameAccountStore
 
     private void SaveAccount(PlayerAccount account)
     {
+        RecalculateAccountDerivedStats(account);
         _accounts[account.UserName] = account;
         SaveAccountDocument(account);
+    }
+
+    private void RecalculateAccountDerivedStats(PlayerAccount account)
+    {
+        foreach (OwnedMonster monster in account.Monsters)
+        {
+            monster.Power = CalculateMonsterPower(
+                monster.Level,
+                monster.Star,
+                monster.Rank,
+                monster.Stage,
+                monster.DemonEssence,
+                monster.Equipment,
+                account.Backpack,
+                ResolveEquipmentItem);
+        }
     }
 
     internal void SaveAccountDocument(PlayerAccount account)
@@ -1368,19 +1425,13 @@ public sealed class GameAccountStore
             document.DemonEssence);
 
     private static MonsterEquipmentSlot ToSlot(MonsterEquipmentSlotDocument document)
-        => new(document.Name, document.Equipped, document.IconText, document.SlotKey, document.ItemInstanceId);
+        => new(document.Name, document.Equipped, document.SlotKey, document.ItemInstanceId);
 
     private static BackpackEquipmentItem ToBackpackEquipment(BackpackEquipmentItemDocument document)
         => new(
             document.InstanceId,
             document.TemplateId,
-            document.Name,
-            document.SlotKey,
-            document.IconText,
-            document.Power,
-            document.Quality,
-            document.AttributeText,
-            document.Stats,
+            document.QualityOverride,
             document.EquippedMonsterId,
             document.UpgradeLevel);
 
@@ -1388,7 +1439,6 @@ public sealed class GameAccountStore
         => new(
             document.TemplateId,
             document.Name,
-            document.IconText,
             document.Quantity,
             document.EffectType,
             document.EffectValue,
@@ -1398,7 +1448,6 @@ public sealed class GameAccountStore
         => new(
             document.TemplateId,
             document.Name,
-            document.IconText,
             document.Quantity,
             document.Quality,
             document.Description);
@@ -1429,7 +1478,6 @@ public sealed class GameAccountStore
         {
             Name = slot.Name,
             Equipped = slot.Equipped,
-            IconText = slot.IconText,
             SlotKey = slot.SlotKey,
             ItemInstanceId = slot.ItemInstanceId,
         };
@@ -1439,13 +1487,7 @@ public sealed class GameAccountStore
         {
             InstanceId = item.InstanceId,
             TemplateId = item.TemplateId,
-            Name = item.Name,
-            SlotKey = item.SlotKey,
-            IconText = item.IconText,
-            Power = item.Power,
-            Quality = item.Quality,
-            AttributeText = item.AttributeText,
-            Stats = item.Stats,
+            QualityOverride = item.QualityOverride,
             EquippedMonsterId = item.EquippedMonsterId,
             UpgradeLevel = item.UpgradeLevel,
         };
@@ -1455,7 +1497,6 @@ public sealed class GameAccountStore
         {
             TemplateId = item.TemplateId,
             Name = item.Name,
-            IconText = item.IconText,
             Quantity = item.Quantity,
             EffectType = item.EffectType,
             EffectValue = item.EffectValue,
@@ -1467,7 +1508,6 @@ public sealed class GameAccountStore
         {
             TemplateId = item.TemplateId,
             Name = item.Name,
-            IconText = item.IconText,
             Quantity = item.Quantity,
             Quality = item.Quality,
             Description = item.Description,
@@ -1514,7 +1554,3 @@ public sealed class GameAccountStore
             account.Profile?.CreatedAt ?? DateTime.MaxValue);
     }
 }
-
-
-
-

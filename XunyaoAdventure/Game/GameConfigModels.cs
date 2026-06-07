@@ -166,7 +166,7 @@ public sealed class ConsumableTemplateConfig
 {
     public string TemplateId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string IconText { get; set; } = "道";
+    public string ImagePath { get; set; } = string.Empty;
     public string EffectType { get; set; } = "None";
     public int EffectValue { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -177,8 +177,7 @@ public sealed class EquipmentTemplateConfig
     public string TemplateId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string SlotKey { get; set; } = "weapon";
-    public string IconText { get; set; } = "装";
-    public string Quality { get; set; } = "白";
+    public string ImagePath { get; set; } = string.Empty;
     public HeroAttributeConfig Stats { get; set; } = new();
     public int UpgradeLevel { get; set; }
 }
@@ -203,7 +202,7 @@ public sealed class FragmentTemplateConfig
 {
     public string TemplateId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string IconText { get; set; } = "碎";
+    public string ImagePath { get; set; } = string.Empty;
     public string Quality { get; set; } = "白";
     public string Description { get; set; } = string.Empty;
 }
@@ -230,7 +229,7 @@ public sealed class GachaEntryConfig
     public string Type { get; set; } = string.Empty;
     public string TemplateId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string IconText { get; set; } = string.Empty;
+    public string ImagePath { get; set; } = string.Empty;
     public int Quantity { get; set; } = 1;
     public int Weight { get; set; } = 1;
 }

@@ -1,0 +1,201 @@
+@page "/add-friend"
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject GameSession Session
+@inject GameAccountStore Accounts
+@inject FriendStore FriendService
+
+<PageTitle>添加好友</PageTitle>
+
+<main class="add-friend-page">
+    <section class="add-friend-panel">
+        @if (_account is null)
+        {
+            <div class="add-friend-state">
+                <div class="add-friend-heading">
+                    <h1>添加好友</h1>
+                </div>
+                <div class="add-friend-empty">请先登录</div>
+                <button class="add-friend-primary" @onclick="GoLogin">返回登录</button>
+            </div>
+        }
+        else if (_account.Profile is null)
+        {
+            <div class="add-friend-state">
+                <div class="add-friend-heading">
+                    <h1>添加好友</h1>
+                </div>
+                <div class="add-friend-empty">请先创建角色</div>
+                <button class="add-friend-primary" @onclick="GoCreateCharacter">创建角色</button>
+            </div>
+        }
+        else
+        {
+            <header class="add-friend-topbar">
+                <div class="add-friend-top-level">等级:@_account.Level</div>
+                <div class="add-friend-top-resource"><span>友</span><b>@_friendCount</b></div>
+                <div class="add-friend-top-resource"><span>战</span><b>@TotalPower</b></div>
+            </header>
+
+            <div class="add-friend-stage">
+                <div class="add-friend-heading">
+                    <h1>添加好友</h1>
+                </div>
+
+                <section class="add-friend-search">
+                    <div class="add-friend-section-title">查找玩家</div>
+                    <div class="add-friend-search-row">
+                        <input maxlength="24" placeholder="输入账号或角色名" @bind="_keyword" @bind:event="oninput" @onkeydown="HandleSearchKeyDown" />
+                        <button disabled="@string.IsNullOrWhiteSpace(_keyword)" @onclick="Search">搜索</button>
+                    </div>
+                </section>
+
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <div class="@(_success ? "add-friend-message success" : "add-friend-message")">@_message</div>
+                }
+
+                <section class="add-friend-results">
+                    <div class="add-friend-section-title">搜索结果</div>
+                    @if (!_searched)
+                    {
+                        <div class="add-friend-empty">搜索玩家后可发送好友申请</div>
+                    }
+                    else if (!_searchResults.Any())
+                    {
+                        <div class="add-friend-empty">没有找到玩家</div>
+                    }
+                    else
+                    {
+                        <div class="add-friend-list">
+                            @foreach (PlayerAccount player in _searchResults)
+                            {
+                                <article class="add-friend-card">
+                                    <div class="add-friend-avatar">@GetAvatarText(player.Profile?.Name ?? player.UserName)</div>
+                                    <div class="add-friend-main">
+                                        <b>@(player.Profile?.Name ?? player.UserName)</b>
+                                        <small>@player.UserName / @player.Level 级 / 战力 @player.Monsters.Sum(monster => monster.Power)</small>
+                                    </div>
+                                    <div class="add-friend-actions">
+                                        @if (FriendService.IsFriend(Session.UserName, player.UserName))
+                                        {
+                                            <button @onclick="() => GoDirectChat(player.UserName)">私聊</button>
+                                        }
+                                        else if (FriendService.HasOutgoingRequest(Session.UserName, player.UserName))
+                                        {
+                                            <button disabled>已申请</button>
+                                        }
+                                        else if (FriendService.HasIncomingRequest(Session.UserName, player.UserName))
+                                        {
+                                            <button @onclick="() => Accept(player.UserName)">同意</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => AddFriendRequest(player.UserName)">加好友</button>
+                                        }
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            </div>
+
+            <footer class="add-friend-bottom-bar">
+                <button class="add-friend-back" @onclick="GoHome">返回</button>
+                <button @onclick="GoFriends">好友</button>
+                <button class="active">添加好友</button>
+            </footer>
+        }
+    </section>
+</main>
+
+@code {
+    private PlayerAccount? _account;
+    private List<PlayerAccount> _searchResults = new();
+    private string _keyword = string.Empty;
+    private string _message = string.Empty;
+    private bool _success;
+    private bool _searched;
+    private int _friendCount;
+
+    private int TotalPower
+        => _account?.Monsters.Sum(monster => monster.Power) ?? 0;
+
+    protected override void OnInitialized()
+    {
+        FriendService.FriendsChanged += OnFriendsChanged;
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _account = Accounts.GetAccount(Session.UserName);
+        _friendCount = FriendService.GetFriends(Session.UserName).Count;
+        if (_searched)
+        {
+            _searchResults = FriendService.SearchPlayers(Session.UserName, _keyword).ToList();
+        }
+    }
+
+    private void Search()
+    {
+        _searched = true;
+        _message = string.Empty;
+        _searchResults = FriendService.SearchPlayers(Session.UserName, _keyword).ToList();
+    }
+
+    private void AddFriendRequest(string userName)
+        => ApplyResult(FriendService.SendRequest(Session.UserName, userName));
+
+    private void Accept(string fromUserName)
+        => ApplyResult(FriendService.AcceptRequest(Session.UserName, fromUserName));
+
+    private void ApplyResult(FriendActionResult result)
+    {
+        _success = result.Success;
+        _message = result.Message;
+        Reload();
+    }
+
+    private void HandleSearchKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !string.IsNullOrWhiteSpace(_keyword))
+        {
+            Search();
+        }
+    }
+
+    private void OnFriendsChanged()
+    {
+        _ = InvokeAsync(() =>
+        {
+            Reload();
+            StateHasChanged();
+        });
+    }
+
+    private void GoDirectChat(string friendUserName)
+        => Navigation.NavigateTo($"/chat/{Uri.EscapeDataString(friendUserName)}");
+
+    private void GoLogin()
+        => Navigation.NavigateTo("/login");
+
+    private void GoCreateCharacter()
+        => Navigation.NavigateTo("/create-character");
+
+    private void GoHome()
+        => Navigation.NavigateTo("/");
+
+    private void GoFriends()
+        => Navigation.NavigateTo("/friends");
+
+    private static string GetAvatarText(string displayName)
+    {
+        string text = string.IsNullOrWhiteSpace(displayName) ? "友" : displayName.Trim();
+        return text[..1];
+    }
+
+    public void Dispose()
+        => FriendService.FriendsChanged -= OnFriendsChanged;
+}

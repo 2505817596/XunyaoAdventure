@@ -111,67 +111,59 @@ public sealed class BackpackEquipmentItem
     public BackpackEquipmentItem(
         int instanceId,
         string templateId,
-        string name,
-        string slotKey,
-        string iconText,
-        int power,
-        string quality,
-        string attributeText,
-        HeroAttributeConfig stats,
+        string qualityOverride,
         int? equippedMonsterId,
         int upgradeLevel)
     {
         InstanceId = instanceId;
         TemplateId = templateId;
-        Name = name;
-        SlotKey = slotKey;
-        IconText = iconText;
-        Power = power;
-        Quality = quality;
-        AttributeText = attributeText;
-        Stats = stats;
+        QualityOverride = qualityOverride;
         EquippedMonsterId = equippedMonsterId;
         UpgradeLevel = upgradeLevel;
     }
 
     public int InstanceId { get; set; }
     public string TemplateId { get; set; }
-    public string Name { get; set; }
-    public string SlotKey { get; set; }
-    public string IconText { get; set; }
-    public int Power { get; set; }
-    public string Quality { get; set; }
-    public string AttributeText { get; set; }
-    public HeroAttributeConfig Stats { get; set; }
+    public string QualityOverride { get; set; }
     public int? EquippedMonsterId { get; set; }
     public int UpgradeLevel { get; set; }
 }
 
+public sealed record ResolvedEquipmentItem(
+    int InstanceId,
+    string TemplateId,
+    string Name,
+    string SlotKey,
+    string ImagePath,
+    int Power,
+    string Quality,
+    string AttributeText,
+    HeroAttributeConfig Stats,
+    int? EquippedMonsterId,
+    int UpgradeLevel);
+
 public sealed class MonsterEquipmentSlot
 {
-    public MonsterEquipmentSlot(string name, bool equipped, string iconText, string slotKey, int? itemInstanceId)
+    public MonsterEquipmentSlot(string name, bool equipped, string slotKey, int? itemInstanceId)
     {
         Name = name;
         Equipped = equipped;
-        IconText = iconText;
         SlotKey = slotKey;
         ItemInstanceId = itemInstanceId;
     }
 
     public string Name { get; set; }
     public bool Equipped { get; set; }
-    public string IconText { get; set; }
     public string SlotKey { get; set; }
     public int? ItemInstanceId { get; set; }
 }
 
 public sealed class BackpackConsumableItem
 {
-    public BackpackConsumableItem(string templateId, string name, string iconText, int quantity, string effectType, int effectValue, string description)
+    public BackpackConsumableItem(string templateId, string name, int quantity, string effectType, int effectValue, string description)
     {
         TemplateId = templateId;
         Name = name;
-        IconText = iconText;
         Quantity = quantity;
         EffectType = effectType;
         EffectValue = effectValue;
@@ -180,7 +172,6 @@ public sealed class BackpackConsumableItem
 
     public string TemplateId { get; set; }
     public string Name { get; set; }
-    public string IconText { get; set; }
     public int Quantity { get; set; }
     public string EffectType { get; set; }
     public int EffectValue { get; set; }
@@ -189,11 +180,10 @@ public sealed class BackpackConsumableItem
 
 public sealed class BackpackFragmentItem
 {
-    public BackpackFragmentItem(string templateId, string name, string iconText, int quantity, string quality, string description)
+    public BackpackFragmentItem(string templateId, string name, int quantity, string quality, string description)
     {
         TemplateId = templateId;
         Name = name;
-        IconText = iconText;
         Quantity = quantity;
         Quality = quality;
         Description = description;
@@ -201,7 +191,6 @@ public sealed class BackpackFragmentItem
 
     public string TemplateId { get; set; }
     public string Name { get; set; }
-    public string IconText { get; set; }
     public int Quantity { get; set; }
     public string Quality { get; set; }
     public string Description { get; set; }
@@ -235,7 +224,7 @@ public sealed record GachaDrawItem(
     string Type,
     string TemplateId,
     string Name,
-    string IconText,
+    string ImagePath,
     int Quantity,
     int? MonsterId);
 

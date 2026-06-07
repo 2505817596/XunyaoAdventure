@@ -1,4 +1,4 @@
-@page "/admin/items"
+﻿@page "/admin/items"
 @inject NavigationManager Navigation
 @inject GameConfigStore Configs
 
@@ -53,7 +53,7 @@
                             <button @onclick:stopPropagation="true" @onclick="() => RemoveEquipment(currentIndex)">删除</button>
                         </header>
                         <div class="admin-index-title">@item.Name</div>
-                        <div class="admin-index-meta">@ResolveSlotName(item.SlotKey) / @item.Quality / 战力 @GameAccountStore.CalculateEquipmentPower(item.Stats, item.Quality, item.UpgradeLevel)</div>
+                        <div class="admin-index-meta">@ResolveSlotName(item.SlotKey) / 白品基础战力 @GameAccountStore.CalculateEquipmentPower(item.Stats, "白", item.UpgradeLevel)</div>
                     </article>
                 }
             }
@@ -116,7 +116,7 @@
             {
                 TemplateId = NextId("item", _consumables.Select(config => config.TemplateId)),
                 Name = "新道具",
-                IconText = "道",
+                ImagePath = string.Empty,
                 EffectType = "None",
                 EffectValue = 0,
                 Description = "道具描述",
@@ -131,8 +131,7 @@
                 TemplateId = NextId("equipment", _equipment.Select(config => config.TemplateId)),
                 Name = "新装备",
                 SlotKey = "weapon",
-                IconText = "装",
-                Quality = "白",
+                ImagePath = string.Empty,
                 Stats = new HeroAttributeConfig { PhysicalAttack = 12 },
             };
             _equipment.Add(item);
@@ -144,7 +143,7 @@
             {
                 TemplateId = NextId("fragment", _fragments.Select(config => config.TemplateId)),
                 Name = "新碎片",
-                IconText = "碎",
+                ImagePath = string.Empty,
                 Quality = "白",
                 Description = "碎片描述",
             };

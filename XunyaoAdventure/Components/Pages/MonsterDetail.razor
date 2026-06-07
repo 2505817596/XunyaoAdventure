@@ -1,4 +1,4 @@
-@page "/monsters/{MonsterId:int}"
+﻿@page "/monsters/{MonsterId:int}"
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
@@ -49,15 +49,23 @@
                         @foreach (MonsterEquipmentSlot slot in _monster.Equipment)
                         {
                             BackpackEquipmentItem? slotItem = ResolveSlotItem(slot);
-                            <button class="monster-detail-equip @ResolveSlotOrbitClass(slot.SlotKey) @ResolveEquipmentQualityClass(slotItem?.Quality) @(slot.Equipped ? "equipped" : "")" @onclick="() => OpenEquipmentPopup(slot.SlotKey)">
-                                <span>@(slot.Equipped ? slot.IconText : string.Empty)</span>
-                                @if (slotItem is not null)
+                            ResolvedEquipmentItem? slotEquipment = slotItem is null ? null : ResolveEquipment(slotItem);
+                            <button class="monster-detail-equip @ResolveSlotOrbitClass(slot.SlotKey) @ResolveEquipmentQualityClass(slotEquipment?.Quality) @(slot.Equipped ? "equipped" : "")" @onclick="() => OpenEquipmentPopup(slot.SlotKey)">
+                                @if (slotEquipment is not null)
                                 {
-                                    <em class="equipment-level-badge">+@slotItem.UpgradeLevel</em>
+                                    <ItemImage CssClass="monster-slot-image" ImagePath="@slotEquipment.ImagePath" Alt="@slotEquipment.Name" />
                                 }
-                                @if (slotItem is not null)
+                                @if (slotEquipment is not null)
                                 {
-                                    <small>Lv.@Math.Max(1, slotItem.UpgradeLevel)</small>
+                                    <em class="equipment-level-badge">+@slotEquipment.UpgradeLevel</em>
+                                }
+                                @if (slotEquipment is not null)
+                                {
+                                    <small>Lv.@Math.Max(1, slotEquipment.UpgradeLevel)</small>
+                                }
+                                else
+                                {
+                                    <small class="monster-empty-slot-label">@ResolveSlotName(slot.SlotKey)</small>
                                 }
                             </button>
                         }
@@ -77,7 +85,7 @@
             }
 
             <footer class="monster-bottom-tabs">
-                <button class="monster-back" @onclick="GoMonsters">‹</button>
+                <button class="monster-back" @onclick="GoMonsters">返回</button>
                 <button class="@(_detailTab == MonsterDetailTab.Basic ? "active" : "")" @onclick="() => _detailTab = MonsterDetailTab.Basic">装备</button>
                 <button @onclick="OpenAttributePopup">属性</button>
                 <button>饰品</button>
@@ -163,21 +171,22 @@
                             }
                             else
                             {
-                                <h3 class="@ResolveEquipmentTextQualityClass(EquippedSlotItem.Quality)">@EquippedSlotItem.Name</h3>
+                                ResolvedEquipmentItem equipment = ResolveEquipment(EquippedSlotItem);
+                                <h3 class="@ResolveEquipmentTextQualityClass(equipment.Quality)">@equipment.Name</h3>
                                 <div class="equipment-equipped-stamp">已装备</div>
                                 <div class="equipment-card-main">
-                                    <div class="backpack-detail-icon @ResolveEquipmentQualityClass(EquippedSlotItem.Quality)">@EquippedSlotItem.IconText</div>
-                                    <div class="equipment-card-summary @ResolveEquipmentTextQualityClass(EquippedSlotItem.Quality)">
-                                        <div>等级： @Math.Max(1, EquippedSlotItem.UpgradeLevel)</div>
-                                        <div>品质： @EquippedSlotItem.Quality</div>
-                                        <div>战力： @EquippedSlotItem.Power</div>
+                                    <ItemImage CssClass="@($"backpack-detail-icon {ResolveEquipmentQualityClass(equipment.Quality)}")" ImagePath="@equipment.ImagePath" Alt="@equipment.Name" />
+                                    <div class="equipment-card-summary @ResolveEquipmentTextQualityClass(equipment.Quality)">
+                                        <div>等级： @Math.Max(1, equipment.UpgradeLevel)</div>
+                                        <div>品质： @equipment.Quality</div>
+                                        <div>战力： @equipment.Power</div>
                                     </div>
                                 </div>
                                 <div class="equipment-card-line">[基础属性]</div>
-                                <div class="equipment-card-stat">@FormatEquipmentAttributeText(EquippedSlotItem)</div>
+                                <div class="equipment-card-stat">@FormatEquipmentAttributeText(equipment)</div>
                                 <div class="equipment-card-line">[词缀效果]</div>
-                                <div class="equipment-card-stat">@ResolveEquipmentAffixText(EquippedSlotItem)</div>
-                                <div class="equipment-card-muted">强化费用：@ResolveUpgradeCost(EquippedSlotItem) 铜钱</div>
+                                <div class="equipment-card-stat">@ResolveEquipmentAffixText(equipment)</div>
+                                <div class="equipment-card-muted">强化费用：@ResolveUpgradeCost(equipment) 铜钱</div>
                             }
                         </section>
                     }
@@ -192,20 +201,21 @@
                         }
                         else
                         {
-                            <h3 class="@ResolveEquipmentTextQualityClass(SelectedCandidateItem.Quality)">@SelectedCandidateItem.Name</h3>
+                            ResolvedEquipmentItem equipment = ResolveEquipment(SelectedCandidateItem);
+                            <h3 class="@ResolveEquipmentTextQualityClass(equipment.Quality)">@equipment.Name</h3>
                             <div class="equipment-card-main">
-                                <div class="backpack-detail-icon @ResolveEquipmentQualityClass(SelectedCandidateItem.Quality)">@SelectedCandidateItem.IconText</div>
-                                <div class="equipment-card-summary @ResolveEquipmentTextQualityClass(SelectedCandidateItem.Quality)">
-                                    <div>等级： @Math.Max(1, SelectedCandidateItem.UpgradeLevel)</div>
-                                    <div>品质： @SelectedCandidateItem.Quality</div>
-                                    <div>战力： @SelectedCandidateItem.Power</div>
+                                <ItemImage CssClass="@($"backpack-detail-icon {ResolveEquipmentQualityClass(equipment.Quality)}")" ImagePath="@equipment.ImagePath" Alt="@equipment.Name" />
+                                <div class="equipment-card-summary @ResolveEquipmentTextQualityClass(equipment.Quality)">
+                                    <div>等级： @Math.Max(1, equipment.UpgradeLevel)</div>
+                                    <div>品质： @equipment.Quality</div>
+                                    <div>战力： @equipment.Power</div>
                                     </div>
                                 </div>
                                 <div class="equipment-card-line">[基础属性]</div>
-                                <div class="equipment-card-stat">@FormatEquipmentAttributeText(SelectedCandidateItem)</div>
+                                <div class="equipment-card-stat">@FormatEquipmentAttributeText(equipment)</div>
                                 <div class="equipment-card-line">[词缀效果]</div>
-                                <div class="equipment-card-stat">@ResolveEquipmentAffixText(SelectedCandidateItem)</div>
-                                <div class="equipment-card-muted">强化费用：@ResolveUpgradeCost(SelectedCandidateItem) 铜钱</div>
+                                <div class="equipment-card-stat">@ResolveEquipmentAffixText(equipment)</div>
+                                <div class="equipment-card-muted">强化费用：@ResolveUpgradeCost(equipment) 铜钱</div>
                         }
                     </section>
 
@@ -246,14 +256,15 @@
                 <div class="equipment-picker-grid">
                     @foreach (BackpackEquipmentItem item in CandidateItems)
                     {
-                        <button class="monster-bag-item @ResolveEquipmentQualityClass(item.Quality)" @onclick="() => InspectCandidateItem(item.InstanceId)">
+                        ResolvedEquipmentItem equipment = ResolveEquipment(item);
+                        <button class="monster-bag-item @ResolveEquipmentQualityClass(equipment.Quality)" @onclick="() => InspectCandidateItem(item.InstanceId)">
                             <em></em>
-                            <span>@item.IconText</span>
-                            @if (item.UpgradeLevel > 0)
+                            <ItemImage CssClass="monster-bag-image" ImagePath="@equipment.ImagePath" Alt="@equipment.Name" />
+                            @if (equipment.UpgradeLevel > 0)
                             {
-                                <strong>+@item.UpgradeLevel</strong>
+                                <strong>+@equipment.UpgradeLevel</strong>
                             }
-                            <small>Lv.@Math.Max(1, item.UpgradeLevel)</small>
+                            <small>Lv.@Math.Max(1, equipment.UpgradeLevel)</small>
                         </button>
                     }
                     @if (CandidateItems.Count == 0)
@@ -399,10 +410,10 @@
 
     private List<BackpackEquipmentItem> CandidateItems
         => _account?.Backpack
-            .Where(item => item.SlotKey == _selectedSlotKey)
+            .Where(item => ResolveEquipment(item).SlotKey == _selectedSlotKey)
             .Where(item => item.EquippedMonsterId is null)
-            .OrderByDescending(item => item.Power)
-            .ThenBy(item => item.Name)
+            .OrderByDescending(item => ResolveEquipment(item).Power)
+            .ThenBy(item => ResolveEquipment(item).Name)
             .ToList()
             ?? new List<BackpackEquipmentItem>();
 
@@ -766,19 +777,28 @@
             ? _account?.Backpack.FirstOrDefault(item => item.InstanceId == itemInstanceId)
             : null;
 
-    private int ResolveUpgradeCost(BackpackEquipmentItem? item)
+    private ResolvedEquipmentItem ResolveEquipment(BackpackEquipmentItem item)
+        => Accounts.ResolveEquipmentItem(item);
+
+    private static int ResolveUpgradeCost(ResolvedEquipmentItem? item)
         => item is null ? 0 : GameAccountStore.GetEquipmentUpgradeCost(item.UpgradeLevel + 1, item.Quality);
 
     private bool CanUpgradeEquipment(BackpackEquipmentItem? item)
-        => item is not null
-            && _account is not null
-            && item.UpgradeLevel < _account.Level
-            && _account.Copper >= ResolveUpgradeCost(item);
+    {
+        if (item is null || _account is null)
+        {
+            return false;
+        }
 
-    private static string FormatEquipmentAttributeText(BackpackEquipmentItem item)
+        ResolvedEquipmentItem equipment = ResolveEquipment(item);
+        return equipment.UpgradeLevel < _account.Level
+            && _account.Copper >= ResolveUpgradeCost(equipment);
+    }
+
+    private static string FormatEquipmentAttributeText(ResolvedEquipmentItem item)
         => string.Join("   ", item.AttributeText.Split('\n', StringSplitOptions.RemoveEmptyEntries).Take(2));
 
-    private static string ResolveEquipmentAffixText(BackpackEquipmentItem item)
+    private static string ResolveEquipmentAffixText(ResolvedEquipmentItem item)
         => item.UpgradeLevel <= 0
             ? "无"
             : $"【强化Lv.{item.UpgradeLevel}】  战力 +{Math.Max(1, item.UpgradeLevel * 8)}";

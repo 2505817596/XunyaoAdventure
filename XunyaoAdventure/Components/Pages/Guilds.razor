@@ -1,4 +1,4 @@
-@page "/guilds"
+﻿@page "/guilds"
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
@@ -23,8 +23,12 @@
         else if (_myGuild is not null)
         {
             <div class="wap-line">你已加入：@_myGuild.Name</div>
-            <button class="wap-button" @onclick="GoMyGuild">进入公会</button>
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="guild-bottom-bar">
+                <button class="guild-back" @onclick="GoHome">返回</button>
+                <button class="active" @onclick="GoMyGuild">公会</button>
+                <button disabled>列表</button>
+                <button disabled>成员</button>
+            </footer>
         }
         else
         {
@@ -60,8 +64,12 @@
                     }
                 }
             </div>
-
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="guild-bottom-bar">
+                <button class="guild-back" @onclick="GoHome">返回</button>
+                <button class="active">公会</button>
+                <button disabled>创建</button>
+                <button disabled>成员</button>
+            </footer>
         }
     </section>
 </main>

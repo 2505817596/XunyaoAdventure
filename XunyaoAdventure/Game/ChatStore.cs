@@ -9,7 +9,7 @@ public sealed class ChatStore
 
     private static readonly TimeSpan SendCooldown = TimeSpan.FromMilliseconds(800);
 
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly GameDatabase _database;
     private readonly GameAccountStore _accounts;
     private readonly FriendStore _friends;

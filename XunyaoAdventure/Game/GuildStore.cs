@@ -8,7 +8,7 @@ public sealed class GuildStore
     private const int MaxNoticeLength = 80;
     private const int MaxContributionAmount = 1000000;
 
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly GameAccountStore _accounts;
     private readonly GameConfigStore _configs;
     private readonly GameDatabase _database;

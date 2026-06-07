@@ -1,4 +1,4 @@
-@page "/chat"
+﻿@page "/chat"
 @page "/chat/{FriendUserName}"
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -113,8 +113,12 @@
             {
                 <div class="wap-message">@_message</div>
             }
-
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="chat-bottom-bar">
+                <button class="chat-back" @onclick="GoHome">返回</button>
+                <button class="@TabClass(ChatChannel.Direct)" @onclick="() => SelectChannel(ChatChannel.Direct)">私聊</button>
+                <button class="@TabClass(ChatChannel.World)" @onclick="() => SelectChannel(ChatChannel.World)">世界</button>
+                <button class="@TabClass(ChatChannel.Guild)" @onclick="() => SelectChannel(ChatChannel.Guild)">公会</button>
+            </footer>
         }
     </section>
 </main>

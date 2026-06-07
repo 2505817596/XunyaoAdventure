@@ -47,7 +47,6 @@ public sealed class MonsterEquipmentSlotDocument
 {
     public string Name { get; set; } = string.Empty;
     public bool Equipped { get; set; }
-    public string IconText { get; set; } = string.Empty;
     public string SlotKey { get; set; } = string.Empty;
     public int? ItemInstanceId { get; set; }
 }
@@ -56,13 +55,7 @@ public sealed class BackpackEquipmentItemDocument
 {
     public int InstanceId { get; set; }
     public string TemplateId { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string SlotKey { get; set; } = string.Empty;
-    public string IconText { get; set; } = string.Empty;
-    public int Power { get; set; }
-    public string Quality { get; set; } = string.Empty;
-    public string AttributeText { get; set; } = string.Empty;
-    public HeroAttributeConfig Stats { get; set; } = new();
+    public string QualityOverride { get; set; } = string.Empty;
     public int? EquippedMonsterId { get; set; }
     public int UpgradeLevel { get; set; }
 }
@@ -71,7 +64,6 @@ public sealed class BackpackConsumableItemDocument
 {
     public string TemplateId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string IconText { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public string EffectType { get; set; } = string.Empty;
     public int EffectValue { get; set; }
@@ -82,7 +74,6 @@ public sealed class BackpackFragmentItemDocument
 {
     public string TemplateId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string IconText { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public string Quality { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;

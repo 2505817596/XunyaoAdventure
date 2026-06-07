@@ -1,4 +1,4 @@
-@page "/gacha/{PoolId}"
+﻿@page "/gacha/{PoolId}"
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
@@ -70,14 +70,7 @@
                         {
                             GachaEntryConfig entry = previewEntries[index];
                             <article class="@ResolveEntryQualityClass(entry)" style="@BuildEntryOrbitStyle(index, previewEntries.Count)">
-                                @if (IsImageIcon(entry.IconText))
-                                {
-                                    <img src="@entry.IconText" alt="@entry.Name" />
-                                }
-                                else
-                                {
-                                    <span>@ResolveEntryIcon(entry)</span>
-                                }
+                                <ItemImage ImagePath="@entry.ImagePath" Alt="@entry.Name" />
                                 <b>@entry.Name</b>
                                 <small>@ResolveTypeName(entry.Type) x@(entry.Quantity) / 权重 @entry.Weight</small>
                             </article>
@@ -108,14 +101,7 @@
                             @foreach (GachaDrawItem item in _lastItems)
                             {
                                 <article class="gacha-result-item @ResolveDrawItemQualityClass(item)">
-                                    @if (IsImageIcon(item.IconText))
-                                    {
-                                        <img src="@item.IconText" alt="@item.Name" />
-                                    }
-                                    else
-                                    {
-                                        <span>@item.IconText</span>
-                                    }
+                                    <ItemImage ImagePath="@item.ImagePath" Alt="@item.Name" />
                                     <b>@item.Name</b>
                                     <small>x@(item.Quantity)</small>
                                 </article>
@@ -181,12 +167,6 @@
 
     private void CloseResultPopup()
         => _showResultPopup = false;
-
-    private static string ResolveEntryIcon(GachaEntryConfig entry)
-        => string.IsNullOrWhiteSpace(entry.IconText) ? ResolveTypeName(entry.Type)[0].ToString() : entry.IconText;
-
-    private static bool IsImageIcon(string? iconText)
-        => !string.IsNullOrWhiteSpace(iconText) && iconText.StartsWith("/", StringComparison.Ordinal);
 
     private static string ResolveTypeName(string type)
         => type switch

@@ -8,7 +8,7 @@ public sealed class OperationLogStore
     public const string StageCleared = "StageCleared";
     public const string StageSwept = "StageSwept";
 
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly GameDatabase _database;
     private long _nextLogId = 1;
 

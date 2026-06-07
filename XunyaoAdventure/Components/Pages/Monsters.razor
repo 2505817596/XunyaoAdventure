@@ -1,4 +1,4 @@
-@page "/monsters"
+﻿@page "/monsters"
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
@@ -25,7 +25,7 @@
                 <div class="monster-top-resource power"><span>妖</span><b>@_account.Monsters.Count</b></div>
                 <div class="monster-top-resource coin"><span>金</span><b>@_account.Copper</b></div>
                 <div class="monster-top-resource gem"><span>战</span><b>@TotalPower</b></div>
-                <button class="monster-settings" aria-label="设置">⚙</button>
+                <button class="monster-settings" aria-label="设置">!</button>
             </header>
 
             <div class="monster-stage">
@@ -57,7 +57,7 @@
             </div>
 
             <footer class="monster-bottom-bar">
-                <button class="monster-back" @onclick="GoHome">‹</button>
+                <button class="monster-back" @onclick="GoHome">返回</button>
                 <button class="active">妖怪</button>
                 <button disabled>阵容</button>
                 <button disabled>图鉴</button>

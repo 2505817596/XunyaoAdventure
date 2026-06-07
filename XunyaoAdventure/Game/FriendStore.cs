@@ -6,7 +6,7 @@ public sealed class FriendStore
 {
     public const int MaxFriends = 80;
 
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly GameDatabase _database;
     private readonly GameAccountStore _accounts;
     private readonly List<FriendRelation> _relations = new();

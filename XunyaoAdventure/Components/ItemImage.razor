@@ -1,0 +1,29 @@
+<span class="@ClassValue">
+    @if (HasImage)
+    {
+        <img src="@ImagePath" alt="@Alt" />
+    }
+    else
+    {
+        <span>无资源</span>
+    }
+</span>
+
+@code {
+    [Parameter]
+    public string? ImagePath { get; set; }
+
+    [Parameter]
+    public string Alt { get; set; } = string.Empty;
+
+    [Parameter]
+    public string CssClass { get; set; } = string.Empty;
+
+    private bool HasImage
+        => !string.IsNullOrWhiteSpace(ImagePath);
+
+    private string ClassValue
+        => string.IsNullOrWhiteSpace(CssClass)
+            ? $"item-image {(HasImage ? "has-image" : "no-resource")}"
+            : $"{CssClass} item-image {(HasImage ? "has-image" : "no-resource")}";
+}

@@ -7,7 +7,8 @@ public sealed class GameSession
     public CampaignBattleResult? LastBattleResult { get; private set; }
     public ArenaBattleSelection? SelectedArenaBattle { get; private set; }
     public ArenaBattleResult? LastArenaBattleResult { get; private set; }
-    public List<int> BattleMonsterIds { get; } = new();
+    private readonly List<int> _battleMonsterIds = new();
+    public IReadOnlyList<int> BattleMonsterIds => _battleMonsterIds;
 
     public bool IsLoggedIn => !string.IsNullOrWhiteSpace(UserName);
     public bool IsArenaBattle => SelectedArenaBattle is not null;
@@ -24,7 +25,7 @@ public sealed class GameSession
         LastBattleResult = null;
         SelectedArenaBattle = null;
         LastArenaBattleResult = null;
-        BattleMonsterIds.Clear();
+        _battleMonsterIds.Clear();
     }
 
     public void SelectStage(CampaignStageSelection stage)
@@ -32,7 +33,7 @@ public sealed class GameSession
         SelectedStage = stage;
         SelectedArenaBattle = null;
         LastArenaBattleResult = null;
-        BattleMonsterIds.Clear();
+        _battleMonsterIds.Clear();
     }
 
     public void EnsureSelectedStage(CampaignStageSelection stage)
@@ -63,7 +64,7 @@ public sealed class GameSession
         SelectedStage = null;
         LastBattleResult = null;
         LastArenaBattleResult = null;
-        BattleMonsterIds.Clear();
+        _battleMonsterIds.Clear();
     }
 
     public void SetArenaBattleResult(ArenaBattleResult result)
@@ -79,13 +80,13 @@ public sealed class GameSession
 
     public void SetBattleMonsters(IEnumerable<int> monsterIds, int formationSize)
     {
-        BattleMonsterIds.Clear();
-        BattleMonsterIds.AddRange(monsterIds.Take(Math.Max(1, formationSize)));
+        _battleMonsterIds.Clear();
+        _battleMonsterIds.AddRange(monsterIds.Take(Math.Max(1, formationSize)));
     }
 
     public void SetBattleMonsters(IEnumerable<int> monsterIds)
     {
-        BattleMonsterIds.Clear();
-        BattleMonsterIds.AddRange(monsterIds);
+        _battleMonsterIds.Clear();
+        _battleMonsterIds.AddRange(monsterIds);
     }
 }

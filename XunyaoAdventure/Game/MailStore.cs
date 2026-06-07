@@ -4,7 +4,7 @@ namespace XunyaoAdventure.Game;
 
 public sealed class MailStore
 {
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly GameDatabase _database;
     private readonly GameAccountStore _accounts;
     private readonly List<MailMessage> _mails = new();

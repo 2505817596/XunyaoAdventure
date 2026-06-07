@@ -1,4 +1,4 @@
-@page "/admin/items/{Kind}/{TemplateId}"
+﻿@page "/admin/items/{Kind}/{TemplateId}"
 @inject NavigationManager Navigation
 @inject GameConfigStore Configs
 
@@ -38,7 +38,7 @@
                             <label><span>名字</span><input @bind="_consumable.Name" /></label>
                         </div>
                         <div class="admin-grid-3">
-                            <label><span>图标字</span><input maxlength="2" @bind="_consumable.IconText" /></label>
+                            <label><span>图片路径</span><input @bind="_consumable.ImagePath" /></label>
                             <label>
                                 <span>效果类型</span>
                                 <select @bind="_consumable.EffectType">
@@ -94,19 +94,9 @@
                                     <option value="soul">命星</option>
                                 </select>
                             </label>
-                            <label>
-                                <span>品质</span>
-                                <select @bind="_equipmentItem.Quality">
-                                    <option value="白">白</option>
-                                    <option value="绿">绿</option>
-                                    <option value="蓝">蓝</option>
-                                    <option value="紫">紫</option>
-                                    <option value="红">红</option>
-                                </select>
-                            </label>
-                            <label><span>图标字</span><input maxlength="2" @bind="_equipmentItem.IconText" /></label>
+                            <label><span>图片路径</span><input @bind="_equipmentItem.ImagePath" /></label>
                         </div>
-                        <div class="admin-index-meta">当前战力：@GameAccountStore.CalculateEquipmentPower(_equipmentItem.Stats, _equipmentItem.Quality, _equipmentItem.UpgradeLevel)</div>
+                        <div class="admin-index-meta">白品基础战力：@GameAccountStore.CalculateEquipmentPower(_equipmentItem.Stats, "白", _equipmentItem.UpgradeLevel)</div>
                     </article>
 
                     <article class="admin-card">
@@ -145,7 +135,7 @@
                             <label><span>名字</span><input @bind="_fragment.Name" /></label>
                         </div>
                         <div class="admin-grid-3">
-                            <label><span>图标字</span><input maxlength="2" @bind="_fragment.IconText" /></label>
+                            <label><span>图片路径</span><input @bind="_fragment.ImagePath" /></label>
                             <label>
                                 <span>品质</span>
                                 <select @bind="_fragment.Quality">

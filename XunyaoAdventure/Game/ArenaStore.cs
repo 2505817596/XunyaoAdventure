@@ -1,4 +1,4 @@
-using LiteDB;
+﻿using LiteDB;
 
 namespace XunyaoAdventure.Game;
 
@@ -9,7 +9,7 @@ public sealed class ArenaStore
     private const int WinBaseScore = 18;
     private const int LoseBaseScore = 10;
 
-    private readonly object _gate = new();
+    private readonly System.Threading.Lock _gate = new();
     private readonly GameDatabase _database;
     private readonly GameAccountStore _accounts;
     private readonly Dictionary<string, ArenaProfile> _profiles = new(StringComparer.OrdinalIgnoreCase);
@@ -318,7 +318,7 @@ public sealed class ArenaStore
             Math.Max(1, (int)Math.Round(monster.Power * scale)),
             monster.PortraitUrl,
             false,
-            monster.Equipment.Select(slot => new MonsterEquipmentSlot(slot.Name, slot.Equipped, slot.IconText, slot.SlotKey, slot.ItemInstanceId)).ToList(),
+            monster.Equipment.Select(slot => new MonsterEquipmentSlot(slot.Name, slot.Equipped, slot.SlotKey, slot.ItemInstanceId)).ToList(),
             monster.Experience,
             Math.Clamp(monster.Stage, 1, GameAccountStore.MaxMonsterStage),
             Math.Clamp((int)Math.Round(monster.DemonEssence * scale), 0, GameAccountStore.MaxDemonEssence));

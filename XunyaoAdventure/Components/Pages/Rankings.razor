@@ -1,4 +1,4 @@
-@page "/rankings"
+﻿@page "/rankings"
 @inject NavigationManager Navigation
 @inject GameSession Session
 @inject GameAccountStore Accounts
@@ -83,8 +83,12 @@
                     </div>
                 }
             }
-
-            <button class="wap-button muted" @onclick="GoHome">返回主页</button>
+            <footer class="ranking-bottom-bar">
+                <button class="ranking-back" @onclick="GoHome">返回</button>
+                <button class="@TabClass(RankingBoardType.TotalPower)" @onclick="() => SelectBoard(RankingBoardType.TotalPower)">总榜</button>
+                <button class="@ArenaTabClass()" @onclick="SelectArenaBoard">竞技</button>
+                <button disabled>排行</button>
+            </footer>
         }
     </section>
 </main>
